@@ -24,8 +24,7 @@ const IMAGES = [
 const VECTOR_LEFT = "/images/hero-extension-vector-1.svg";
 const VECTOR_RIGHT = "/images/hero-extension-vector.svg";
 const VECTOR_SHADOW_FLOWER_TOP_RIGHT = "/images/hero-extension-vector-2.svg";
-// Added missing vector from the target design
-const VECTOR_DIAMOND = "/images/hero-extension-vector-diamond.svg";
+
 
 export default function HeroExtension() {
   return (
@@ -40,15 +39,7 @@ export default function HeroExtension() {
         transition={{ duration: 0.8, delay: 0.5 }}
         aria-hidden="true"
       />
-      <motion.img
-        src={VECTOR_DIAMOND}
-        alt=""
-        className="pointer-events-none select-none hidden md:block absolute left-1/2 top-[8%] h-auto w-8 z-20"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        aria-hidden="true"
-      />
+      
        <motion.img
         src={VECTOR_RIGHT}
         alt=""
