@@ -76,6 +76,18 @@ const initialState: HotelState = {
   searchQuery: '',
 };
 
+import { Auth } from './authSlice';
+
+// Listen for auth actions to handle hotel selection
+export const listenToAuth = createAsyncThunk(
+  'hotel/listenToAuth',
+  async (auth: Auth | null, { dispatch }) => {
+    if (auth?.role === 'hotel' && auth?.roleId) {
+      dispatch(fetchHotelById(auth.roleId));
+    }
+  }
+);
+
 // Fetch all hotels
 export const fetchHotels = createAsyncThunk<Hotel[]>(
   "hotel/fetchHotels",

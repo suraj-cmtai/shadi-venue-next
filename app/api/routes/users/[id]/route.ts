@@ -34,7 +34,7 @@ export async function GET(
             errorMessage: "",
         }, { status: 200 });
     } catch (error: any) {
-        consoleManager.error("Error in GET /api/users/[id]:", error);
+        consoleManager.error("Error in GET /api/routes/users/[id]:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",
@@ -121,7 +121,7 @@ export async function PUT(
             errorMessage: "",
         }, { status: 200 });
     } catch (error: any) {
-        consoleManager.error("Error in PUT /api/users/[id]:", error);
+        consoleManager.error("Error in PUT /api/routes/users/[id]:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",
@@ -159,7 +159,7 @@ export async function DELETE(
             errorMessage: "",
         }, { status: 200 });
     } catch (error: any) {
-        consoleManager.error("Error in DELETE /api/users/[id]:", error);
+        consoleManager.error("Error in DELETE /api/routes/users/[id]:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",

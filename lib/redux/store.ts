@@ -10,7 +10,7 @@ import hotelReducer from "./features/hotelSlice";
 import adminReducer from "./features/adminSlice";
 import vendorReducer from "./features/vendorSlice";
 import userReducer from "./features/userSlice";
-
+import weddingReducer from "./features/inviteSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +25,7 @@ export const store = configureStore({
     admin: adminReducer,
     vendor: vendorReducer,
     user: userReducer,
+    wedding: weddingReducer,
   },
 });
 

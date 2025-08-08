@@ -42,6 +42,7 @@ export default function GradientButton({
         // Word break and text wrapping utilities for long text
         "break-words whitespace-normal overflow-hidden text-ellipsis",
         "leading-none",
+        "cursor-pointer",
         className
       )}
       {...props}

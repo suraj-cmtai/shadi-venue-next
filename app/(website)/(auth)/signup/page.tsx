@@ -7,12 +7,22 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
 import { signup } from "@/lib/redux/features/authSlice";
 import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import  GradientButton  from "@/components/GradientButton";
+import { Button } from "@/components/ui/button";
+
+const ROLES = [
+  { value: "user", label: "User" },
+  { value: "hotel", label: "Hotel" },
+  { value: "vendor", label: "Vendor" },
+  // Add more roles here as needed
+];
 
 const SignupPage = () => {
   const [name, setName] = useState("");
+  const [role, setRole] = useState(ROLES[0].value);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,19 +37,25 @@ const SignupPage = () => {
     setError("");
 
     try {
-      await dispatch(signup({ name, email, password })).unwrap();
+      const result = await dispatch(signup({ name, email, password, role })).unwrap();
       toast.success("Account created successfully!");
-      router.push("/profile");
+      if (result.data.role === "admin") {
+        router.push("/dashboard/admin");
+      } else if (result.data.role === "hotel") {
+        router.push("/dashboard/hotel");
+      }
+      else if (result.data.role === "vendor") {
+        router.push("/dashboard/vendor");
+      } else {
+        router.push("/dashboard/user");
+      }
     } catch (error: unknown) {
-      // Handle specific error messages from the API
       let errorMessage = "Signup failed. Please try again.";
-      
-      if (error && typeof error === 'object' && 'message' in error) {
+      if (error && typeof error === "object" && "message" in error) {
         errorMessage = (error as { message: string }).message;
-      } else if (typeof error === 'string') {
+      } else if (typeof error === "string") {
         errorMessage = error;
       }
-      
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -57,14 +73,14 @@ const SignupPage = () => {
           <h2 className="text-2xl font-bold text-navy">Create Account</h2>
           <p className="text-gray-600 text-sm mt-1">Sign up to get started</p>
         </div>
-        
+
         {error && (
           <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
             <span className="text-sm text-red-700">{error}</span>
           </div>
         )}
-        
+
         <form className="w-full space-y-4" onSubmit={handleSubmit} autoComplete="off">
           <div>
             <label className="block text-sm font-medium mb-1.5 text-navy">Full Name</label>
@@ -79,6 +95,27 @@ const SignupPage = () => {
                 autoFocus
               />
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-navy">Role</label>
+            <div className="relative">
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger className="w-full pl-10 border-gray-300 focus:border-orange focus:ring-orange/20">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <User className="w-4 h-4 text-gray-400" />
+                </span>
+                <SelectContent>
+                  {ROLES.map(r => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -115,6 +152,7 @@ const SignupPage = () => {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 tabIndex={-1}
                 onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -124,8 +162,9 @@ const SignupPage = () => {
 
           <Button
             type="submit"
-            className="w-full gap-2 bg-gradient-to-r from-orange to-orange/80 hover:from-orange/90 hover:to-orange text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            className="w-full gap-2  text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
             disabled={loading}
+            aria-label="Create Account"
           >
             {loading ? (
               <>

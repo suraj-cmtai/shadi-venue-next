@@ -15,14 +15,15 @@ const FLOWER_IMG = "/images/flower-vector.svg";
 const DROPDOWN_ARROW_IMG = "/images/drop-down-arrow.svg";
 const SEARCH_ICON_IMG = "/images/search-icon.svg";
 
+// Add nav routes
 const NAV_ITEMS = [
-  "Home",
-  "About Us",
-  "Venue",
-  "Hotels",
-  "Wedding",
-  "Blog",
-  "Gallery",
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Venue", href: "/venue" },
+  { label: "Hotels", href: "/hotels" },
+  { label: "Wedding", href: "/wedding" },
+  { label: "Blog", href: "/blogs" },
+  { label: "Gallery", href: "/gallery" },
 ];
 
 const LOCATIONS = ["Delhi", "Mumbai", "Bangalore", "Jaipur", "Goa"];
@@ -35,13 +36,13 @@ export default function Header() {
 
   return (
     <header className="w-full bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-200">
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between px-4 md:px-8 py-2 min-h-12 md:min-h-16 gap-2 md:gap-4">
+      <div className="w-full max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 md:px-8 py-2 min-h-12 md:min-h-16 gap-2 md:gap-4">
         {/* Logo and Flower */}
         <div className="flex items-center gap-2 md:gap-4 min-w-fit">
           <motion.img
             src={LOGO_IMG}
             alt="Logo"
-            className="h-10 w-auto"
+            className="h-8 sm:h-10 w-auto"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
@@ -49,7 +50,7 @@ export default function Header() {
           <motion.img
             src={FLOWER_IMG}
             alt="Decorative Flower"
-            className="h-8 w-auto md:h-12"
+            className="h-6 sm:h-8 w-auto md:h-12"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -59,8 +60,8 @@ export default function Header() {
         <nav className="hidden xl:flex flex-1 items-center justify-center">
           <ul className="flex flex-row gap-6 lg:gap-10 text-[#212d47] text-sm font-medium font-cormorant uppercase tracking-wide">
             {NAV_ITEMS.map((item) => (
-              <li key={item} className="whitespace-nowrap">
-                <a href="#" className="hover:text-primary transition-colors">{item}</a>
+              <li key={item.label} className="whitespace-nowrap">
+                <a href={item.href} className="hover:text-primary transition-colors">{item.label}</a>
               </li>
             ))}
           </ul>
@@ -118,13 +119,13 @@ export default function Header() {
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-[#212d47]">
-                <MenuIcon className="h-6 w-6" />
+                <MenuIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-full max-w-xs">
                 <SheetTitle hidden aria-hidden="true">Shadi Venue</SheetTitle>
-              <div className="flex flex-col gap-6 p-6">
+              <div className="flex flex-col gap-6 p-4 sm:p-6">
                 {/* Logo and Flower in Sheet */}
                 <div className="flex items-center gap-2 mb-4">
                   <img src={LOGO_IMG} alt="Logo" className="h-8 w-auto" />
@@ -134,8 +135,8 @@ export default function Header() {
                 <nav>
                   <ul className="flex flex-col gap-4 text-[#212d47] text-base font-medium font-cormorant uppercase">
                     {NAV_ITEMS.map((item) => (
-                      <li key={item}>
-                        <a href="#" className="hover:text-primary transition-colors">{item}</a>
+                      <li key={item.label}>
+                        <a href={item.href} className="hover:text-primary transition-colors">{item.label}</a>
                       </li>
                     ))}
                   </ul>

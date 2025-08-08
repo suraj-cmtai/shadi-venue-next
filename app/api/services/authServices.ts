@@ -2,52 +2,152 @@ import { db } from "../config/firebase";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import consoleManager from "../utils/consoleManager";
+import { UserRole } from "./userServices";
+import { Hotel } from "./hotelServices";
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 const SALT_ROUNDS = 10;
 
-class AuthService {
-    static async signupUser(email: string, password: string, name: string) {
-        try {
-            consoleManager.log("🔍 Checking if user exists:", email);
+// Helper: get collection name for role
+function getRoleCollection(role: UserRole) {
+    switch (role) {
+        case "user":
+            return "users";
+        case "hotel":
+            return "hotels";
+        case "vendor":
+            return "vendors";
+        default:
+            throw new Error("Invalid role");
+    }
+}
 
-            // Check if user already exists
-            const existingUser = await db.collection("users").where("email", "==", email).get();
-            if (!existingUser.empty) {
+class AuthService {
+    /**
+     * Signup a new user, hotel, or vendor.
+     * - Creates an entry in the "auth" collection (with status "inactive")
+     * - Creates a corresponding entry in the role's collection (users, hotels, vendors)
+     * - Sets the role-specific id in the auth document
+     * @param email
+     * @param password
+     * @param name
+     * @param role
+     */
+    static async signupUser(email: string, password: string, name: string, role: UserRole) {
+        try {
+            consoleManager.log("🔍 Checking if user exists in auth:", email);
+
+            // Check if user already exists in auth collection
+            const existingAuth = await db.collection("auth").where("email", "==", email).get();
+            if (!existingAuth.empty) {
                 throw new Error("User already exists with this email.");
             }
 
             // Hash password
             const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-            // Create new user document
-            const userData = {
+            // Prepare base auth data
+            const authData: any = {
                 email,
                 password: hashedPassword,
                 name,
-                role: "user", // Fixed role for signup
-                status: "active",
+                role,
+                status: "inactive", // Always inactive on signup
                 createdOn: new Date().toISOString(),
-                updatedOn: new Date().toISOString()
+                updatedOn: new Date().toISOString(),
             };
 
-            const userRef = await db.collection("users").add(userData);
+            // Create role-specific entry
+            let roleDocRef;
+            let roleDocId: string;
+            let roleDocData: any = {
+                name,
+                email,
+                role,
+                status: "inactive",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            };
 
-            // Generate JWT token
+            // Add more fields for hotel/vendor if needed
+            if (role === "hotel") {
+                // Minimal hotel doc, can be expanded later
+                roleDocData = {
+                    ...roleDocData,
+                    category: "",
+                    location: {
+                        address: "",
+                        city: "",
+                        state: "",
+                        country: "",
+                        zipCode: "",
+                    },
+                    priceRange: {
+                        startingPrice: 0,
+                        currency: "INR",
+                    },
+                    rating: 0,
+                    description: "",
+                    amenities: [],
+                    rooms: [],
+                    images: [],
+                    contactInfo: {
+                        phone: "",
+                        email,
+                        website: "",
+                    },
+                    policies: {
+                        checkIn: "",
+                        checkOut: "",
+                        cancellation: "",
+                    },
+                };
+            } else if (role === "vendor") {
+                // Minimal vendor doc, can be expanded later
+                roleDocData = {
+                    ...roleDocData,
+                    company: "",
+                    services: [],
+                    address: {
+                        street: "",
+                        city: "",
+                        state: "",
+                        country: "",
+                        zipCode: "",
+                    },
+                    phoneNumber: "",
+                    avatar: "",
+                };
+            }
+
+            // Create the role-specific document
+            const roleCollection = getRoleCollection(role);
+            roleDocRef = await db.collection(roleCollection).add(roleDocData);
+            roleDocId = roleDocRef.id;
+
+            // Add the role-specific id to authData
+            authData[`${role}Id`] = roleDocId;
+
+            // Create the auth document
+            const authRef = await db.collection("auth").add(authData);
+
+            // Generate JWT token (but user is inactive, so up to you if you want to allow login)
             const token = jwt.sign(
-                { uid: userRef.id, email, role: "user" },
+                { uid: authRef.id, email, role, roleId: roleDocId },
                 SECRET_KEY,
                 { expiresIn: "7d" }
             );
 
-            consoleManager.log("✅ User created successfully:", userRef.id);
+            consoleManager.log(`✅ ${role} created successfully:`, authRef.id, "Role doc:", roleDocId);
+
             return {
                 token,
                 user: {
-                    id: userRef.id,
+                    id: authRef.id,
                     email,
                     name,
-                    role: "user"
+                    role,
+                    roleId: roleDocId,
                 }
             };
 
@@ -57,46 +157,110 @@ class AuthService {
         }
     }
 
+    /**
+     * Login user by email and password.
+     * - Checks in-memory users for admin/super-admin/vendor/user
+     * - Otherwise, checks "auth" collection
+     * - Only allows login if status is "active"
+     */
     static async loginUser(email: string, password: string) {
         try {
             consoleManager.log("🔍 Checking user:", email);
 
-            // Fetch user from Firestore
-            const userSnapshot = await db.collection("users").where("email", "==", email).get();
+            // In-memory users array for role checking (for login only)
+            const users = [
+                {
+                    name: "Admin User",
+                    email: "admin@example.com",
+                    password: "admin123",
+                    role: "admin",
+                },
+                {
+                    name: "Super Admin",
+                    email: "superadmin@example.com",
+                    password: "superadmin123",
+                    role: "super-admin",
+                },
+                {
+                    name: "Hotel Vendor",
+                    email: "vendor@example.com",
+                    password: "vendor123",
+                    role: "vendor",
+                },
+                {
+                    name: "Regular User",
+                    email: "user@example.com",
+                    password: "user123",
+                    role: "user",
+                },
+                // Add more users as needed
+            ];
 
-            if (userSnapshot.empty) {
+            // First, check in-memory users array
+            const inMemoryUser = users.find(
+                (user) => user.email === email && user.password === password
+            );
+
+            if (inMemoryUser) {
+                // Generate JWT token for in-memory user
+                const token = jwt.sign(
+                    { uid: inMemoryUser.email, email: inMemoryUser.email, role: inMemoryUser.role },
+                    SECRET_KEY,
+                    { expiresIn: "7d" }
+                );
+
+                consoleManager.log("✅ In-memory user logged in successfully:", inMemoryUser.email);
+                return {
+                    token,
+                    user: {
+                        id: inMemoryUser.email,
+                        email: inMemoryUser.email,
+                        name: inMemoryUser.name,
+                        role: inMemoryUser.role
+                    }
+                };
+            }
+
+            // If not found in in-memory users, check Firestore "auth" collection
+            const authSnapshot = await db.collection("auth").where("email", "==", email).get();
+
+            if (authSnapshot.empty) {
                 throw new Error("User not found. Please check your email.");
             }
 
-            const userDoc = userSnapshot.docs[0];
-            const userData = userDoc.data();
+            const authDoc = authSnapshot.docs[0];
+            const authData = authDoc.data();
 
             // Verify password
-            const isPasswordValid = await bcrypt.compare(password, userData.password);
+            const isPasswordValid = await bcrypt.compare(password, authData.password);
             if (!isPasswordValid) {
                 throw new Error("Incorrect password. Please try again.");
             }
 
             // Check if user is active
-            if (userData.status !== "active") {
+            if (authData.status !== "active") {
                 throw new Error("Your account is not active. Please contact support.");
             }
 
             // Generate JWT token
             const token = jwt.sign(
-                { uid: userDoc.id, email: userData.email, role: userData.role },
+                { uid: authDoc.id, email: authData.email, role: authData.role },
                 SECRET_KEY,
                 { expiresIn: "7d" }
             );
 
-            consoleManager.log("✅ User logged in successfully:", userDoc.id);
+            consoleManager.log("✅ User logged in successfully:", authDoc.id);
             return {
                 token,
                 user: {
-                    id: userDoc.id,
-                    email: userData.email,
-                    name: userData.name,
-                    role: userData.role
+                    id: authDoc.id,
+                    email: authData.email,
+                    name: authData.name,
+                    role: authData.role,
+                    status: authData.status,
+                    ...(authData.userId && { userId: authData.userId }),
+                    ...(authData.hotelId && { hotelId: authData.hotelId }),
+                    ...(authData.vendorId && { vendorId: authData.vendorId }),
                 }
             };
 
@@ -106,25 +270,32 @@ class AuthService {
         }
     }
 
+    /**
+     * Verify JWT token and return user info from "auth" collection.
+     */
     static async verifyToken(token: string) {
         try {
             const decoded = jwt.verify(token, SECRET_KEY) as { uid: string; email: string; role: string };
-            const userDoc = await db.collection("users").doc(decoded.uid).get();
-            
-            if (!userDoc.exists) {
+            const authDoc = await db.collection("auth").doc(decoded.uid).get();
+
+            if (!authDoc.exists) {
                 throw new Error("User not found");
             }
 
-            const userData = userDoc.data();
-            if (userData?.status !== "active") {
+            const authData = authDoc.data();
+            if (authData?.status !== "active") {
                 throw new Error("Account is not active");
             }
 
             return {
-                id: userDoc.id,
-                email: userData?.email,
-                name: userData?.name,
-                role: userData?.role
+                id: authDoc.id,
+                email: authData?.email,
+                name: authData?.name,
+                role: authData?.role,
+                status: authData?.status,
+                ...(authData?.userId && { userId: authData.userId }),
+                ...(authData?.hotelId && { hotelId: authData.hotelId }),
+                ...(authData?.vendorId && { vendorId: authData.vendorId }),
             };
 
         } catch (error: any) {

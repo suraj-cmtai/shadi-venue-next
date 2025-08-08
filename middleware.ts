@@ -1,55 +1,390 @@
+// middleware.ts
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 
-export default function middleware(request: NextRequest) {
-  // Get the token from cookies
-  const token = request.cookies.get("token")?.value;
+// ===== TYPES =====
+export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user";
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
 
-  // If no token and trying to access protected routes, redirect to login
-  if (!token && request.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+interface Auth {
+  role?: Role;
+}
+
+interface RouteConfig {
+  pattern: string | RegExp;
+  methods?: HttpMethod[];
+  roles?: Role[];
+  isPublic?: boolean;
+  customHandler?: (pathname: string, method: HttpMethod, auth: Auth | null) => boolean;
+}
+
+interface DashboardConfig {
+  path: string;
+  allowedRoles: Role[];
+}
+
+// ===== CONFIGURATION =====
+
+// Role to Dashboard Mapping
+const ROLE_DASHBOARDS: Record<Role, string> = {
+  "super-admin": "/dashboard/super-admin",
+  "admin": "/dashboard/admin", 
+  "hotel": "/dashboard/hotel",
+  "vendor": "/dashboard/vendor",
+  "user": "/dashboard/user",
+};
+
+// Dashboard Access Configuration
+const DASHBOARD_ROUTES: DashboardConfig[] = [
+  {
+    path: "/dashboard/super-admin",
+    allowedRoles: ["super-admin"],
+  },
+  {
+    path: "/dashboard/admin", 
+    allowedRoles: ["admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/hotel",
+    allowedRoles: ["hotel", "admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/vendor",
+    allowedRoles: ["vendor", "admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/user",
+    allowedRoles: ["user"],
+  },
+];
+
+// Public Routes (accessible without authentication)
+const PUBLIC_ROUTES = ["/login", "/signup"];
+
+// API Routes Configuration
+const API_ROUTES: RouteConfig[] = [
+  // ===== PUBLIC API ROUTES =====
+  {
+    pattern: /\/api\/routes\/(contact|subscribers)$/,
+    methods: ["POST"],
+    isPublic: true,
+  },
+  {
+    pattern: /\/api\/routes\/blogs\/slug\//,
+    isPublic: true,
+  },
+  {
+    pattern: /\/api\/routes\/course\/[^/]+$/,
+    methods: ["GET"], 
+    isPublic: true,
+  },
+  {
+    pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,
+    isPublic: true,
+  },
+  {
+    pattern: "/api/routes/test",
+    methods: ["POST", "OPTIONS"],
+    isPublic: true,
+  },
+
+  // ===== ROLE-BASED API ROUTES =====
+  
+  // Super Admin Only Routes
+  {
+    pattern: "/api/routes/super-admin",
+    roles: ["super-admin"],
+  },
+  
+  // Admin Routes (admin + super-admin)
+  {
+    pattern: "/api/routes/admin",
+    roles: ["admin", "super-admin"],
+  },
+  {
+    pattern: "/api/routes/test",
+    methods: ["GET", "PUT", "DELETE"],
+    roles: ["admin", "super-admin"],
+  },
+  
+  // Hotel Routes
+  {
+    pattern: "/api/routes/hotel",
+    roles: ["hotel", "admin", "super-admin"],
+  },
+  
+  // Vendor Routes  
+  {
+    pattern: "/api/routes/vendor",
+    roles: ["vendor", "admin", "super-admin"],
+  },
+
+  // ===== CUSTOM LOGIC ROUTES =====
+  
+  // Users route with special logic
+  {
+    pattern: "/api/routes/users",
+    customHandler: (pathname: string, method: HttpMethod, auth: Auth | null) => {
+      if (!auth?.role) return false;
+      
+      // GET/POST: allow user, admin, super-admin
+      if (method === "GET" || method === "POST") {
+        return ["user", "admin", "super-admin"].includes(auth.role);
+      }
+      
+      // Other methods: admin/super-admin only
+      return ["admin", "super-admin"].includes(auth.role);
+    },
+  },
+
+  // ===== EXAMPLE: HOW TO ADD NEW ROUTES =====
+  
+  // Example: Analytics route for managers and above
+  // {
+  //   pattern: "/api/routes/analytics",
+  //   roles: ["manager", "admin", "super-admin"],
+  // },
+  
+  // Example: Public endpoint
+  // {
+  //   pattern: "/api/public/stats",
+  //   isPublic: true,
+  // },
+  
+  // Example: Method-specific access
+  // {
+  //   pattern: "/api/routes/orders",
+  //   methods: ["GET"],
+  //   roles: ["vendor", "admin", "super-admin"],
+  // },
+  // {
+  //   pattern: "/api/routes/orders", 
+  //   methods: ["POST", "PUT", "DELETE"],
+  //   roles: ["admin", "super-admin"],
+  // },
+  
+  // Example: Complex pattern with regex
+  // {
+  //   pattern: /\/api\/routes\/reports\/\d+$/,
+  //   methods: ["GET"],
+  //   roles: ["manager", "admin", "super-admin"],
+  // },
+
+  // ===== DEFAULT FALLBACK =====
+  // All other API routes default to admin/super-admin only
+  {
+    pattern: /^\/api\//,
+    roles: ["admin", "super-admin"],
+  },
+];
+
+// ===== HELPER FUNCTIONS =====
+
+function getAuthFromRequest(request: NextRequest): Auth | null {
+  const userCookie = request.cookies.get("auth")?.value;
+  try {
+    return userCookie ? JSON.parse(decodeURIComponent(userCookie)) : null;
+  } catch {
+    return null;
+  }
+}
+
+function createRedirect(url: string, request: NextRequest): NextResponse {
+  return NextResponse.redirect(new URL(url, request.url));
+}
+
+function createLoginRedirect(request: NextRequest): NextResponse {
+  return createRedirect("/login", request);
+}
+
+function matchesPattern(pathname: string, pattern: string | RegExp): boolean {
+  if (typeof pattern === "string") {
+    return pathname.startsWith(pattern);
+  }
+  return pattern.test(pathname);
+}
+
+// ===== ROUTE HANDLERS =====
+
+function handleDashboardRoutes(
+  pathname: string,
+  auth: Auth | null,
+  request: NextRequest
+): NextResponse | null {
+  // Handle /dashboard root - redirect to role-specific dashboard
+  if (pathname === "/dashboard") {
+    if (!auth?.role) {
+      return createLoginRedirect(request);
+    }
+    
+    const dashboard = ROLE_DASHBOARDS[auth.role];
+    return dashboard ? createRedirect(dashboard, request) : createLoginRedirect(request);
   }
 
-  // Check role-based access for specific routes
-  if (token) {
-    try {
-      // Decode the token and get the role
-      const role = decodeTokenAndGetRole(token);
-
-      // Hotel routes protection
-      if (request.nextUrl.pathname.startsWith("/dashboard/hotel") && role !== "hotel") {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Handle specific dashboard routes
+  for (const { path, allowedRoles } of DASHBOARD_ROUTES) {
+    if (pathname.startsWith(path)) {
+      if (!auth?.role) {
+        return createLoginRedirect(request);
       }
-
-      // Vendor routes protection
-      if (request.nextUrl.pathname.startsWith("/dashboard/vendor") && role !== "vendor") {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+      
+      if (!allowedRoles.includes(auth.role)) {
+        // Redirect to user's appropriate dashboard
+        const userDashboard = ROLE_DASHBOARDS[auth.role];
+        return userDashboard ? createRedirect(userDashboard, request) : createLoginRedirect(request);
       }
-
-      // Admin routes protection
-      if (request.nextUrl.pathname.startsWith("/dashboard/admin") && role !== "admin") {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
-      }
-    } catch (error) {
-      // If token is invalid, redirect to login
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      
+      // User has access
+      return null;
     }
+  }
+
+  return null;
+}
+
+function handlePublicRoutes(
+  pathname: string, 
+  auth: Auth | null, 
+  request: NextRequest
+): NextResponse | null {
+  // Redirect logged-in users away from auth pages
+  const isAuthPage = PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+  
+  if (isAuthPage && auth?.role) {
+    const dashboard = ROLE_DASHBOARDS[auth.role];
+    return dashboard ? createRedirect(dashboard, request) : null;
+  }
+
+  return null;
+}
+
+function handleApiRoutes(
+  pathname: string,
+  auth: Auth | null, 
+  request: NextRequest
+): NextResponse | null {
+  const method = request.method as HttpMethod;
+
+  for (const route of API_ROUTES) {
+    if (matchesPattern(pathname, route.pattern)) {
+      // Check method restrictions
+      if (route.methods && !route.methods.includes(method)) {
+        continue; // Try next route
+      }
+
+      // Handle public routes
+      if (route.isPublic) {
+        return null; // Allow access
+      }
+
+      // Handle custom logic
+      if (route.customHandler) {
+        const hasAccess = route.customHandler(pathname, method, auth);
+        return hasAccess ? null : createLoginRedirect(request);
+      }
+
+      // Handle role-based access
+      if (route.roles) {
+        if (!auth?.role) {
+          return createLoginRedirect(request);
+        }
+        
+        if (!route.roles.includes(auth.role)) {
+          return createLoginRedirect(request);
+        }
+        
+        return null; // Allow access
+      }
+
+      // If no specific rules, deny by default
+      return createLoginRedirect(request);
+    }
+  }
+
+  // No matching route found - deny access
+  return createLoginRedirect(request);
+}
+
+// ===== MAIN MIDDLEWARE =====
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const auth = getAuthFromRequest(request);
+
+  // Handle dashboard routes
+  if (pathname.startsWith("/dashboard") || pathname === "/dashboard") {
+    const dashboardResponse = handleDashboardRoutes(pathname, auth, request);
+    if (dashboardResponse) return dashboardResponse;
+  }
+
+  // Handle public route redirects
+  const publicRouteResponse = handlePublicRoutes(pathname, auth, request);
+  if (publicRouteResponse) return publicRouteResponse;
+
+  // Handle API routes
+  if (pathname.startsWith("/api/")) {
+    const apiResponse = handleApiRoutes(pathname, auth, request);
+    if (apiResponse) return apiResponse;
   }
 
   return NextResponse.next();
 }
 
-// Helper function to decode token and get role
-function decodeTokenAndGetRole(token: string): string {
-  try {
-    // This is a simple base64 decode. Replace this with your actual token decoding logic
-    const decoded = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
-    return decoded.role || "user";
-  } catch (error) {
-    return "user";
-  }
+export const config = {
+  matcher: [
+    "/dashboard/:path*",
+    "/dashboard", 
+    "/login/:path*",
+    "/signup/:path*",
+    "/api/:path*",
+  ],
+};
+
+// ===== QUICK REFERENCE FOR ADDING ROUTES =====
+/*
+
+TO ADD NEW DASHBOARD ROUTES:
+1. Add role to ROLE_DASHBOARDS
+2. Add config to DASHBOARD_ROUTES
+
+TO ADD NEW API ROUTES:
+Add to API_ROUTES array with one of these patterns:
+
+// Public route
+{
+  pattern: "/api/public/endpoint",
+  isPublic: true,
 }
 
-export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
-};
+// Role-based route
+{
+  pattern: "/api/routes/newfeature", 
+  roles: ["admin", "super-admin"],
+}
+
+// Method-specific route
+{
+  pattern: "/api/routes/data",
+  methods: ["GET"],
+  roles: ["user", "admin"],
+}
+
+// Regex pattern
+{
+  pattern: /\/api\/routes\/items\/\d+$/,
+  roles: ["vendor", "admin"],
+}
+
+// Complex custom logic
+{
+  pattern: "/api/routes/complex",
+  customHandler: (pathname, method, auth) => {
+    // Your custom logic here
+    return auth?.role === "admin" && method === "POST";
+  },
+}
+
+EXAMPLES:
+- Want to make /api/routes/reports public? Add: { pattern: "/api/routes/reports", isPublic: true }
+- Want only vendors to access /api/routes/inventory? Add: { pattern: "/api/routes/inventory", roles: ["vendor", "admin", "super-admin"] }
+- Want different methods to have different access? Add multiple entries with different methods arrays
+
+*/

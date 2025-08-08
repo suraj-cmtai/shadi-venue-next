@@ -3,6 +3,77 @@ import axios from "axios";
 import { RootState } from "../store";
 import { getErrorMessage } from "@/lib/utils";
 
+interface Theme {
+  primaryColor: string;
+  secondaryColor: string;
+  titleColor: string;
+  nameColor: string;
+  backgroundColor: string;
+  textColor: string;
+}
+
+interface Social {
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
+}
+
+interface Person {
+  name: string;
+  description: string;
+  image: string;
+  socials: Social;
+}
+
+interface AboutSection {
+  title: string;
+  subtitle: string;
+  groom: Person;
+  bride: Person;
+  coupleImage: string;
+}
+
+interface WeddingEvent {
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  description: string;
+  image?: string;
+}
+
+interface TimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+  image?: string;
+}
+
+interface PlanningItem {
+  title: string;
+  description: string;
+  icon?: string;
+  completed: boolean;
+}
+
+interface InviteSection {
+  heading: string;
+  subheading: string;
+  message: string;
+  rsvpLink?: string;
+  backgroundImage?: string;
+}
+
+interface Invite {
+  isEnabled: boolean;
+  theme: Theme;
+  about: AboutSection;
+  weddingEvents: WeddingEvent[];
+  loveStory: TimelineEvent[];
+  planning: PlanningItem[];
+  invitation: InviteSection;
+}
+
 interface User {
   id: string;
   name: string;
@@ -17,7 +88,7 @@ interface User {
     country: string;
     zipCode: string;
   };
-  bookings?: string[]; // IDs of bookings
+  bookings?: string[];
   favorites?: {
     hotels?: string[];
     vendors?: string[];
@@ -28,6 +99,7 @@ interface User {
     read: boolean;
     createdAt: string;
   }[];
+  invite?: Invite;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,7 +125,7 @@ export const fetchUsers = createAsyncThunk<User[]>(
   "user/fetchUsers",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/user");
+      const response = await axios.get("/api/routes/users");
       if (response.data.errorCode !== "NO") {
         throw new Error(response.data.errorMessage);
       }
@@ -68,7 +140,7 @@ export const fetchUserById = createAsyncThunk<User, string>(
   "user/fetchUserById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/user/${id}`);
+      const response = await axios.get(`/api/routes/users/${id}`);
       if (response.data.errorCode !== "NO") {
         throw new Error(response.data.errorMessage);
       }
@@ -83,7 +155,7 @@ export const updateUser = createAsyncThunk<User, { id: string; data: FormData }>
   "user/updateUser",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`/api/user/${id}`, data, {
+      const response = await axios.put(`/api/routes/users/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (response.data.errorCode !== "NO") {
@@ -100,11 +172,93 @@ export const deleteUser = createAsyncThunk<string, string>(
   "user/deleteUser",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`/api/user/${id}`);
+      const response = await axios.delete(`/api/routes/users/${id}`);
       if (response.data.errorCode !== "NO") {
         throw new Error(response.data.errorMessage);
       }
       return id;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+// Add the new thunks for invite management
+export const updateInvite = createAsyncThunk<User, { id: string; inviteData: Partial<Invite> }>(
+  "user/updateInvite",
+  async ({ id, inviteData }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`/api/routes/users/${id}/invite`, inviteData);
+      if (response.data.errorCode !== "NO") {
+        throw new Error(response.data.errorMessage);
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const toggleInviteStatus = createAsyncThunk<User, { id: string; isEnabled: boolean }>(
+  "user/toggleInviteStatus",
+  async ({ id, isEnabled }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`/api/routes/users/${id}/invite/status`, { isEnabled });
+      if (response.data.errorCode !== "NO") {
+        throw new Error(response.data.errorMessage);
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const updateInviteTheme = createAsyncThunk<User, { id: string; theme: Theme }>(
+  "user/updateInviteTheme",
+  async ({ id, theme }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`/api/routes/users/${id}/invite/theme`, { theme });
+      if (response.data.errorCode !== "NO") {
+        throw new Error(response.data.errorMessage);
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const updateWeddingEvent = createAsyncThunk<
+  User,
+  { id: string; eventData: WeddingEvent; eventIndex?: number }
+>(
+  "user/updateWeddingEvent",
+  async ({ id, eventData, eventIndex }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`/api/routes/users/${id}/invite/events`, {
+        eventData,
+        eventIndex,
+      });
+      if (response.data.errorCode !== "NO") {
+        throw new Error(response.data.errorMessage);
+      }
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const deleteWeddingEvent = createAsyncThunk<User, { id: string; eventIndex: number }>(
+  "user/deleteWeddingEvent",
+  async ({ id, eventIndex }, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(`/api/routes/users/${id}/invite/events/${eventIndex}`);
+      if (response.data.errorCode !== "NO") {
+        throw new Error(response.data.errorMessage);
+      }
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -181,6 +335,96 @@ const userSlice = createSlice({
         state.loading = false;
       })
       .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateInvite.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateInvite.fulfilled, (state, action) => {
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = action.payload;
+        }
+        state.loading = false;
+      })
+      .addCase(updateInvite.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(toggleInviteStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleInviteStatus.fulfilled, (state, action) => {
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = action.payload;
+        }
+        state.loading = false;
+      })
+      .addCase(toggleInviteStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateInviteTheme.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateInviteTheme.fulfilled, (state, action) => {
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = action.payload;
+        }
+        state.loading = false;
+      })
+      .addCase(updateInviteTheme.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(updateWeddingEvent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateWeddingEvent.fulfilled, (state, action) => {
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = action.payload;
+        }
+        state.loading = false;
+      })
+      .addCase(updateWeddingEvent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(deleteWeddingEvent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteWeddingEvent.fulfilled, (state, action) => {
+        const index = state.users.findIndex(u => u.id === action.payload.id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+        if (state.selectedUser?.id === action.payload.id) {
+          state.selectedUser = action.payload;
+        }
+        state.loading = false;
+      })
+      .addCase(deleteWeddingEvent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

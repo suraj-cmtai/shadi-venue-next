@@ -21,7 +21,7 @@ const LogoutPage = () => {
 
         // Clear client-side storage
         if (typeof window !== "undefined") {
-          localStorage.removeItem("user");
+          localStorage.removeItem("auth");
         }
 
         // Redirect after a brief delay
@@ -46,7 +46,7 @@ const LogoutPage = () => {
           <LogOut className="w-12 h-12 text-orange" />
         </div>
         <h2 className="text-2xl font-bold mt-6 text-navy">Signing Out</h2>
-        <div className="text-gray-600 text-sm mt-2">Thanks for using Study Abroad</div>
+        <div className="text-gray-600 text-sm mt-2">Thanks for using Shadi Venue</div>
         <div className="text-gray-500 text-sm mt-1">Redirecting to homepage...</div>
         <div className="mt-6 w-8 h-8 border-2 border-orange/20 border-t-orange rounded-full animate-spin" />
       </div>

@@ -2,6 +2,77 @@ import { db } from "../config/firebase";
 import consoleManager from "../utils/consoleManager";
 import admin from "firebase-admin";
 
+export interface Theme {
+  primaryColor: string;
+  secondaryColor: string;
+  titleColor: string;
+  nameColor: string;
+  backgroundColor: string;
+  textColor: string;
+}
+
+export interface Social {
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
+}
+
+export interface Person {
+  name: string;
+  description: string;
+  image: string;
+  socials: Social;
+}
+
+export interface AboutSection {
+  title: string;
+  subtitle: string;
+  groom: Person;
+  bride: Person;
+  coupleImage: string;
+}
+
+export interface WeddingEvent {
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  description: string;
+  image?: string;
+}
+
+export interface TimelineEvent {
+  date: string;
+  title: string;
+  description: string;
+  image?: string;
+}
+
+export interface PlanningItem {
+  title: string;
+  description: string;
+  icon?: string;
+  completed: boolean;
+}
+
+export interface InviteSection {
+  heading: string;
+  subheading: string;
+  message: string;
+  rsvpLink?: string;
+  backgroundImage?: string;
+}
+
+export interface Invite {
+  isEnabled: boolean;
+  theme: Theme;
+  about: AboutSection;
+  weddingEvents: WeddingEvent[];
+  loveStory: TimelineEvent[];
+  planning: PlanningItem[];
+  invitation: InviteSection;
+}
+
 export type UserRole = 'user' | 'admin' | 'hotel' | 'vendor';
 
 export interface User {
@@ -18,7 +89,7 @@ export interface User {
     country: string;
     zipCode: string;
   };
-  bookings?: string[]; // IDs of bookings
+  bookings?: string[];
   favorites?: {
     hotels?: string[];
     vendors?: string[];
@@ -29,6 +100,7 @@ export interface User {
     read: boolean;
     createdAt: string;
   }[];
+  invite?: Invite;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +143,7 @@ class UserService {
       bookings: data.bookings || [],
       favorites: data.favorites || { hotels: [], vendors: [] },
       notifications: data.notifications || [],
+      invite: data.invite || null,
       createdAt: this.convertTimestamp(data.createdAt),
       updatedAt: this.convertTimestamp(data.updatedAt),
     };
@@ -279,6 +352,154 @@ class UserService {
       (user.phoneNumber && user.phoneNumber.includes(searchTerm)) ||
       (user.address?.city && user.address.city.toLowerCase().includes(searchTerm))
     );
+  }
+
+  // Update user's invite data
+  static async updateInvite(userId: string, inviteData: Partial<Invite>) {
+    try {
+      const user = await this.getUserById(userId);
+      const currentInvite = user.invite || {
+        isEnabled: false,
+        theme: {
+          primaryColor: "#000000",
+          secondaryColor: "#ffffff",
+          titleColor: "#333333",
+          nameColor: "#666666",
+          backgroundColor: "#ffffff",
+          textColor: "#000000"
+        },
+        about: {
+          title: "",
+          subtitle: "",
+          groom: {
+            name: "",
+            description: "",
+            image: "",
+            socials: {}
+          },
+          bride: {
+            name: "",
+            description: "",
+            image: "",
+            socials: {}
+          },
+          coupleImage: ""
+        },
+        weddingEvents: [],
+        loveStory: [],
+        planning: [],
+        invitation: {
+          heading: "",
+          subheading: "",
+          message: ""
+        }
+      };
+
+      const updatedInvite = {
+        ...currentInvite,
+        ...inviteData,
+      };
+
+      await db.collection("users").doc(userId).update({
+        invite: updatedInvite,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await this.getAllUsers(true);
+      return updatedInvite;
+    } catch (error: any) {
+      consoleManager.error("Error updating invite:", error);
+      throw error;
+    }
+  }
+
+  // Toggle invite enabled status
+  static async toggleInviteStatus(userId: string, isEnabled: boolean) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite) {
+        await this.updateInvite(userId, { isEnabled });
+      } else {
+        await db.collection("users").doc(userId).update({
+          "invite.isEnabled": isEnabled,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error toggling invite status:", error);
+      throw error;
+    }
+  }
+
+  // Update invite theme
+  static async updateInviteTheme(userId: string, theme: Theme) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite) {
+        await this.updateInvite(userId, { theme });
+      } else {
+        await db.collection("users").doc(userId).update({
+          "invite.theme": theme,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error updating invite theme:", error);
+      throw error;
+    }
+  }
+
+  // Add or update wedding event
+  static async updateWeddingEvent(userId: string, eventData: WeddingEvent, eventIndex?: number) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite) {
+        await this.updateInvite(userId, {
+          weddingEvents: [eventData]
+        });
+        return;
+      }
+
+      const events = [...(user.invite.weddingEvents || [])];
+      if (typeof eventIndex === 'number' && eventIndex >= 0) {
+        events[eventIndex] = eventData;
+      } else {
+        events.push(eventData);
+      }
+
+      await db.collection("users").doc(userId).update({
+        "invite.weddingEvents": events,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error updating wedding event:", error);
+      throw error;
+    }
+  }
+
+  // Delete wedding event
+  static async deleteWeddingEvent(userId: string, eventIndex: number) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite?.weddingEvents) return;
+
+      const events = [...user.invite.weddingEvents];
+      events.splice(eventIndex, 1);
+
+      await db.collection("users").doc(userId).update({
+        "invite.weddingEvents": events,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error deleting wedding event:", error);
+      throw error;
+    }
   }
 }
 

@@ -233,7 +233,7 @@ class HotelService {
             await new Promise(resolve => setTimeout(resolve, 100));
             
             await this.getAllHotels(true);
-            
+
             const updatedHotel = await this.getHotelById(id);
             if (!updatedHotel) throw new Error('Hotel not found after update');
 
@@ -280,7 +280,42 @@ class HotelService {
             hotel.category === category && hotel.status === 'active'
         );
     }
-}
 
+    /**
+     * Get a hotel by the contactInfo.email field.
+     * @param email The email address to search for.
+     * @returns The hotel object if found, otherwise null.
+     */
+    static async getHotelByContactEmail(email: string): Promise<Hotel | null> {
+        try {
+            // Try cache first
+            const cached = this.hotels.find(
+                (hotel) => hotel.contactInfo?.email?.toLowerCase() === email.toLowerCase()
+            );
+            if (cached) {
+                consoleManager.log(`Hotel found in cache by email:`, email);
+                return cached;
+            }
+
+            // Query Firestore
+            const snapshot = await db
+                .collection(this.collection)
+                .where("contactInfo.email", "==", email)
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) {
+                consoleManager.log("No hotel found with contact email:", email);
+                return null;
+            }
+
+            const doc = snapshot.docs[0];
+            return this.convertToType(doc.id, doc.data());
+        } catch (error) {
+            consoleManager.error("Error fetching hotel by contact email:", error);
+            throw error;
+        }
+    }
+}
 
 export default HotelService;

@@ -2,22 +2,26 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "../store";
 
-interface User {
+// The "auth" object will contain all user details from the cookie
+export interface Auth {
   id: string;
   name: string;
   email: string;
   role: string;
+  roleId: string;
+  status: string;
+  [key: string]: any; // allow for extra fields if backend adds more
 }
 
 interface AuthState {
-  user: User | null;
+  auth: Auth | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
-  user: null,
+  auth: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -25,8 +29,16 @@ const initialState: AuthState = {
 
 export const signup = createAsyncThunk(
   "auth/signup",
-  async ({ name, email, password }: { name: string; email: string; password: string }) => {
-    const response = await axios.post("/api/routes/auth", { name, email, password, action: "signup" });
+  async (
+    { name, email, password, role }: { name: string; email: string; password: string; role: string }
+  ) => {
+    const response = await axios.post("/api/routes/auth", {
+      name,
+      email,
+      password,
+      role,
+      action: "signup",
+    });
     return response.data;
   }
 );
@@ -43,6 +55,7 @@ export const logout = createAsyncThunk(
   "auth/logout",
   async () => {
     await axios.delete("/api/routes/auth");
+    // Cookie should be cleared by backend
     return null;
   }
 );
@@ -51,9 +64,14 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser: (state, action) => {
-      state.user = action.payload;
+    setAuth: (state, action) => {
+      state.auth = action.payload;
       state.isAuthenticated = !!action.payload;
+      state.error = null;
+    },
+    clearAuth: (state) => {
+      state.auth = null;
+      state.isAuthenticated = false;
       state.error = null;
     },
   },
@@ -65,13 +83,13 @@ const authSlice = createSlice({
     });
     builder.addCase(signup.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.user = action.payload.data;
-      state.isAuthenticated = true;
+      state.auth = action.payload;
+      state.isAuthenticated = !!action.payload;
       state.error = null;
     });
     builder.addCase(signup.rejected, (state, action) => {
       state.isLoading = false;
-      state.error = action.error.message || "Signup failed";
+      state.error = (action.payload as string) || action.error.message || "Signup failed";
     });
 
     // Login
@@ -81,27 +99,28 @@ const authSlice = createSlice({
     });
     builder.addCase(login.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.user = action.payload.data;
-      state.isAuthenticated = true;
+      state.auth = action.payload;
+      state.isAuthenticated = !!action.payload;
       state.error = null;
     });
     builder.addCase(login.rejected, (state, action) => {
       state.isLoading = false;
-      state.error = action.error.message || "Login failed";
+      state.error = (action.payload as string) || action.error.message || "Login failed";
     });
 
     // Logout
     builder.addCase(logout.fulfilled, (state) => {
-      state.user = null;
+      state.auth = null;
       state.isAuthenticated = false;
       state.error = null;
     });
   },
 });
 
-export const { setUser } = authSlice.actions;
+export const { setAuth, clearAuth } = authSlice.actions;
 
-export const selectUser = (state: RootState) => state.auth.user;
+// Selectors
+export const selectAuth = (state: RootState) => state.auth.auth;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectIsLoading = (state: RootState) => state.auth.isLoading;
 export const selectError = (state: RootState) => state.auth.error;

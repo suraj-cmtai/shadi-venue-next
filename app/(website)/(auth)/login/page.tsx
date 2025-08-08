@@ -30,13 +30,19 @@ const LoginPage = () => {
       toast.success("Login successful!");
       
       if (result.data.role === "admin") {
-        router.push("/dashboard");
+        router.push("/dashboard/admin");
+      } else if (result.data.role === "hotel") {
+        router.push("/dashboard/hotel");
+      }
+      else if (result.data.role === "vendor") {
+        router.push("/dashboard/vendor");
       } else {
-        router.push("/profile");
+        router.push("/dashboard/user");
       }
     } catch (error: unknown) {
       // Handle specific error messages from the API
       let errorMessage = "Login failed. Please try again.";
+      console.error(error)
       
       setError(errorMessage);
       toast.error(errorMessage);
@@ -105,7 +111,7 @@ const LoginPage = () => {
 
           <Button
             type="submit"
-            className="w-full gap-2 bg-gradient-to-r from-orange to-orange/80 hover:from-orange/90 hover:to-orange text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+            className="w-full gap-2  text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
             disabled={loading}
           >
             {loading ? (

@@ -17,20 +17,20 @@ import GetInTouch from '@/components/(website)/home/GetInTouch'
 const HomePage = () => {
   return (
    <>
-   {/* <Hero /> */}
+   <Hero />
    <HeroExtension />
-   {/* <AllLogos /> */}
-   {/* <About /> */}
-   {/* <Venue /> */}
-   {/* <VideoSection /> */}
-   {/* <Hotels /> */}
-   {/* <Award /> */}
-   {/* <Wedding /> */}
-   {/* <Gallery /> */}
-   {/* <Testimonials /> */}
+   <AllLogos />
+   <About />
+   <Venue />
+   <VideoSection />
+   <Hotels />
+   <Award />
+   <Wedding />
+   <Gallery />
+   <Testimonials />
    <Blog />
    <GetInTouch />
-   {/* <Offer /> */}
+   <Offer />
    </>
   )
 }

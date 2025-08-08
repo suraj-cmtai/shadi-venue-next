@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { UploadImage } from "../../controller/imageController";
-import UserService, { User, UserRole } from "../../services/userServices";
+import UserService, { User, UserRole, Invite } from "../../services/userServices";
 import consoleManager from "../../utils/consoleManager";
 
 // Get all users (GET)
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
             errorMessage: "",
         }, { status: 200 });
     } catch (error: any) {
-        consoleManager.error("Error in GET /api/users:", error);
+        consoleManager.error("Error in GET /api/routes/users:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",
@@ -58,6 +58,18 @@ export async function POST(req: Request) {
         const state = formData.get("state");
         const country = formData.get("country");
         const zipCode = formData.get("zipCode");
+
+        // Extract invite data if provided
+        const inviteData = formData.get("invite");
+        let invite: Invite | undefined;
+        
+        if (inviteData) {
+            try {
+                invite = JSON.parse(inviteData.toString());
+            } catch (error) {
+                consoleManager.error("Error parsing invite data:", error);
+            }
+        }
 
         // Validate required fields
         if (!name || !email || !role) {
@@ -96,6 +108,7 @@ export async function POST(req: Request) {
                 vendors: [],
             },
             notifications: [],
+            invite,
         };
 
         const newUser = await UserService.addUser(userData);
@@ -111,7 +124,7 @@ export async function POST(req: Request) {
         }, { status: 201 });
 
     } catch (error: any) {
-        consoleManager.error("Error in POST /api/users:", error);
+        consoleManager.error("Error in POST /api/routes/users:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",
@@ -160,7 +173,7 @@ export async function PATCH(req: Request) {
             errorMessage: "",
         }, { status: 200 });
     } catch (error: any) {
-        consoleManager.error("Error in PATCH /api/users:", error);
+        consoleManager.error("Error in PATCH /api/routes/users:", error);
         return NextResponse.json({
             statusCode: 500,
             errorCode: "INTERNAL_ERROR",
