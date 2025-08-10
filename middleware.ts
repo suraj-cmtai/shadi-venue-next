@@ -78,12 +78,20 @@ const API_ROUTES: RouteConfig[] = [
     isPublic: true,
   },
   {
+    // This covers /api/routes/(published|active|login|signup|logout|public|auth) for any method
     pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,
     isPublic: true,
   },
   {
     pattern: "/api/routes/test",
     methods: ["POST", "OPTIONS"],
+    isPublic: true,
+  },
+  // ===== NEW: Make any GET request to /api/routes/anything/(published|active|login|signup|logout|public|auth)/ public =====
+  {
+    // Matches /api/routes/anything/(published|active|login|signup|logout|public|auth)/...
+    pattern: /\/api\/routes\/[^/]+\/(published|active|login|signup|logout|public|auth)(\/|$)/,
+    methods: ["GET"],
     isPublic: true,
   },
 

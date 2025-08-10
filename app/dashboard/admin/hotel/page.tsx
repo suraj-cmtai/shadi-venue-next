@@ -48,7 +48,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Loader2, MoreHorizontal, Pencil, Trash2, Image as ImageIcon, Plus, Search } from "lucide-react";
+import { 
+  Loader2, 
+  MoreHorizontal, 
+  Pencil, 
+  Trash2, 
+  Image as ImageIcon, 
+  Plus, 
+  Search,
+  CheckCircle,
+  Archive,
+  AlertCircle
+} from "lucide-react";
 import Image from "next/image";
 
 interface Hotel {
@@ -397,6 +408,35 @@ export default function HotelDashboard() {
       toast.error(error?.message || "Failed to delete hotel");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickStatusUpdate = async (hotelId: string, newStatus: Hotel["status"]) => {
+    try {
+      setIsSubmitting(true);
+      const hotel = hotels.find(h => h.id === hotelId);
+      if (!hotel) return;
+
+      const formData = new FormData();
+      formData.append('status', newStatus);
+      
+      await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
+      toast.success(`Hotel status updated to ${newStatus}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update hotel status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getStatusIcon = (status: Hotel["status"]) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'draft':
+        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      case 'archived':
+        return <Archive className="w-4 h-4 text-gray-600" />;
     }
   };
 
@@ -831,7 +871,7 @@ export default function HotelDashboard() {
                       {hotel.location.city}, {hotel.location.country}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: hotel.priceRange.currency }).format(hotel.priceRange.startingPrice)}
+                      {new Intl.NumberFormat('en-US', { style:
                     </TableCell>
                     <TableCell className="text-muted-foreground">{hotel.rating.toFixed(1)}</TableCell>
                     <TableCell>
