@@ -871,15 +871,21 @@ export default function HotelDashboard() {
                       {hotel.location.city}, {hotel.location.country}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Intl.NumberFormat('en-US', { style:
+                      {new Intl.NumberFormat('en-US', { 
+                        style: 'currency', 
+                        currency: hotel.priceRange.currency 
+                      }).format(hotel.priceRange.startingPrice)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{hotel.rating.toFixed(1)}</TableCell>
                     <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[hotel.status]}`}
-                      >
-                        {hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(hotel.status)}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[hotel.status]}`}
+                        >
+                          {hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1)}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -909,6 +915,34 @@ export default function HotelDashboard() {
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          {/* Quick Status Update Options */}
+                          {hotel.status !== 'active' && (
+                            <DropdownMenuItem
+                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'active')}
+                              className="text-green-600"
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Mark as Active
+                            </DropdownMenuItem>
+                          )}
+                          {hotel.status !== 'draft' && (
+                            <DropdownMenuItem
+                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'draft')}
+                              className="text-yellow-600"
+                            >
+                              <AlertCircle className="mr-2 h-4 w-4" />
+                              Mark as Draft
+                            </DropdownMenuItem>
+                          )}
+                          {hotel.status !== 'archived' && (
+                            <DropdownMenuItem
+                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'archived')}
+                              className="text-gray-600"
+                            >
+                              <Archive className="mr-2 h-4 w-4" />
+                              Archive
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 focus:bg-red-50"
                             onSelect={() => {
