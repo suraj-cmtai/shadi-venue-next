@@ -39,9 +39,9 @@ const LoginPage = () => {
       } else {
         router.push("/dashboard/user");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific error messages from the API
-      let errorMessage = error.errorMessage || "Login failed. Please try again.";
+      let errorMessage = "Login failed. Please try again.";
       console.error(error)
       
       setError(errorMessage);
