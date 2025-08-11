@@ -7,9 +7,11 @@ export interface Auth {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: "admin" | "super-admin" | "hotel" | "vendor" | "user";
   roleId: string;
-  status: string;
+  status: "active" | "inactive";
+  createdOn: string;
+  updatedOn: string;
   [key: string]: any; // allow for extra fields if backend adds more
 }
 
@@ -18,6 +20,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  authList: Auth[];
+  listLoading: boolean;
+  listError: string | null;
 }
 
 const initialState: AuthState = {
@@ -25,6 +30,9 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  authList: [],
+  listLoading: false,
+  listError: null,
 };
 
 export const signup = createAsyncThunk(
@@ -57,6 +65,47 @@ export const logout = createAsyncThunk(
     await axios.delete("/api/routes/auth");
     // Cookie should be cleared by backend
     return null;
+  }
+);
+
+// Fetch all auth entries
+export const fetchAuthList = createAsyncThunk(
+  "auth/fetchList",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/routes/auth/list");
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessage || error.message);
+    }
+  }
+);
+
+// Update auth status
+export const updateAuthStatus = createAsyncThunk(
+  "auth/updateStatus",
+  async ({ id, status }: { id: string; status: Auth["status"] }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("status", status);
+      const response = await axios.put(`/api/routes/auth/${id}`, formData);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessage || error.message);
+    }
+  }
+);
+
+// Delete auth entry
+export const deleteAuth = createAsyncThunk(
+  "auth/delete",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/api/routes/auth/${id}`);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessage || error.message);
+    }
   }
 );
 
@@ -113,6 +162,34 @@ const authSlice = createSlice({
       state.auth = null;
       state.isAuthenticated = false;
       state.error = null;
+    });
+
+    // Fetch Auth List
+    builder.addCase(fetchAuthList.pending, (state) => {
+      state.listLoading = true;
+      state.listError = null;
+    });
+    builder.addCase(fetchAuthList.fulfilled, (state, action) => {
+      state.listLoading = false;
+      state.authList = action.payload;
+      state.listError = null;
+    });
+    builder.addCase(fetchAuthList.rejected, (state, action) => {
+      state.listLoading = false;
+      state.listError = action.error.message || "Failed to fetch auth list";
+    });
+
+    // Update Auth Status
+    builder.addCase(updateAuthStatus.fulfilled, (state, action) => {
+      const updatedAuth = action.payload;
+      state.authList = state.authList.map(auth =>
+        auth.id === updatedAuth.id ? updatedAuth : auth
+      );
+    });
+
+    // Delete Auth
+    builder.addCase(deleteAuth.fulfilled, (state, action) => {
+      state.authList = state.authList.filter(auth => auth.id !== action.payload);
     });
   },
 });

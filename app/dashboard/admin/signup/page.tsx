@@ -1,20 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/lib/redux/store";
-import { signup } from "@/lib/redux/features/authSlice";
-import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/lib/redux/store";
+import { signup, fetchAuthList, updateAuthStatus, deleteAuth } from "@/lib/redux/features/authSlice";
+import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle, Search, MoreHorizontal, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import GradientButton from "@/components/GradientButton";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-/**
- * Roles available for admin signup.
- * You can extend this list as needed.
- */
 const ROLES = [
   { value: "admin", label: "Admin" },
   { value: "hotel", label: "Hotel Manager" },
@@ -23,6 +41,7 @@ const ROLES = [
 ];
 
 const AdminSignupPage = () => {
+  // Form State
   const [name, setName] = useState("");
   const [role, setRole] = useState(ROLES[0].value);
   const [email, setEmail] = useState("");
@@ -30,12 +49,21 @@ const AdminSignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const dispatch = useDispatch<AppDispatch>();
+  
+  // Table State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [selectedAuthId, setSelectedAuthId] = useState<string | null>(null);
+  const [selectedAction, setSelectedAction] = useState<"activate" | "deactivate" | "delete" | null>(null);
 
-  /**
-   * Handles the admin signup form submission.
-   * Does not redirect after signup; shows toast and error states.
-   */
+  const dispatch = useDispatch<AppDispatch>();
+  const { authList, listLoading, listError } = useSelector((state: RootState) => state.auth);
+
+  // Fetch auth list on mount
+  useEffect(() => {
+    dispatch(fetchAuthList());
+  }, [dispatch]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -44,6 +72,13 @@ const AdminSignupPage = () => {
     try {
       await dispatch(signup({ name, email, password, role })).unwrap();
       toast.success("Account created successfully!");
+      dispatch(fetchAuthList()); // Refresh the list
+      dispatch(fetchAuthList());
+      // Reset form
+      setName("");
+      setEmail("");
+      setPassword("");
+      setRole(ROLES[0].value);
     } catch (error: unknown) {
       let errorMessage = "Signup failed. Please try again.";
       if (error && typeof error === "object" && "message" in error) {
@@ -58,13 +93,57 @@ const AdminSignupPage = () => {
     }
   };
 
-  return (
-    <div className="min-h-[90vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white/95  flex flex-col items-center">
-        <div className="mb-6 flex flex-col items-center">
-          <p className="text-gray-600 text-sm mt-1">Create a new Account</p>
-        </div>
+  const handleStatusChange = async (id: string, currentStatus: string) => {
+    setSelectedAuthId(id);
+    setSelectedAction(currentStatus === "active" ? "deactivate" : "activate");
+    setIsConfirmDialogOpen(true);
+  };
 
+  const handleDelete = async (id: string) => {
+    setSelectedAuthId(id);
+    setSelectedAction("delete");
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!selectedAuthId || !selectedAction) return;
+
+    try {
+      if (selectedAction === "delete") {
+        await dispatch(deleteAuth(selectedAuthId)).unwrap();
+        toast.success("Auth entry deleted successfully");
+      } else {
+        const newStatus = selectedAction === "activate" ? "active" : "inactive";
+        await dispatch(updateAuthStatus({ id: selectedAuthId, status: newStatus })).unwrap();
+        toast.success(`Auth status updated to ${newStatus}`);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Action failed");
+    } finally {
+      setIsConfirmDialogOpen(false);
+      setSelectedAuthId(null);
+      setSelectedAction(null);
+    }
+  };
+
+  const filteredAuthList = authList.filter(auth => 
+    auth.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    auth.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    auth.role.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getStatusStyles = (status: string) => {
+    return status === "active"
+      ? "text-green-700 bg-green-50"
+      : "text-red-700 bg-red-50";
+  };
+
+  return (
+    <div className="min-h-[90vh] p-6 space-y-8">
+      {/* Create New Auth Form */}
+      <div className="max-w-md mx-auto bg-white/95 p-6 rounded-lg shadow-sm">
+        <h2 className="text-2xl font-semibold mb-6">Create New Auth</h2>
+        
         {error && (
           <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -72,7 +151,7 @@ const AdminSignupPage = () => {
           </div>
         )}
 
-        <form className="w-full space-y-4" onSubmit={handleSubmit} autoComplete="off">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium mb-1.5 text-navy">Full Name</label>
             <div className="relative">
@@ -81,9 +160,8 @@ const AdminSignupPage = () => {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Jane Admin"
-                className="pl-10 border-gray-300 focus:border-orange focus:ring-orange/20"
+                className="pl-10 border-gray-300"
                 required
-                autoFocus
               />
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
@@ -93,7 +171,7 @@ const AdminSignupPage = () => {
             <label className="block text-sm font-medium mb-1.5 text-navy">Role</label>
             <div className="relative">
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="w-full pl-10 border-gray-300 focus:border-orange focus:ring-orange/20">
+                <SelectTrigger className="w-full pl-10">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -118,7 +196,7 @@ const AdminSignupPage = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@email.com"
-                className="pl-10 border-gray-300 focus:border-orange focus:ring-orange/20"
+                className="pl-10 border-gray-300"
                 required
               />
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -133,7 +211,7 @@ const AdminSignupPage = () => {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="Create a strong password"
-                className="pl-10 pr-10 border-gray-300 focus:border-orange focus:ring-orange/20"
+                className="pl-10 pr-10 border-gray-300"
                 required
                 minLength={6}
               />
@@ -141,9 +219,7 @@ const AdminSignupPage = () => {
               <button
                 type="button"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                tabIndex={-1}
                 onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -153,14 +229,13 @@ const AdminSignupPage = () => {
 
           <Button
             type="submit"
-            className="w-full gap-2"
+            className="w-full"
             disabled={loading}
-            aria-label="Create Account"
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creating account...
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
               </>
             ) : (
               "Create Account"
@@ -168,6 +243,132 @@ const AdminSignupPage = () => {
           </Button>
         </form>
       </div>
+
+      {/* Auth List Table */}
+      <div className="bg-white/95 rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold">Auth Management</h2>
+          <div className="relative w-64">
+            <Input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {listLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : filteredAuthList.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    No auth entries found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAuthList.map((auth) => (
+                  <TableRow key={auth.id}>
+                    <TableCell>{auth.name}</TableCell>
+                    <TableCell>{auth.email}</TableCell>
+                    <TableCell className="capitalize">{auth.role}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusStyles(auth.status)}`}>
+                        {auth.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{new Date(auth.createdOn).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(auth.id, auth.status)}
+                            className={auth.status === "active" ? "text-red-600" : "text-green-600"}
+                          >
+                            {auth.status === "active" ? (
+                              <>
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(auth.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogDescription>
+              {selectedAction === "delete"
+                ? "Are you sure you want to delete this auth entry? This action cannot be undone."
+                : selectedAction === "activate"
+                ? "Are you sure you want to activate this auth entry?"
+                : "Are you sure you want to deactivate this auth entry?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={selectedAction === "delete" ? "destructive" : "default"}
+              onClick={handleConfirmAction}
+            >
+              {selectedAction === "delete" ? "Delete" : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

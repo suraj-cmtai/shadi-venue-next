@@ -193,6 +193,12 @@ class AuthService {
                     password: "user123",
                     role: "user",
                 },
+                {
+                    name: "Hotel Manager",
+                    email: "hotel@example.com",
+                    password:"hotel123",
+                    role: "hotel",
+                }
                 // Add more users as needed
             ];
 
