@@ -127,6 +127,8 @@ class AuthService {
 
             // Add the role-specific id to authData
             authData[`${role}Id`] = roleDocId;
+            // Also add a generic roleId for easier access
+            authData["roleId"] = roleDocId;
 
             // Create the auth document
             const authRef = await db.collection("auth").add(authData);
@@ -222,7 +224,8 @@ class AuthService {
                         id: inMemoryUser.email,
                         email: inMemoryUser.email,
                         name: inMemoryUser.name,
-                        role: inMemoryUser.role
+                        role: inMemoryUser.role,
+                        // In-memory users do not have a roleId, so omit it
                     }
                 };
             }
@@ -248,9 +251,22 @@ class AuthService {
                 throw new Error("Your account is not active. Please contact support.");
             }
 
+            // Determine the roleId (userId, hotelId, vendorId) if present
+            let roleId: string | undefined = undefined;
+            if (authData.userId) {
+                roleId = authData.userId;
+            } else if (authData.hotelId) {
+                roleId = authData.hotelId;
+            } else if (authData.vendorId) {
+                roleId = authData.vendorId;
+            } else if (authData.roleId) {
+                // fallback if roleId is present
+                roleId = authData.roleId;
+            }
+
             // Generate JWT token
             const token = jwt.sign(
-                { uid: authDoc.id, email: authData.email, role: authData.role },
+                { uid: authDoc.id, email: authData.email, role: authData.role, ...(roleId && { roleId }) },
                 SECRET_KEY,
                 { expiresIn: "7d" }
             );
@@ -264,6 +280,7 @@ class AuthService {
                     name: authData.name,
                     role: authData.role,
                     status: authData.status,
+                    ...(roleId && { roleId }),
                     ...(authData.userId && { userId: authData.userId }),
                     ...(authData.hotelId && { hotelId: authData.hotelId }),
                     ...(authData.vendorId && { vendorId: authData.vendorId }),

@@ -2,34 +2,50 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/lib/redux/store';
 
-export default function LoveStory() {
-  const { sectionTitle, sectionSubtitle, stories } = useSelector(
-    (state: RootState) => state.wedding.loveStory
-  );
+interface Story {
+  id: number;
+  title: string;
+  date: string;
+  description: string;
+  image: string;
+}
 
+interface LoveStoryProps {
+  title: string;
+  subtitle: string;
+  stories: Story[];
+  theme: {
+    titleColor: string;
+    nameColor: string;
+    buttonColor: string;
+    buttonHoverColor: string;
+  };
+}
+
+export default function LoveStory({ title, subtitle, stories, theme }: LoveStoryProps) {
   return (
     <section className="relative w-full bg-white py-16 sm:py-20 md:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="text-center mb-12 sm:mb-16">
           <motion.h3
-            className="font-cormorant font-medium text-2xl sm:text-3xl lg:text-4xl text-black mb-4"
+            className="font-cormorant font-medium text-2xl sm:text-3xl lg:text-4xl mb-4"
+            style={{ color: theme.titleColor }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            {sectionTitle}
+            {title}
           </motion.h3>
           <motion.h2
-            className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl text-[#212d47]"
+            className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl"
+            style={{ color: theme.nameColor }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            {sectionSubtitle}
+            {subtitle}
           </motion.h2>
         </div>
 

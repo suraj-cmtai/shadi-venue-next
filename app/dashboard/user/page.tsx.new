@@ -4,46 +4,33 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/lib/redux/store';
 import {
-  fetchUsers,
+  fetchUserById,
   updateUser,
-  deleteUser,
-  selectUsers,
+  selectUserById,
   selectUserLoading,
   selectUserError,
-  setSearchQuery,
 } from '@/lib/redux/features/userSlice';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { selectAuth } from '@/lib/redux/features/authSlice';
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 interface User {
   id: string;
@@ -104,22 +91,22 @@ const initialFormState: UserFormState = {
   removeAvatar: false,
 };
 
-export default function UsersPage() {
+export default function UserDashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const users = useSelector(selectUsers);
+  const auth = useSelector(selectAuth);
+  const user = useSelector((state) => auth?.id ? selectUserById(state, auth.id) : null);
   const isLoading = useSelector(selectUserLoading);
   const error = useSelector(selectUserError);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQueryLocal] = useState("");
   const [editUserForm, setEditUserForm] = useState<UserFormState | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch]);
+    if (auth?.id) {
+      dispatch(fetchUserById(auth.id));
+    }
+  }, [dispatch, auth?.id]);
 
   // Clean up object URLs when component unmounts or form changes
   useEffect(() => {
@@ -130,23 +117,16 @@ export default function UsersPage() {
     };
   }, [editUserForm?.avatarFile]);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (user.phoneNumber && user.phoneNumber.includes(searchQuery)) ||
-    (user.address?.city && user.address.city.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
   const resetEditForm = () => {
     if (editUserForm?.avatarFile && editUserForm.avatar?.startsWith('blob:')) {
       URL.revokeObjectURL(editUserForm.avatar);
     }
     setEditUserForm(null);
-    setSelectedUserId(null);
   };
 
-  const openEditDialog = (user: User) => {
-    setSelectedUserId(user.id);
+  const openEditDialog = () => {
+    if (!user) return;
+    
     setEditUserForm({
       name: user.name,
       email: user.email,
@@ -165,7 +145,7 @@ export default function UsersPage() {
   };
 
   const handleEdit = async () => {
-    if (!editUserForm || !selectedUserId || isSubmitting) return;
+    if (!editUserForm || !auth?.id || isSubmitting) return;
 
     // Validation
     if (!editUserForm.name.trim()) {
@@ -200,29 +180,12 @@ export default function UsersPage() {
       }
       formData.append("removeAvatar", editUserForm.removeAvatar.toString());
 
-      await dispatch(updateUser({ id: selectedUserId, data: formData })).unwrap();
-      toast.success("User updated successfully");
+      await dispatch(updateUser({ id: auth.id, data: formData })).unwrap();
+      toast.success("Profile updated successfully");
       setIsEditDialogOpen(false);
       resetEditForm();
     } catch (err: any) {
-      toast.error(err.message || "Error updating user");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedUserId || isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    try {
-      await dispatch(deleteUser(selectedUserId)).unwrap();
-      toast.success("User deleted successfully");
-      setIsDeleteDialogOpen(false);
-      setSelectedUserId(null);
-    } catch (err: any) {
-      toast.error(err.message || "Error deleting user");
+      toast.error(err.message || "Error updating profile");
     } finally {
       setIsSubmitting(false);
     }
@@ -275,7 +238,7 @@ export default function UsersPage() {
               prev ? { ...prev, name: e.target.value } : null
             )
           }
-          placeholder="User name"
+          placeholder="Your name"
         />
       </div>
 
@@ -291,25 +254,6 @@ export default function UsersPage() {
           }
           placeholder="Email address"
         />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="role">Role</Label>
-        <select
-          id="role"
-          value={editUserForm?.role || "user"}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, role: e.target.value as User['role'] } : null
-            )
-          }
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-          <option value="hotel">Hotel</option>
-          <option value="vendor">Vendor</option>
-        </select>
       </div>
 
       <div className="grid gap-2">
@@ -429,21 +373,14 @@ export default function UsersPage() {
     </div>
   );
 
+  if (!auth) {
+    return <div className="container mx-auto p-6">Please log in to view your profile.</div>;
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users Management</h1>
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQueryLocal(e.target.value);
-              dispatch(setSearchQuery(e.target.value));
-            }}
-            className="w-64"
-          />
-        </div>
+        <h1 className="text-3xl font-bold">My Profile</h1>
       </div>
 
       {error && (
@@ -452,96 +389,102 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-2xl mx-auto">
         {isLoading ? (
           <p>Loading...</p>
-        ) : (
-          filteredUsers.map((user) => (
-            <Card key={user.id}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  {user.avatar && (
-                    <img
-                      src={user.avatar}
-                      alt={`${user.name}'s avatar`}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  )}
+        ) : user ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                {user.avatar && (
+                  <img
+                    src={user.avatar}
+                    alt={`${user.name}'s avatar`}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                )}
+                <div>
+                  <CardTitle>{user.name}</CardTitle>
+                  <CardDescription>{user.email}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <CardTitle>{user.name}</CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
+                    <p className="font-semibold">Role</p>
+                    <p className="capitalize">{user.role}</p>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p><strong>Role:</strong> {user.role}</p>
                   {user.phoneNumber && (
-                    <p><strong>Phone:</strong> {user.phoneNumber}</p>
+                    <div>
+                      <p className="font-semibold">Phone</p>
+                      <p>{user.phoneNumber}</p>
+                    </div>
                   )}
-                  {user.address && (
-                    <p><strong>Location:</strong> {user.address.city}, {user.address.country}</p>
-                  )}
-                  <p><strong>Notifications:</strong> {user.notifications.filter(n => !n.read).length} unread</p>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2">
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" onClick={() => openEditDialog(user)}>
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit User</DialogTitle>
-                      <DialogDescription>
-                        Make changes to the user profile here.
-                      </DialogDescription>
-                    </DialogHeader>
-                    {renderUserForm()}
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleEdit} disabled={isSubmitting}>
-                        {isSubmitting ? "Saving..." : "Save Changes"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
 
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        setSelectedUserId(user.id);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      Delete
+                {user.address && (
+                  <div>
+                    <p className="font-semibold">Address</p>
+                    <p>{user.address.street}</p>
+                    <p>{user.address.city}, {user.address.state} {user.address.zipCode}</p>
+                    <p>{user.address.country}</p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="font-semibold">Notifications</p>
+                  <p>{user.notifications.filter(n => !n.read).length} unread notifications</p>
+                </div>
+
+                {user.bookings && (
+                  <div>
+                    <p className="font-semibold">Bookings</p>
+                    <p>{user.bookings.length} total bookings</p>
+                  </div>
+                )}
+
+                {user.favorites && (
+                  <div>
+                    <p className="font-semibold">Favorites</p>
+                    <p>
+                      {user.favorites.hotels?.length || 0} hotels saved &bull;{" "}
+                      {user.favorites.vendors?.length || 0} vendors saved
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" onClick={() => openEditDialog()}>
+                    Edit Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Profile</DialogTitle>
+                    <DialogDescription>
+                      Make changes to your profile here.
+                    </DialogDescription>
+                  </DialogHeader>
+                  {renderUserForm()}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancel
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the
-                        user's account and remove their data from our servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} disabled={isSubmitting}>
-                        {isSubmitting ? "Deleting..." : "Delete"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          ))
+                    <Button onClick={handleEdit} disabled={isSubmitting}>
+                      {isSubmitting ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardFooter>
+          </Card>
+        ) : (
+          <p>No user data found.</p>
         )}
       </div>
     </div>

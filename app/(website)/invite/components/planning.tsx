@@ -2,18 +2,35 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useSelector } from "react-redux";
 import { useState } from "react";
-import { RootState } from "@/lib/redux/store";
+
+interface PlanningEvent {
+  id: number;
+  type: string;
+  date: string;
+  venue: string;
+  time: string;
+  phone: string;
+  icon: string;
+}
+
+interface PlanningProps {
+  title: string;
+  subtitle: string;
+  events: PlanningEvent[];
+  mapIframeUrl: string;
+  theme: {
+    titleColor: string;
+    nameColor: string;
+    buttonColor: string;
+    buttonHoverColor: string;
+  };
+}
 
 const colorShadow = "#212d47";
 
-export default function Planning() {
+export default function Planning({ title, subtitle, events, mapIframeUrl, theme }: PlanningProps) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
-
-  const { mapIframeUrl, title, subtitle, events } = useSelector(
-    (state: RootState) => state.wedding.planning
-  );
 
   return (
     <section className="relative w-full bg-white py-16 sm:py-20 md:py-24">

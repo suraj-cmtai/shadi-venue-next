@@ -1,6 +1,7 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit'
+import { configureStore, combineReducers, ThunkDispatch, Action } from '@reduxjs/toolkit'
 import { persistStore, persistReducer } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 import galleryReducer from "./features/gallerySlice";
 import authReducer from "./features/authSlice";
 import blogReducer from "./features/blogSlice";
@@ -13,6 +14,7 @@ import adminReducer from "./features/adminSlice";
 import vendorReducer from "./features/vendorSlice";
 import userReducer from "./features/userSlice";
 import weddingReducer from "./features/inviteSlice";
+import rsvpReducer from "./features/rsvpSlice";
 
 // Configuration for redux-persist
 const persistConfig = {
@@ -34,6 +36,7 @@ const rootReducer = combineReducers({
   vendor: vendorReducer,
   user: userReducer,
   wedding: weddingReducer,
+  rsvp: rsvpReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -49,7 +52,10 @@ export const store = configureStore({
 });
 
 export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type AppDispatch = ThunkDispatch<RootState, unknown, Action> & typeof store.dispatch
+
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
 export const persistor = persistStore(store);
 export default store;

@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 // Image assets
-const LOGO_IMG = "/images/logo.png";
+const LOGO_IMG = "/images/logo-blue.png";
 const FLOWER_IMG = "/images/flower-vector.svg";
 const DROPDOWN_ARROW_IMG = "/images/drop-down-arrow.svg";
 const SEARCH_ICON_IMG = "/images/search-icon.svg";
