@@ -37,7 +37,7 @@ export default function Header() {
 
   return (
     <header className="w-full bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-200">
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 md:px-8 py-2 min-h-12 md:min-h-16 gap-2 md:gap-4">
+      <div className="w-full max-w-7xl mx-auto flex items-center justify-between py-2 min-h-12 md:min-h-16 gap-2 md:gap-4">
         {/* Logo and Flower */}
         <div className="flex items-center gap-2 md:gap-4 min-w-fit">
           <motion.img
