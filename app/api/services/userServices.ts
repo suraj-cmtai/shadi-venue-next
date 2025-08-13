@@ -20,7 +20,7 @@ export interface Social {
 export interface Person {
   name: string;
   description: string;
-  image: string;
+  image: string | null;
   socials: Social;
 }
 
@@ -29,7 +29,7 @@ export interface AboutSection {
   subtitle: string;
   groom: Person;
   bride: Person;
-  coupleImage: string;
+  coupleImage: string | null;
 }
 
 export interface WeddingEvent {
@@ -38,7 +38,7 @@ export interface WeddingEvent {
   time: string;
   venue: string;
   description: string;
-  image?: string;
+  image: string | null;
 }
 
 export interface TimelineEvent {
@@ -59,8 +59,8 @@ export interface InviteSection {
   heading: string;
   subheading: string;
   message: string;
-  rsvpLink?: string;
-  backgroundImage?: string;
+  rsvpLink: string | null;
+  backgroundImage: string | null;
 }
 
 export interface Invite {
@@ -498,6 +498,48 @@ class UserService {
       await this.getAllUsers(true);
     } catch (error: any) {
       consoleManager.error("Error deleting wedding event:", error);
+      throw error;
+    }
+  }
+
+  // Update love story events
+  static async updateLoveStory(userId: string, storyEvents: TimelineEvent[]) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite) {
+        await this.updateInvite(userId, { loveStory: storyEvents });
+        return;
+      }
+
+      await db.collection("users").doc(userId).update({
+        "invite.loveStory": storyEvents,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error updating love story:", error);
+      throw error;
+    }
+  }
+
+  // Update planning items
+  static async updatePlanning(userId: string, planningItems: PlanningItem[]) {
+    try {
+      const user = await this.getUserById(userId);
+      if (!user.invite) {
+        await this.updateInvite(userId, { planning: planningItems });
+        return;
+      }
+
+      await db.collection("users").doc(userId).update({
+        "invite.planning": planningItems,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      await this.getAllUsers(true);
+    } catch (error: any) {
+      consoleManager.error("Error updating planning items:", error);
       throw error;
     }
   }

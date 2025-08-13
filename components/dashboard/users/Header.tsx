@@ -54,12 +54,12 @@ interface HeaderProps {
 }
 
 const searchSuggestions = [
-  { label: "Courses", value: "courses", href: "/dashboard/courses" },
-  { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
-  { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
-  { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
-  { label: "Contact", value: "contact", href: "/dashboard/contact" },
-  {label: "Test", value: "test", href: "/dashboard/test" },
+  { label: "Dashboard", value: "dashboard", href: "/dashboard/user" },
+  // { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
+  // { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
+  // { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
+  // { label: "Contact", value: "contact", href: "/dashboard/contact" },
+  // {label: "Test", value: "test", href: "/dashboard/test" },
 ];
 
 const notifications = [

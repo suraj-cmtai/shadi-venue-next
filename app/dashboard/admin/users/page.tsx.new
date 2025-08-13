@@ -1,0 +1,100 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from "react-redux";
+import { AppDispatch } from "@/lib/redux/store";
+import {
+  selectUsers,
+  selectUserLoading,
+  selectUserError,
+  fetchUsers,
+  updateUser,
+  deleteUser,
+  setSearchQuery,
+} from "@/lib/redux/features/userSlice";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+
+interface Theme {
+  titleColor: string;
+  nameColor: string;
+  buttonColor: string;
+  buttonHoverColor: string;
+}
+
+interface Invite {
+  isEnabled: boolean;
+  status: 'draft' | 'published';
+  theme?: Theme;
+  lastPublished?: string;
+  views: number;
+  rsvpCount: number;
+}
+
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+type UserRole = 'user' | 'admin' | 'hotel' | 'vendor';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  phoneNumber?: string;
+  address?: Address;
+  avatar?: string;
+  invite?: Invite;
+  notifications: Notification[];
+}
+
+interface UserFormState {
+  name: string;
+  email: string;
+  role: UserRole;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string;
+  avatar: string | null;
+  avatarFile: File | null;
+  removeAvatar: boolean;
+  invite: Invite | null;
+}

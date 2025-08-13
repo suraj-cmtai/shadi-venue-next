@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const links = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badge: null },
+  { name: "Dashboard", href: "/dashboard/hotel", icon: LayoutDashboard, badge: null },
   // { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
   // { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
   // { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },

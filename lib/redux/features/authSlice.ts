@@ -12,6 +12,11 @@ export interface Auth {
   status: "active" | "inactive";
   createdOn: string;
   updatedOn: string;
+  // Dynamic role-specific IDs
+  adminId?: string;
+  hotelId?: string;
+  vendorId?: string;
+  userId?: string;
   [key: string]: any; // allow for extra fields if backend adds more
 }
 
@@ -61,9 +66,10 @@ export const login = createAsyncThunk(
 
 export const logout = createAsyncThunk(
   "auth/logout",
-  async () => {
+  async (_, { dispatch }) => {
     await axios.delete("/api/routes/auth");
-    // Cookie should be cleared by backend
+    // Clear persisted state and cookies handled by backend
+    dispatch(clearAuth());
     return null;
   }
 );

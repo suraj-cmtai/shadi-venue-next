@@ -32,10 +32,13 @@ const initialState: RSVPState = {
 // Fetch RSVP responses for a specific invite
 export const fetchRSVPResponses = createAsyncThunk<RSVPResponse[], string>(
   "rsvp/fetchResponses",
-  async (userId, { rejectWithValue }) => {
+  async (roleId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/routes/invite/${userId}/responses`);
-      return response.data.data;
+      const response = await axios.get(`/api/routes/invite/${roleId}/responses`);
+      if (response.data.statusCode === 200) {
+        return response.data.data;
+      }
+      return rejectWithValue(response.data.errorMessage || "Failed to fetch responses");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -51,7 +54,10 @@ export const submitRSVP = createAsyncThunk<
   async (rsvpData, { rejectWithValue }) => {
     try {
       const response = await axios.post(`/api/routes/invite/${rsvpData.userId}/rsvp`, rsvpData);
-      return response.data.data;
+      if (response.data.statusCode === 200) {
+        return response.data.data;
+      }
+      return rejectWithValue(response.data.errorMessage || "Failed to submit RSVP");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -69,7 +75,10 @@ export const updateRSVPStatus = createAsyncThunk<
       const response = await axios.patch(`/api/routes/invite/${userId}/responses/${rsvpId}`, {
         status,
       });
-      return response.data.data;
+      if (response.data.statusCode === 200) {
+        return response.data.data;
+      }
+      return rejectWithValue(response.data.errorMessage || "Failed to update RSVP status");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }

@@ -167,11 +167,11 @@ export default function UserDashboard() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (auth?.id) {
-      dispatch(fetchUserById(auth.id));
-      dispatch(fetchRSVPResponses(auth.id));
+    if (auth?.data?.roleId) {
+      dispatch(fetchUserById(auth.data.roleId));
+      dispatch(fetchRSVPResponses(auth.data.roleId));
     }
-  }, [dispatch, auth?.id]);
+  }, [dispatch, auth?.data?.roleId]);
 
   const handleInviteUpdate = async (
     section: keyof WeddingState,
@@ -196,7 +196,7 @@ export default function UserDashboard() {
         const formData = new FormData();
         formData.append('invite', JSON.stringify({ [section]: data }));
         await dispatch(updateUser({ 
-          id: auth!.id, 
+          id: auth!.data!.roleId, 
           data: formData
         })).unwrap();
       }
@@ -212,7 +212,7 @@ export default function UserDashboard() {
     try {
       await dispatch(updateRSVPStatus({ 
         rsvpId, 
-        userId: auth!.id, 
+        userId: auth!.data!.roleId, 
         status 
       })).unwrap();
       toast.success(`RSVP ${status}`);
@@ -235,7 +235,7 @@ export default function UserDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <Button asChild variant="outline">
-            <Link href={`/invite/${auth?.id}`} target="_blank">
+            <Link href={`/invite/${auth?.data?.roleId}`} target="_blank">
               <Share2 className="w-4 h-4 mr-2" />
               Preview Invite
             </Link>
@@ -243,6 +243,46 @@ export default function UserDashboard() {
           {isSaving && <p className="text-sm text-muted-foreground">Saving...</p>}
         </div>
       </div>
+
+      {/* Profile Settings */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Profile Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input 
+                value={user.name || ''}
+                onChange={(e) => {
+                  const formData = new FormData();
+                  formData.append('name', e.target.value);
+                  dispatch(updateUser({ 
+                    id: auth!.data!.roleId, 
+                    data: formData 
+                  }));
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input 
+                value={user.email || ''}
+                type="email"
+                onChange={(e) => {
+                  const formData = new FormData();
+                  formData.append('email', e.target.value);
+                  dispatch(updateUser({ 
+                    id: auth!.data!.roleId, 
+                    data: formData 
+                  }));
+                }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -356,7 +396,7 @@ export default function UserDashboard() {
             <CardContent>
               <ScrollArea className="h-[400px]">
                 <div className="space-y-4">
-                  {rsvpResponses.map((response) => (
+                  {rsvpResponses && rsvpResponses.map((response) => (
                     <div
                       key={response.id}
                       className="flex items-center justify-between p-4 border rounded-lg"

@@ -6,7 +6,11 @@ export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user";
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
 
 interface Auth {
+  id?: string;
   role?: Role;
+  roleId?: string;
+  status?: "active" | "inactive";
+  [key: string]: any; // for dynamic roleIds and other fields
 }
 
 interface RouteConfig {
@@ -63,6 +67,11 @@ const PUBLIC_ROUTES = ["/login", "/signup"];
 // API Routes Configuration
 const API_ROUTES: RouteConfig[] = [
   // ===== PUBLIC API ROUTES =====
+  {
+    pattern: /\/api\/routes\/invite\/[^/]+\/responses$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
   {
     pattern: /\/api\/routes\/(contact|subscribers)$/,
     methods: ["POST"],

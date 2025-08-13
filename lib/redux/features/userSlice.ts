@@ -184,45 +184,45 @@ export const deleteUser = createAsyncThunk<string, string>(
 );
 
 // Add the new thunks for invite management
-export const updateInvite = createAsyncThunk<User, { id: string; inviteData: Partial<Invite> }>(
+export const updateInvite = createAsyncThunk<User, { roleId: string; inviteData: Partial<Invite> }>(
   "user/updateInvite",
-  async ({ id, inviteData }, { rejectWithValue }) => {
+  async ({ roleId, inviteData }, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`/api/routes/users/${id}/invite`, inviteData);
-      if (response.data.errorCode !== "NO") {
-        throw new Error(response.data.errorMessage);
+      const response = await axios.patch(`/api/routes/users/${roleId}/invite`, inviteData);
+      if (response.data.statusCode === 200) {
+        return response.data.data;
       }
-      return response.data.data;
+      return rejectWithValue(response.data.errorMessage || "Failed to update invite");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const toggleInviteStatus = createAsyncThunk<User, { id: string; isEnabled: boolean }>(
+export const toggleInviteStatus = createAsyncThunk<User, { roleId: string; isEnabled: boolean }>(
   "user/toggleInviteStatus",
-  async ({ id, isEnabled }, { rejectWithValue }) => {
+  async ({ roleId, isEnabled }, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`/api/routes/users/${id}/invite/status`, { isEnabled });
-      if (response.data.errorCode !== "NO") {
-        throw new Error(response.data.errorMessage);
+      const response = await axios.patch(`/api/routes/users/${roleId}/invite/status`, { isEnabled });
+      if (response.data.statusCode === 200) {
+        return response.data.data;
       }
-      return response.data.data;
+      return rejectWithValue(response.data.errorMessage || "Failed to toggle invite status");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-export const updateInviteTheme = createAsyncThunk<User, { id: string; theme: Theme }>(
+export const updateInviteTheme = createAsyncThunk<User, { roleId: string; theme: Theme }>(
   "user/updateInviteTheme",
-  async ({ id, theme }, { rejectWithValue }) => {
+  async ({ roleId, theme }, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`/api/routes/users/${id}/invite/theme`, { theme });
-      if (response.data.errorCode !== "NO") {
-        throw new Error(response.data.errorMessage);
+      const response = await axios.patch(`/api/routes/users/${roleId}/invite/theme`, { theme });
+      if (response.data.statusCode === 200) {
+        return response.data.data;
       }
-      return response.data.data;
+      return rejectWithValue(response.data.errorMessage || "Failed to update invite theme");
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }

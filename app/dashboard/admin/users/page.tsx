@@ -1,26 +1,30 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '@/lib/redux/store';
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { AppDispatch, RootState } from "@/lib/redux/store";
 import {
-  fetchUsers,
-  updateUser,
-  deleteUser,
   selectUsers,
   selectUserLoading,
   selectUserError,
+  fetchUsers,
+  updateUser,
+  deleteUser,
   setSearchQuery,
-} from '@/lib/redux/features/userSlice';
+  updateInvite,
+  toggleInviteStatus,
+  updateInviteTheme,
+  updateWeddingEvent,
+  deleteWeddingEvent,
+} from "@/lib/redux/features/userSlice";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+  selectRSVPResponses,
+  selectRSVPLoading,
+  selectRSVPError,
+  fetchRSVPResponses,
+  updateRSVPStatus,
+  clearResponses,
+} from "@/lib/redux/features/rsvpSlice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,9 +46,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { toast } from "sonner";
 
+// Import types from userSlice - define them properly
 interface User {
   id: string;
   name: string;
@@ -59,25 +79,88 @@ interface User {
     country: string;
     zipCode: string;
   };
-  bookings?: string[];
-  favorites?: {
-    hotels?: string[];
-    vendors?: string[];
-  };
   notifications: {
     id: string;
     message: string;
     read: boolean;
     createdAt: string;
   }[];
+  invite?: {
+    isEnabled: boolean;
+    theme: {
+      primaryColor: string;
+      secondaryColor: string;
+      titleColor: string;
+      nameColor: string;
+      backgroundColor: string;
+      textColor: string;
+    };
+    about: {
+      title: string;
+      subtitle: string;
+      groom: {
+        name: string;
+        description: string;
+        image: string;
+        socials: {
+          instagram?: string;
+          facebook?: string;
+          twitter?: string;
+        };
+      };
+      bride: {
+        name: string;
+        description: string;
+        image: string;
+        socials: {
+          instagram?: string;
+          facebook?: string;
+          twitter?: string;
+        };
+      };
+      coupleImage: string;
+    };
+    weddingEvents: {
+      title: string;
+      date: string;
+      time: string;
+      venue: string;
+      description: string;
+      image?: string;
+    }[];
+    loveStory: {
+      date: string;
+      title: string;
+      description: string;
+      image?: string;
+    }[];
+    planning: {
+      title: string;
+      description: string;
+      icon?: string;
+      completed: boolean;
+    }[];
+    invitation: {
+      heading: string;
+      subheading: string;
+      message: string;
+      rsvpLink?: string;
+      backgroundImage?: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
 
+type UserRole = User['role'];
+type WeddingEvent = NonNullable<User['invite']>['weddingEvents'][0];
+type Theme = NonNullable<User['invite']>['theme'];
+
+// Form state interfaces
 interface UserFormState {
   name: string;
   email: string;
-  role: 'user' | 'admin' | 'hotel' | 'vendor';
+  role: UserRole;
   phoneNumber: string;
   street: string;
   city: string;
@@ -89,7 +172,18 @@ interface UserFormState {
   removeAvatar: boolean;
 }
 
-const initialFormState: UserFormState = {
+interface InviteFormState {
+  isEnabled: boolean;
+  theme: Theme;
+  about: NonNullable<User['invite']>['about'];
+  invitation: NonNullable<User['invite']>['invitation'];
+  weddingEvents: WeddingEvent[];
+  loveStory: NonNullable<User['invite']>['loveStory'];
+  planning: NonNullable<User['invite']>['planning'];
+}
+
+// Initial states
+const initialUserFormState: UserFormState = {
   name: "",
   email: "",
   role: "user",
@@ -104,50 +198,114 @@ const initialFormState: UserFormState = {
   removeAvatar: false,
 };
 
+const initialInviteFormState: InviteFormState = {
+  isEnabled: false,
+  theme: {
+    primaryColor: '#1E3A8A',
+    secondaryColor: '#A4E5F6',
+    titleColor: '#1E3A8A',
+    nameColor: '#1E3A8A',
+    backgroundColor: '#FFFFFF',
+    textColor: '#000000',
+  },
+  about: {
+    title: 'About Us',
+    subtitle: 'Couple',
+    groom: {
+      name: '',
+      description: '',
+      image: '',
+      socials: {
+        instagram: '',
+        facebook: '',
+      },
+    },
+    bride: {
+      name: '',
+      description: '',
+      image: '',
+      socials: {
+        instagram: '',
+        facebook: '',
+      },
+    },
+    coupleImage: '',
+  },
+  invitation: {
+    heading: 'You are invited',
+    subheading: 'To our wedding',
+    message: 'Join us for our special day',
+  },
+  weddingEvents: [],
+  loveStory: [],
+  planning: [],
+};
+
 export default function UsersPage() {
   const dispatch = useDispatch<AppDispatch>();
   const users = useSelector(selectUsers);
   const isLoading = useSelector(selectUserLoading);
   const error = useSelector(selectUserError);
+  
+  // RSVP state
+  const rsvpResponses = useSelector(selectRSVPResponses);
+  const rsvpLoading = useSelector(selectRSVPLoading);
+  const rsvpError = useSelector(selectRSVPError);
 
+  // Component state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQueryLocal] = useState("");
-  const [editUserForm, setEditUserForm] = useState<UserFormState | null>(null);
+  const [activeTab, setActiveTab] = useState("user");
+  
+  // Form states
+  const [userForm, setUserForm] = useState<UserFormState>(initialUserFormState);
+  const [inviteForm, setInviteForm] = useState<InviteFormState>(initialInviteFormState);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Loading states for different forms
+  const [isUserSubmitting, setIsUserSubmitting] = useState(false);
+  const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
+  const [isRSVPSubmitting, setIsRSVPSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  // Clean up object URLs when component unmounts or form changes
+  // Clean up object URLs
   useEffect(() => {
     return () => {
-      if (editUserForm?.avatarFile && editUserForm.avatar?.startsWith('blob:')) {
-        URL.revokeObjectURL(editUserForm.avatar);
+      if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
+        URL.revokeObjectURL(userForm.avatar);
       }
     };
-  }, [editUserForm?.avatarFile]);
+  }, [userForm.avatarFile]);
 
-  const filteredUsers = users.filter(user =>
+  const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (user.phoneNumber && user.phoneNumber.includes(searchQuery)) ||
     (user.address?.city && user.address.city.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const resetEditForm = () => {
-    if (editUserForm?.avatarFile && editUserForm.avatar?.startsWith('blob:')) {
-      URL.revokeObjectURL(editUserForm.avatar);
+  const resetForms = () => {
+    if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
+      URL.revokeObjectURL(userForm.avatar);
     }
-    setEditUserForm(null);
+    setUserForm(initialUserFormState);
+    setInviteForm(initialInviteFormState);
     setSelectedUserId(null);
+    setSelectedUser(null);
+    dispatch(clearResponses());
   };
 
   const openEditDialog = (user: User) => {
     setSelectedUserId(user.id);
-    setEditUserForm({
+    setSelectedUser(user);
+    
+    // Set user form
+    setUserForm({
       name: user.name,
       email: user.email,
       role: user.role,
@@ -161,85 +319,170 @@ export default function UsersPage() {
       avatarFile: null,
       removeAvatar: false,
     });
+
+    // Set invite form if user has invite
+    if (user.invite) {
+      setInviteForm({
+        isEnabled: user.invite.isEnabled,
+        theme: user.invite.theme,
+        about: user.invite.about,
+        invitation: user.invite.invitation,
+        weddingEvents: user.invite.weddingEvents || [],
+        loveStory: user.invite.loveStory || [],
+        planning: user.invite.planning || [],
+      });
+    } else {
+      setInviteForm(initialInviteFormState);
+    }
+
+    // Fetch RSVP responses if user has invite
+    if (user.invite?.isEnabled) {
+      dispatch(fetchRSVPResponses(user.id));
+    }
+
     setIsEditDialogOpen(true);
   };
 
-  const handleEdit = async () => {
-    if (!editUserForm || !selectedUserId || isSubmitting) return;
+  // Handle User Form Submit
+  const handleUserSubmit = async () => {
+    if (!selectedUserId || isUserSubmitting) return;
 
-    // Validation
-    if (!editUserForm.name.trim()) {
+    if (!userForm.name.trim()) {
       toast.error("Name is required");
       return;
     }
-    if (!editUserForm.email.trim()) {
+    if (!userForm.email.trim()) {
       toast.error("Email is required");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsUserSubmitting(true);
 
     try {
       const formData = new FormData();
-      formData.append("name", editUserForm.name);
-      formData.append("email", editUserForm.email);
-      formData.append("role", editUserForm.role);
-      formData.append("phoneNumber", editUserForm.phoneNumber);
+      formData.append("name", userForm.name);
+      formData.append("email", userForm.email);
+      formData.append("role", userForm.role);
+      formData.append("phoneNumber", userForm.phoneNumber);
 
-      // Add address fields if any are present
-      if (editUserForm.street || editUserForm.city || editUserForm.state || editUserForm.country || editUserForm.zipCode) {
-        formData.append("street", editUserForm.street);
-        formData.append("city", editUserForm.city);
-        formData.append("state", editUserForm.state);
-        formData.append("country", editUserForm.country);
-        formData.append("zipCode", editUserForm.zipCode);
+      // Add address fields
+      if (
+        userForm.street ||
+        userForm.city ||
+        userForm.state ||
+        userForm.country ||
+        userForm.zipCode
+      ) {
+        formData.append("street", userForm.street);
+        formData.append("city", userForm.city);
+        formData.append("state", userForm.state);
+        formData.append("country", userForm.country);
+        formData.append("zipCode", userForm.zipCode);
       }
 
-      if (editUserForm.avatarFile) {
-        formData.append("avatar", editUserForm.avatarFile);
+      if (userForm.avatarFile) {
+        formData.append("avatar", userForm.avatarFile);
       }
-      formData.append("removeAvatar", editUserForm.removeAvatar.toString());
+      formData.append("removeAvatar", userForm.removeAvatar.toString());
 
       await dispatch(updateUser({ id: selectedUserId, data: formData })).unwrap();
-      toast.success("User updated successfully");
-      setIsEditDialogOpen(false);
-      resetEditForm();
+      toast.success("User details updated successfully");
     } catch (err: any) {
-      toast.error(err.message || "Error updating user");
+      toast.error(err?.message || "Error updating user");
     } finally {
-      setIsSubmitting(false);
+      setIsUserSubmitting(false);
+    }
+  };
+
+  // Handle Invite Form Submit
+  const handleInviteSubmit = async () => {
+    if (!selectedUserId || isInviteSubmitting) return;
+
+    setIsInviteSubmitting(true);
+
+    try {
+      // First toggle invite status if needed
+      if (selectedUser?.invite?.isEnabled !== inviteForm.isEnabled) {
+        await dispatch(toggleInviteStatus({ 
+          roleId: selectedUserId, 
+          isEnabled: inviteForm.isEnabled 
+        })).unwrap();
+      }
+
+      // Update invite theme
+      await dispatch(updateInviteTheme({
+        roleId: selectedUserId,
+        theme: inviteForm.theme
+      })).unwrap();
+
+      // Update full invite data
+      const inviteData = {
+        about: inviteForm.about,
+        invitation: inviteForm.invitation,
+        weddingEvents: inviteForm.weddingEvents,
+        loveStory: inviteForm.loveStory,
+        planning: inviteForm.planning,
+      };
+
+      await dispatch(updateInvite({
+        roleId: selectedUserId,
+        inviteData
+      })).unwrap();
+
+      toast.success("Wedding invite updated successfully");
+    } catch (err: any) {
+      toast.error(err?.message || "Error updating invite");
+    } finally {
+      setIsInviteSubmitting(false);
+    }
+  };
+
+  // Handle RSVP Status Update
+  const handleRSVPStatusUpdate = async (rsvpId: string, status: 'pending' | 'confirmed' | 'declined') => {
+    if (!selectedUserId || isRSVPSubmitting) return;
+
+    setIsRSVPSubmitting(true);
+
+    try {
+      await dispatch(updateRSVPStatus({
+        rsvpId,
+        userId: selectedUserId,
+        status
+      })).unwrap();
+      toast.success("RSVP status updated successfully");
+    } catch (err: any) {
+      toast.error(err?.message || "Error updating RSVP status");
+    } finally {
+      setIsRSVPSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!selectedUserId || isSubmitting) return;
+    if (!selectedUserId || isUserSubmitting) return;
 
-    setIsSubmitting(true);
+    setIsUserSubmitting(true);
 
     try {
       await dispatch(deleteUser(selectedUserId)).unwrap();
       toast.success("User deleted successfully");
       setIsDeleteDialogOpen(false);
-      setSelectedUserId(null);
+      resetForms();
     } catch (err: any) {
-      toast.error(err.message || "Error deleting user");
+      toast.error(err?.message || "Error deleting user");
     } finally {
-      setIsSubmitting(false);
+      setIsUserSubmitting(false);
     }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!editUserForm) return;
-
     const file = e.target.files?.[0];
     if (file) {
-      // Clean up previous object URL
-      if (editUserForm.avatarFile && editUserForm.avatar?.startsWith('blob:')) {
-        URL.revokeObjectURL(editUserForm.avatar);
+      if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
+        URL.revokeObjectURL(userForm.avatar);
       }
 
-      setEditUserForm({
-        ...editUserForm,
+      setUserForm({
+        ...userForm,
         avatar: URL.createObjectURL(file),
         avatarFile: file,
         removeAvatar: false,
@@ -248,158 +491,157 @@ export default function UsersPage() {
   };
 
   const handleRemoveAvatar = () => {
-    if (!editUserForm) return;
-
-    // Clean up previous object URL
-    if (editUserForm.avatarFile && editUserForm.avatar?.startsWith('blob:')) {
-      URL.revokeObjectURL(editUserForm.avatar);
+    if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
+      URL.revokeObjectURL(userForm.avatar);
     }
 
-    setEditUserForm({
-      ...editUserForm,
+    setUserForm({
+      ...userForm,
       avatar: null,
       avatarFile: null,
       removeAvatar: true,
     });
   };
 
+  // Add new wedding event
+  const addWeddingEvent = () => {
+    const newEvent: WeddingEvent = {
+      title: '',
+      date: '',
+      time: '',
+      venue: '',
+      description: '',
+      image: '',
+    };
+    setInviteForm({
+      ...inviteForm,
+      weddingEvents: [...inviteForm.weddingEvents, newEvent],
+    });
+  };
+
+  // Update wedding event
+  const updateWeddingEventLocal = (index: number, updatedEvent: WeddingEvent) => {
+    const updatedEvents = [...inviteForm.weddingEvents];
+    updatedEvents[index] = updatedEvent;
+    setInviteForm({
+      ...inviteForm,
+      weddingEvents: updatedEvents,
+    });
+  };
+
+  // Remove wedding event
+  const removeWeddingEvent = (index: number) => {
+    const updatedEvents = inviteForm.weddingEvents.filter((_, i) => i !== index);
+    setInviteForm({
+      ...inviteForm,
+      weddingEvents: updatedEvents,
+    });
+  };
+
+  // Form 1: User Details
   const renderUserForm = () => (
-    <div className="grid gap-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          value={editUserForm?.name || ""}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, name: e.target.value } : null
-            )
-          }
-          placeholder="User name"
-        />
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            value={userForm.name}
+            onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+            placeholder="User name"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            value={userForm.email}
+            onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+            placeholder="Email address"
+          />
+        </div>
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          value={editUserForm?.email || ""}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, email: e.target.value } : null
-            )
-          }
-          placeholder="Email address"
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-2">
+          <Label htmlFor="role">Role</Label>
+          <select
+            id="role"
+            value={userForm.role}
+            onChange={(e) => setUserForm({ ...userForm, role: e.target.value as UserRole })}
+            className="w-full px-3 py-2 border rounded-md text-sm"
+          >
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="hotel">Hotel</option>
+            <option value="vendor">Vendor</option>
+          </select>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Input
+            id="phoneNumber"
+            value={userForm.phoneNumber}
+            onChange={(e) => setUserForm({ ...userForm, phoneNumber: e.target.value })}
+            placeholder="Phone number"
+          />
+        </div>
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="role">Role</Label>
-        <select
-          id="role"
-          value={editUserForm?.role || "user"}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, role: e.target.value as User['role'] } : null
-            )
-          }
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-          <option value="hotel">Hotel</option>
-          <option value="vendor">Vendor</option>
-        </select>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="phoneNumber">Phone Number</Label>
-        <Input
-          id="phoneNumber"
-          value={editUserForm?.phoneNumber || ""}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, phoneNumber: e.target.value } : null
-            )
-          }
-          placeholder="Phone number"
-        />
-      </div>
-
+      {/* Address Information */}
       <div className="grid gap-2">
         <Label htmlFor="street">Street Address</Label>
         <Input
           id="street"
-          value={editUserForm?.street || ""}
-          onChange={(e) =>
-            setEditUserForm((prev) =>
-              prev ? { ...prev, street: e.target.value } : null
-            )
-          }
+          value={userForm.street}
+          onChange={(e) => setUserForm({ ...userForm, street: e.target.value })}
           placeholder="Street address"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="city">City</Label>
           <Input
             id="city"
-            value={editUserForm?.city || ""}
-            onChange={(e) =>
-              setEditUserForm((prev) =>
-                prev ? { ...prev, city: e.target.value } : null
-              )
-            }
+            value={userForm.city}
+            onChange={(e) => setUserForm({ ...userForm, city: e.target.value })}
             placeholder="City"
           />
         </div>
-
         <div className="grid gap-2">
           <Label htmlFor="state">State</Label>
           <Input
             id="state"
-            value={editUserForm?.state || ""}
-            onChange={(e) =>
-              setEditUserForm((prev) =>
-                prev ? { ...prev, state: e.target.value } : null
-              )
-            }
+            value={userForm.state}
+            onChange={(e) => setUserForm({ ...userForm, state: e.target.value })}
             placeholder="State"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="country">Country</Label>
           <Input
             id="country"
-            value={editUserForm?.country || ""}
-            onChange={(e) =>
-              setEditUserForm((prev) =>
-                prev ? { ...prev, country: e.target.value } : null
-              )
-            }
+            value={userForm.country}
+            onChange={(e) => setUserForm({ ...userForm, country: e.target.value })}
             placeholder="Country"
           />
         </div>
-
         <div className="grid gap-2">
           <Label htmlFor="zipCode">ZIP Code</Label>
           <Input
             id="zipCode"
-            value={editUserForm?.zipCode || ""}
-            onChange={(e) =>
-              setEditUserForm((prev) =>
-                prev ? { ...prev, zipCode: e.target.value } : null
-              )
-            }
+            value={userForm.zipCode}
+            onChange={(e) => setUserForm({ ...userForm, zipCode: e.target.value })}
             placeholder="ZIP Code"
           />
         </div>
       </div>
 
+      {/* Avatar Section */}
       <div className="grid gap-2">
         <Label htmlFor="avatar">Avatar</Label>
         <Input
@@ -408,31 +650,391 @@ export default function UsersPage() {
           accept="image/*"
           onChange={handleAvatarChange}
         />
-        {editUserForm?.avatar && (
-          <div className="mt-2">
+        {userForm.avatar && (
+          <div className="flex items-center gap-4 mt-2">
             <img
-              src={editUserForm.avatar}
+              src={userForm.avatar}
               alt="Avatar preview"
-              className="w-20 h-20 object-cover rounded-full"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-full flex-shrink-0"
             />
             <Button
               variant="destructive"
               size="sm"
               onClick={handleRemoveAvatar}
-              className="mt-2"
             >
               Remove Avatar
             </Button>
           </div>
         )}
       </div>
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleUserSubmit} 
+          disabled={isUserSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isUserSubmitting ? "Saving User Details..." : "Save User Details"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Form 2: Wedding Invite
+  const renderInviteForm = () => (
+    <div className="space-y-6">
+      {/* Invite Status */}
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="isEnabled"
+          checked={inviteForm.isEnabled}
+          onChange={(e) => setInviteForm({ ...inviteForm, isEnabled: e.target.checked })}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <Label htmlFor="isEnabled">Enable Wedding Invite</Label>
+      </div>
+
+      {/* Theme Section */}
+      <div className="space-y-4">
+        <h4 className="font-semibold">Theme Colors</h4>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-2">
+            <Label htmlFor="primaryColor">Primary Color</Label>
+            <Input
+              id="primaryColor"
+              type="color"
+              value={inviteForm.theme.primaryColor}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                theme: { ...inviteForm.theme, primaryColor: e.target.value }
+              })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="titleColor">Title Color</Label>
+            <Input
+              id="titleColor"
+              type="color"
+              value={inviteForm.theme.titleColor}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                theme: { ...inviteForm.theme, titleColor: e.target.value }
+              })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="nameColor">Name Color</Label>
+            <Input
+              id="nameColor"
+              type="color"
+              value={inviteForm.theme.nameColor}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                theme: { ...inviteForm.theme, nameColor: e.target.value }
+              })}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div className="space-y-4">
+        <h4 className="font-semibold">About Section</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="aboutTitle">About Title</Label>
+            <Input
+              id="aboutTitle"
+              value={inviteForm.about.title}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                about: { ...inviteForm.about, title: e.target.value }
+              })}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="aboutSubtitle">About Subtitle</Label>
+            <Input
+              id="aboutSubtitle"
+              value={inviteForm.about.subtitle}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                about: { ...inviteForm.about, subtitle: e.target.value }
+              })}
+            />
+          </div>
+        </div>
+
+        {/* Groom Details */}
+        <div className="border p-4 rounded-lg">
+          <h5 className="font-medium mb-3">Groom Details</h5>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="groomName">Groom Name</Label>
+              <Input
+                id="groomName"
+                value={inviteForm.about.groom.name}
+                onChange={(e) => setInviteForm({
+                  ...inviteForm,
+                  about: {
+                    ...inviteForm.about,
+                    groom: { ...inviteForm.about.groom, name: e.target.value }
+                  }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="groomImage">Groom Image URL</Label>
+              <Input
+                id="groomImage"
+                value={inviteForm.about.groom.image}
+                onChange={(e) => setInviteForm({
+                  ...inviteForm,
+                  about: {
+                    ...inviteForm.about,
+                    groom: { ...inviteForm.about.groom, image: e.target.value }
+                  }
+                })}
+              />
+            </div>
+          </div>
+          <div className="grid gap-2 mt-4">
+            <Label htmlFor="groomDescription">Groom Description</Label>
+            <textarea
+              id="groomDescription"
+              value={inviteForm.about.groom.description}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                about: {
+                  ...inviteForm.about,
+                  groom: { ...inviteForm.about.groom, description: e.target.value }
+                }
+              })}
+              className="w-full px-3 py-2 border rounded-md text-sm min-h-[80px]"
+            />
+          </div>
+        </div>
+
+        {/* Bride Details */}
+        <div className="border p-4 rounded-lg">
+          <h5 className="font-medium mb-3">Bride Details</h5>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="brideName">Bride Name</Label>
+              <Input
+                id="brideName"
+                value={inviteForm.about.bride.name}
+                onChange={(e) => setInviteForm({
+                  ...inviteForm,
+                  about: {
+                    ...inviteForm.about,
+                    bride: { ...inviteForm.about.bride, name: e.target.value }
+                  }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="brideImage">Bride Image URL</Label>
+              <Input
+                id="brideImage"
+                value={inviteForm.about.bride.image}
+                onChange={(e) => setInviteForm({
+                  ...inviteForm,
+                  about: {
+                    ...inviteForm.about,
+                    bride: { ...inviteForm.about.bride, image: e.target.value }
+                  }
+                })}
+              />
+            </div>
+          </div>
+          <div className="grid gap-2 mt-4">
+            <Label htmlFor="brideDescription">Bride Description</Label>
+            <textarea
+              id="brideDescription"
+              value={inviteForm.about.bride.description}
+              onChange={(e) => setInviteForm({
+                ...inviteForm,
+                about: {
+                  ...inviteForm.about,
+                  bride: { ...inviteForm.about.bride, description: e.target.value }
+                }
+              })}
+              className="w-full px-3 py-2 border rounded-md text-sm min-h-[80px]"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Wedding Events */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h4 className="font-semibold">Wedding Events</h4>
+          <Button onClick={addWeddingEvent} size="sm">Add Event</Button>
+        </div>
+        {inviteForm.weddingEvents.map((event, index) => (
+          <div key={index} className="border p-4 rounded-lg">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor={`eventTitle${index}`}>Event Title</Label>
+                <Input
+                  id={`eventTitle${index}`}
+                  value={event.title}
+                  onChange={(e) => updateWeddingEventLocal(index, { ...event, title: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`eventDate${index}`}>Date</Label>
+                <Input
+                  id={`eventDate${index}`}
+                  type="datetime-local"
+                  value={event.date}
+                  onChange={(e) => updateWeddingEventLocal(index, { ...event, date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`eventTime${index}`}>Time</Label>
+                <Input
+                  id={`eventTime${index}`}
+                  value={event.time}
+                  onChange={(e) => updateWeddingEventLocal(index, { ...event, time: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`eventVenue${index}`}>Venue</Label>
+                <Input
+                  id={`eventVenue${index}`}
+                  value={event.venue}
+                  onChange={(e) => updateWeddingEventLocal(index, { ...event, venue: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2 mt-4">
+              <Label htmlFor={`eventDescription${index}`}>Description</Label>
+              <textarea
+                id={`eventDescription${index}`}
+                value={event.description}
+                onChange={(e) => updateWeddingEventLocal(index, { ...event, description: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md text-sm min-h-[60px]"
+              />
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => removeWeddingEvent(index)}
+              >
+                Remove Event
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleInviteSubmit} 
+          disabled={isInviteSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isInviteSubmitting ? "Saving Invite..." : "Save Wedding Invite"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Form 3: RSVP Management
+  const renderRSVPForm = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h4 className="font-semibold">RSVP Responses</h4>
+        <Button 
+          onClick={() => selectedUserId && dispatch(fetchRSVPResponses(selectedUserId))}
+          size="sm"
+          disabled={rsvpLoading}
+        >
+          {rsvpLoading ? "Loading..." : "Refresh"}
+        </Button>
+      </div>
+
+      {rsvpError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {rsvpError}
+        </div>
+      )}
+
+      {rsvpResponses.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">No RSVP responses yet</p>
+      ) : (
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {rsvpResponses.map((rsvp) => (
+            <div key={rsvp.id} className="border p-4 rounded-lg">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p><strong>Name:</strong> {rsvp.name}</p>
+                  <p><strong>Email:</strong> {rsvp.email}</p>
+                  {rsvp.phone && <p><strong>Phone:</strong> {rsvp.phone}</p>}
+                </div>
+                <div>
+                  <p><strong>Guests:</strong> {rsvp.numberOfGuests}</p>
+                  <p><strong>Attending:</strong> {rsvp.attending ? 'Yes' : 'No'}</p>
+                  <p><strong>Created:</strong> {new Date(rsvp.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              {rsvp.message && (
+                <div className="mt-3">
+                  <p><strong>Message:</strong></p>
+                  <p className="text-sm text-gray-600">{rsvp.message}</p>
+                </div>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  size="sm" 
+                  variant={rsvp.status === 'confirmed' ? 'default' : 'outline'}
+                  onClick={() => handleRSVPStatusUpdate(rsvp.id, 'confirmed')}
+                  disabled={isRSVPSubmitting}
+                >
+                  Confirm
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={rsvp.status === 'pending' ? 'default' : 'outline'}
+                  onClick={() => handleRSVPStatusUpdate(rsvp.id, 'pending')}
+                  disabled={isRSVPSubmitting}
+                >
+                  Pending
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={rsvp.status === 'declined' ? 'destructive' : 'outline'}
+                  onClick={() => handleRSVPStatusUpdate(rsvp.id, 'declined')}
+                  disabled={isRSVPSubmitting}
+                >
+                  Decline
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={() => selectedUserId && dispatch(fetchRSVPResponses(selectedUserId))} 
+          disabled={rsvpLoading}
+          className="w-full sm:w-auto"
+        >
+          {rsvpLoading ? "Refreshing RSVPs..." : "Refresh RSVP Data"}
+        </Button>
+      </div>
     </div>
   );
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users Management</h1>
+    <div className="container mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold">Users Management</h1>
         <div className="flex gap-4">
           <Input
             placeholder="Search users..."
@@ -441,7 +1043,7 @@ export default function UsersPage() {
               setSearchQueryLocal(e.target.value);
               dispatch(setSearchQuery(e.target.value));
             }}
-            className="w-64"
+            className="w-full sm:w-64"
           />
         </div>
       </div>
@@ -452,60 +1054,136 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {isLoading ? (
           <p>Loading...</p>
         ) : (
           filteredUsers.map((user) => (
-            <Card key={user.id}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
+            <Card key={user.id} className="flex flex-col">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   {user.avatar && (
                     <img
                       src={user.avatar}
                       alt={`${user.name}'s avatar`}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
                     />
                   )}
-                  <div>
-                    <CardTitle>{user.name}</CardTitle>
-                    <CardDescription>{user.email}</CardDescription>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="truncate text-sm sm:text-base">{user.name}</CardTitle>
+                    <CardDescription className="truncate text-xs sm:text-sm">{user.email}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p><strong>Role:</strong> {user.role}</p>
+              <CardContent className="flex-1 pb-4">
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <strong>Role:</strong> {user.role}
+                  </p>
                   {user.phoneNumber && (
-                    <p><strong>Phone:</strong> {user.phoneNumber}</p>
+                    <p className="truncate">
+                      <strong>Phone:</strong> {user.phoneNumber}
+                    </p>
                   )}
                   {user.address && (
-                    <p><strong>Location:</strong> {user.address.city}, {user.address.country}</p>
+                    <p className="truncate">
+                      <strong>Location:</strong> {user.address.city}, {user.address.country}
+                    </p>
                   )}
-                  <p><strong>Notifications:</strong> {user.notifications.filter(n => !n.read).length} unread</p>
+                  <p>
+                    <strong>Notifications:</strong>{" "}
+                    {user.notifications.filter((n) => !n.read).length} unread
+                  </p>
+
+                  {user.role === "user" && user.invite && (
+                    <div className="mt-3 pt-3 border-t">
+                      <h4 className="font-semibold mb-2 text-sm">Wedding Invite</h4>
+                      <div className="space-y-1 text-xs">
+                        <p>
+                          <strong>Status:</strong>{" "}
+                          {user.invite.isEnabled ? "Enabled" : "Disabled"}
+                        </p>
+                        <p>
+                          <strong>Events:</strong> {user.invite.weddingEvents?.length || 0}
+                        </p>
+                        <p>
+                          <strong>Love Story:</strong> {user.invite.loveStory?.length || 0} items
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-end gap-2">
+              <CardFooter className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" onClick={() => openEditDialog(user)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => openEditDialog(user)}
+                      className="w-full sm:w-auto"
+                      size="sm"
+                    >
                       Edit
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
                     <DialogHeader>
-                      <DialogTitle>Edit User</DialogTitle>
+                      <DialogTitle>Edit User - {selectedUser?.name}</DialogTitle>
                       <DialogDescription>
-                        Make changes to the user profile here.
+                        Manage user details, wedding invite, and RSVP responses.
                       </DialogDescription>
                     </DialogHeader>
-                    {renderUserForm()}
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleEdit} disabled={isSubmitting}>
-                        {isSubmitting ? "Saving..." : "Save Changes"}
+                    
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="user">User Details</TabsTrigger>
+                        <TabsTrigger 
+                          value="invite" 
+                          disabled={selectedUser?.role !== "user"}
+                        >
+                          Wedding Invite
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="rsvp" 
+                          disabled={selectedUser?.role !== "user" || !selectedUser?.invite?.isEnabled}
+                        >
+                          RSVP Responses
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <div className="max-h-[60vh] overflow-y-auto px-1 mt-4">
+                        <TabsContent value="user" className="mt-0">
+                          {renderUserForm()}
+                        </TabsContent>
+                        
+                        <TabsContent value="invite" className="mt-0">
+                          {selectedUser?.role === "user" ? renderInviteForm() : (
+                            <p className="text-center py-8 text-gray-500">
+                              Wedding invites are only available for users with role "user"
+                            </p>
+                          )}
+                        </TabsContent>
+                        
+                        <TabsContent value="rsvp" className="mt-0">
+                          {selectedUser?.role === "user" && selectedUser?.invite?.isEnabled ? renderRSVPForm() : (
+                            <p className="text-center py-8 text-gray-500">
+                              RSVP management is only available for users with enabled wedding invites
+                            </p>
+                          )}
+                        </TabsContent>
+                      </div>
+                    </Tabs>
+
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditDialogOpen(false);
+                          resetForms();
+                        }}
+                        className="w-full sm:w-auto"
+                      >
+                        Close
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -519,11 +1197,13 @@ export default function UsersPage() {
                         setSelectedUserId(user.id);
                         setIsDeleteDialogOpen(true);
                       }}
+                      className="w-full sm:w-auto"
+                      size="sm"
                     >
                       Delete
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="w-[95vw] max-w-md">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -531,10 +1211,14 @@ export default function UsersPage() {
                         user's account and remove their data from our servers.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} disabled={isSubmitting}>
-                        {isSubmitting ? "Deleting..." : "Delete"}
+                    <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete} 
+                        disabled={isUserSubmitting}
+                        className="w-full sm:w-auto"
+                      >
+                        {isUserSubmitting ? "Deleting..." : "Delete"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

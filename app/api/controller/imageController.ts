@@ -7,7 +7,9 @@ const UploadImage = async (file: any, width: number, height: number) => {
     const buffer = Buffer.from(arrayBuffer); // Convert to Buffer
 
     const bucket = adminStorage.bucket();
-    const filePath = `images/${Date.now()}_${file.name}`; // Generate unique file path
+    const fileName = file instanceof File ? file.name : `image_${Math.random().toString(36).substring(7)}`;
+const filePath = `images/${Date.now()}_${fileName}`;
+    // const filePath = `images/${Date.now()}_${file.name}`; // Generate unique file path
     const firebaseFile = bucket.file(filePath);
 
     // Convert width & height to numbers
