@@ -31,6 +31,8 @@ import vendorReducer from "./features/vendorSlice";
 import userReducer from "./features/userSlice";
 import weddingReducer from "./features/inviteSlice";
 import rsvpReducer from "./features/rsvpSlice";
+import weddingManagementReducer from "./features/weddingSlice"
+
 
 // Configuration for redux-persist
 const persistConfig = {
@@ -54,6 +56,8 @@ const rootReducer = combineReducers({
   user: userReducer,
   wedding: weddingReducer,
   rsvp: rsvpReducer,
+  weddingManagement: weddingManagementReducer,
+
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -61,6 +61,7 @@ const searchSuggestions = [
   { label: "Contact", value: "contact", href: "/dashboard/admin/contact" },
   {label: "Hotel", value: "hotel", href: "/dashboard/admin/hotel" },
   { label: "Users", value: "users", href: "/dashboard/admin/users" },
+  { label: "Wedding Themes", value: "themes", href: "/dashboard/admin/wedding"},
 ];
 
 const notifications = [
