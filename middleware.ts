@@ -103,6 +103,11 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
+  {
+    pattern: /\/api\/routes\/users\/[^/]+$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
 
   // ===== ROLE-BASED API ROUTES =====
   
@@ -139,16 +144,45 @@ const API_ROUTES: RouteConfig[] = [
   
   // Users route with special logic
   {
-    pattern: "/api/routes/users",
+    pattern: /^\/api\/routes\/users\/[^/]+$/,
     customHandler: (pathname: string, method: HttpMethod, auth: Auth | null) => {
       if (!auth?.role) return false;
-      
-      // GET/POST: allow user, admin, super-admin
-      if (method === "GET" || method === "POST") {
-        return ["user", "admin", "super-admin"].includes(auth.role);
+
+      // Allow users to access their own data
+      if (auth.role === "user" && pathname.includes(auth.roleId || "")) {
+        return true;
       }
       
-      // Other methods: admin/super-admin only
+      // Admin and super-admin can access all
+      return ["admin", "super-admin"].includes(auth.role);
+    },
+  },
+  {
+    pattern: /^\/api\/routes\/users\/[^/]+\/(invite|invite\/status|invite\/theme|invite\/events)$/,
+    customHandler: (pathname: string, method: HttpMethod, auth: Auth | null) => {
+      if (!auth?.role) return false;
+
+      // Allow users to access their own invite data
+      if (auth.role === "user" && pathname.includes(auth.roleId || "")) {
+        return true;
+      }
+      
+      // Admin and super-admin can access all
+      return ["admin", "super-admin"].includes(auth.role);
+    },
+  },
+  {
+    // For DELETE method on events
+    pattern: /^\/api\/routes\/users\/[^/]+\/invite\/events\/\d+$/,
+    customHandler: (pathname: string, method: HttpMethod, auth: Auth | null) => {
+      if (!auth?.role) return false;
+
+      // Allow users to delete their own events
+      if (auth.role === "user" && pathname.includes(auth.roleId || "")) {
+        return true;
+      }
+      
+      // Admin and super-admin can access all
       return ["admin", "super-admin"].includes(auth.role);
     },
   },
