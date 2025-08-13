@@ -20,9 +20,9 @@ const SEARCH_ICON_IMG = "/images/search-icon.svg";
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
-  { label: "Venue", href: "#" },
-  { label: "Hotels", href: "#" },
-  { label: "Wedding", href: "#" },
+  { label: "Venue", href: "/venue" },
+  { label: "Hotels", href: "/hotels" },
+  { label: "Wedding", href: "/wedding" },
   { label: "Blog", href: "/blogs" },
   { label: "Gallery", href: "/gallery" },
 ];
