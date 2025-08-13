@@ -65,7 +65,7 @@ export default function Footer() {
               {IMAGES.map((src, i) => (
                 <motion.div
                   key={src}
-                  className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-xs overflow-y-clip overflow-x-auto bg-center bg-cover shadow-lg border-2 border-white flex-shrink-0"
+                  className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-xs overflow-hidden bg-center bg-cover shadow-lg border-2 border-white flex-shrink-0"
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.07 }}
