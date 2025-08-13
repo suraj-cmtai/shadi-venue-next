@@ -91,7 +91,7 @@ export default function Wedding() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            From <span className={textColor}>'Yes'</span> To <span className={textColor}>'I Do'</span> - we're with you
+            From <span className={textColor}>&apos;Yes&apos;</span> To <span className={textColor}>&apos;I Do&apos;</span> - we&apos;re with you
           </motion.h2>
         </div>
 
@@ -109,7 +109,7 @@ export default function Wedding() {
               {WEDDING_THEMES.map((theme, index) => (
                 <motion.div
                   key={theme.id}
-                  className="relative shrink-0 w-64 lg:w-72 xl:w-80 2xl:w-96 h-full rounded-xs overflow-hidden group flex flex-col justify-end cursor-pointer"
+                  className="relative shrink-0 w-64 lg:w-72 xl:w-80 2xl:w-96 h-full rounded-xs overflow-y-clip overflow-x-auto group flex flex-col justify-end cursor-pointer"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
