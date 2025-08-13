@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { MenuIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Link from "next/link";
 
 // Image assets
 const LOGO_IMG = "/images/logo-blue.png";
@@ -61,7 +62,7 @@ export default function Header() {
           <ul className="flex flex-row gap-6 lg:gap-10 text-[#212d47] text-sm font-medium font-cormorant uppercase tracking-wide">
             {NAV_ITEMS.map((item) => (
               <li key={item.label} className="whitespace-nowrap">
-                <a href={item.href} className="hover:text-primary transition-colors">{item.label}</a>
+                <Link href={item.href} className="hover:text-primary transition-colors">{item.label}</Link>
               </li>
             ))}
           </ul>
