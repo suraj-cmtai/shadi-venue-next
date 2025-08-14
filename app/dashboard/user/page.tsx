@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Check, 
-  Image, 
-  Palette, 
-  Share2, 
-  Type, 
-  Users, 
-  X, 
+import {
+  Check,
+  Image,
+  Palette,
+  Share2,
+  Type,
+  Users,
+  X,
   Save,
   Plus,
   Trash2,
@@ -20,7 +20,8 @@ import {
   Phone,
   Heart,
   User,
-  Bell
+  Bell,
+  Upload
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,17 +36,17 @@ import { Separator } from '@/components/ui/separator';
 
 import { AppDispatch } from '@/lib/redux/store';
 import { selectAuth } from '@/lib/redux/features/authSlice';
-import { 
-  selectSelectedUser, 
-  fetchUserById, 
+import {
+  selectSelectedUser,
+  fetchUserById,
   updateUser,
   updateInvite,
   updateInviteTheme
 } from '@/lib/redux/features/userSlice';
-import { 
-  fetchRSVPResponses, 
-  selectRSVPResponses, 
-  updateRSVPStatus 
+import {
+  fetchRSVPResponses,
+  selectRSVPResponses,
+  updateRSVPStatus
 } from '@/lib/redux/features/rsvpSlice';
 
 // Types from the slices
@@ -64,6 +65,54 @@ interface Social {
   twitter?: string;
 }
 
+// Client-side types that include File objects for forms
+interface PersonForm {
+  name: string;
+  description: string;
+  image: string | File;
+  socials: Social;
+}
+
+interface AboutSectionForm {
+  title: string;
+  subtitle: string;
+  groom: PersonForm;
+  bride: PersonForm;
+  coupleImage: string | File;
+}
+
+interface WeddingEventForm {
+  title: string;
+  date: string;
+  time: string;
+  venue: string;
+  description: string;
+  image?: string | File;
+}
+
+interface TimelineEventForm {
+  date: string;
+  title: string;
+  description: string;
+  image?: string | File;
+}
+
+interface PlanningItem {
+  title: string;
+  description: string;
+  icon?: string;
+  completed: boolean;
+}
+
+interface InviteSectionForm {
+  heading: string;
+  subheading: string;
+  message: string;
+  rsvpLink?: string;
+  backgroundImage?: string | File;
+}
+
+// Server-side types that only use strings for images
 interface Person {
   name: string;
   description: string;
@@ -95,13 +144,6 @@ interface TimelineEvent {
   image?: string;
 }
 
-interface PlanningItem {
-  title: string;
-  description: string;
-  icon?: string;
-  completed: boolean;
-}
-
 interface InviteSection {
   heading: string;
   subheading: string;
@@ -130,7 +172,7 @@ export default function UserDashboard() {
   const user = useSelector(selectSelectedUser);
   const rsvpResponses = useSelector(selectRSVPResponses);
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   // Loading states for each section
   const [themeLoading, setThemeLoading] = useState(false);
   const [aboutLoading, setAboutLoading] = useState(false);
@@ -150,7 +192,7 @@ export default function UserDashboard() {
     textColor: '#000000'
   });
 
-  const [aboutForm, setAboutForm] = useState<AboutSection>({
+  const [aboutForm, setAboutForm] = useState<AboutSectionForm>({
     title: '',
     subtitle: '',
     groom: {
@@ -168,10 +210,10 @@ export default function UserDashboard() {
     coupleImage: ''
   });
 
-  const [eventsForm, setEventsForm] = useState<WeddingEvent[]>([]);
-  const [loveStoryForm, setLoveStoryForm] = useState<TimelineEvent[]>([]);
+  const [eventsForm, setEventsForm] = useState<WeddingEventForm[]>([]);
+  const [loveStoryForm, setLoveStoryForm] = useState<TimelineEventForm[]>([]);
   const [planningForm, setPlanningForm] = useState<PlanningItem[]>([]);
-  const [invitationForm, setInvitationForm] = useState<InviteSection>({
+  const [invitationForm, setInvitationForm] = useState<InviteSectionForm>({
     heading: '',
     subheading: '',
     message: '',
@@ -183,7 +225,7 @@ export default function UserDashboard() {
   const [profileForm, setProfileForm] = useState({
     name: '',
     phoneNumber: '',
-    avatar: '',
+    avatar: '' as string | File,
     address: {
       street: '',
       city: '',
@@ -192,6 +234,9 @@ export default function UserDashboard() {
       zipCode: ''
     }
   });
+
+  // Preview URLs for file inputs
+  const [previewUrls, setPreviewUrls] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     if (auth?.data?.roleId) {
@@ -210,7 +255,7 @@ export default function UserDashboard() {
       setPlanningForm(user.invite.planning || []);
       setInvitationForm(user.invite.invitation || invitationForm);
     }
-    
+
     // Update profile form
     if (user) {
       setProfileForm({
@@ -228,11 +273,60 @@ export default function UserDashboard() {
     }
   }, [user]);
 
+  // File handling utilities
+  const handleFileChange = (file: File | null, key: string) => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrls(prev => ({ ...prev, [key]: url }));
+    } else {
+      setPreviewUrls(prev => {
+        const newUrls = { ...prev };
+        delete newUrls[key];
+        return newUrls;
+      });
+    }
+  };
+
+  const createFormData = (data: any): FormData => {
+    const formData = new FormData();
+    
+    const appendToFormData = (obj: any, prefix = '') => {
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+          const formKey = prefix ? `${prefix}[${key}]` : key;
+          
+          if (value instanceof File) {
+            formData.append(formKey, value);
+          } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+            appendToFormData(value, formKey);
+          } else if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              if (item instanceof File) {
+                formData.append(`${formKey}[${index}]`, item);
+              } else if (typeof item === 'object') {
+                appendToFormData(item, `${formKey}[${index}]`);
+              } else {
+                formData.append(`${formKey}[${index}]`, item?.toString() || '');
+              }
+            });
+          } else {
+            formData.append(formKey, value?.toString() || '');
+          }
+        }
+      }
+    };
+
+    appendToFormData(data);
+    return formData;
+  };
+
   // Save functions
   const handleSaveTheme = async () => {
     if (!auth?.data?.roleId) return;
     setThemeLoading(true);
     try {
+      const formData = createFormData({ theme: themeForm });
       await dispatch(updateInviteTheme({
         roleId: auth.data.roleId,
         theme: themeForm
@@ -249,9 +343,17 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setAboutLoading(true);
     try {
+      const formData = createFormData({ about: aboutForm });
+      // Convert form data to server-side type
+      const serverData: AboutSection = {
+        ...aboutForm,
+        groom: { ...aboutForm.groom, image: aboutForm.groom.image instanceof File ? '' : aboutForm.groom.image },
+        bride: { ...aboutForm.bride, image: aboutForm.bride.image instanceof File ? '' : aboutForm.bride.image },
+        coupleImage: aboutForm.coupleImage instanceof File ? '' : aboutForm.coupleImage
+      };
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
-        inviteData: { about: aboutForm }
+        inviteData: { about: serverData }
       })).unwrap();
       toast.success("About section saved successfully");
     } catch (error: any) {
@@ -265,9 +367,15 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setEventsLoading(true);
     try {
+      const formData = createFormData({ weddingEvents: eventsForm });
+      // Convert form data to server-side type
+      const serverData: WeddingEvent[] = eventsForm.map(event => ({
+        ...event,
+        image: event.image instanceof File ? '' : event.image
+      }));
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
-        inviteData: { weddingEvents: eventsForm }
+        inviteData: { weddingEvents: serverData }
       })).unwrap();
       toast.success("Wedding events saved successfully");
     } catch (error: any) {
@@ -281,9 +389,15 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setLoveStoryLoading(true);
     try {
+      const formData = createFormData({ loveStory: loveStoryForm });
+      // Convert form data to server-side type
+      const serverData: TimelineEvent[] = loveStoryForm.map(event => ({
+        ...event,
+        image: event.image instanceof File ? '' : event.image
+      }));
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
-        inviteData: { loveStory: loveStoryForm }
+        inviteData: { loveStory: serverData }
       })).unwrap();
       toast.success("Love story saved successfully");
     } catch (error: any) {
@@ -297,6 +411,7 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setPlanningLoading(true);
     try {
+      const formData = createFormData({ planning: planningForm });
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
         inviteData: { planning: planningForm }
@@ -313,9 +428,15 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setInvitationLoading(true);
     try {
+      const formData = createFormData({ invitation: invitationForm });
+      // Convert form data to server-side type
+      const serverData: InviteSection = {
+        ...invitationForm,
+        backgroundImage: invitationForm.backgroundImage instanceof File ? '' : invitationForm.backgroundImage
+      };
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
-        inviteData: { invitation: invitationForm }
+        inviteData: { invitation: serverData }
       })).unwrap();
       toast.success("Invitation saved successfully");
     } catch (error: any) {
@@ -332,7 +453,13 @@ export default function UserDashboard() {
       const formData = new FormData();
       formData.append('name', profileForm.name);
       if (profileForm.phoneNumber) formData.append('phoneNumber', profileForm.phoneNumber);
-      if (profileForm.avatar) formData.append('avatar', profileForm.avatar);
+      
+      if (profileForm.avatar instanceof File) {
+        formData.append('avatar', profileForm.avatar);
+      } else if (typeof profileForm.avatar === 'string' && profileForm.avatar) {
+        formData.append('avatarUrl', profileForm.avatar);
+      }
+      
       formData.append('address', JSON.stringify(profileForm.address));
 
       await dispatch(updateUser({ 
@@ -350,10 +477,10 @@ export default function UserDashboard() {
   const handleRSVPStatusUpdate = async (rsvpId: string, status: 'confirmed' | 'declined') => {
     if (!auth?.data?.roleId) return;
     try {
-      await dispatch(updateRSVPStatus({ 
-        rsvpId, 
-        userId: auth.data.roleId, 
-        status 
+      await dispatch(updateRSVPStatus({
+        rsvpId,
+        userId: auth.data.roleId,
+        status
       })).unwrap();
       toast.success(`RSVP ${status}`);
     } catch (error: any) {
@@ -401,6 +528,66 @@ export default function UserDashboard() {
 
   const removePlanningItem = (index: number) => {
     setPlanningForm(planningForm.filter((_, i) => i !== index));
+  };
+
+  // File input component
+  const FileInput = ({ 
+    label, 
+    value, 
+    onChange, 
+    accept = "image/*",
+    previewKey 
+  }: {
+    label: string;
+    value: string | File;
+    onChange: (file: File | null) => void;
+    accept?: string;
+    previewKey: string;
+  }) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] || null;
+      onChange(file);
+      if (file) {
+        handleFileChange(file, previewKey);
+      }
+    };
+
+    const currentUrl = previewUrls[previewKey] || (typeof value === 'string' ? value : '');
+
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="flex items-center gap-4">
+          <Input
+            type="file"
+            accept={accept}
+            onChange={handleFileSelect}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const fileInput = document.querySelector(`input[type="file"][accept="${accept}"]`) as HTMLInputElement;
+              if (fileInput) fileInput.click();
+            }}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Choose File
+          </Button>
+        </div>
+        {currentUrl && (
+          <div className="mt-2">
+            <img 
+              src={currentUrl} 
+              alt="Preview" 
+              className="w-20 h-20 object-cover rounded border"
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (!user) {
@@ -494,15 +681,12 @@ export default function UserDashboard() {
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="profileAvatar">Avatar URL</Label>
-                    <Input 
-                      id="profileAvatar"
-                      value={profileForm.avatar}
-                      onChange={(e) => setProfileForm({...profileForm, avatar: e.target.value})}
-                      placeholder="https://example.com/avatar.jpg"
-                    />
-                  </div>
+                  <FileInput
+                    label="Profile Avatar"
+                    value={profileForm.avatar}
+                    onChange={(file) => setProfileForm({...profileForm, avatar: file || ''})}
+                    previewKey="profileAvatar"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="profileRole">Role (Read Only)</Label>
@@ -837,17 +1021,15 @@ export default function UserDashboard() {
                         })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="groomImage">Image URL</Label>
-                      <Input 
-                        id="groomImage"
-                        value={aboutForm.groom.image}
-                        onChange={(e) => setAboutForm({
-                          ...aboutForm, 
-                          groom: {...aboutForm.groom, image: e.target.value}
-                        })}
-                      />
-                    </div>
+                    <FileInput
+                      label="Groom Image"
+                      value={aboutForm.groom.image}
+                      onChange={(file) => setAboutForm({
+                        ...aboutForm, 
+                        groom: {...aboutForm.groom, image: file || ''}
+                      })}
+                      previewKey="groomImage"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="groomDescription">Description</Label>
@@ -924,17 +1106,15 @@ export default function UserDashboard() {
                         })}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="brideImage">Image URL</Label>
-                      <Input 
-                        id="brideImage"
-                        value={aboutForm.bride.image}
-                        onChange={(e) => setAboutForm({
-                          ...aboutForm, 
-                          bride: {...aboutForm.bride, image: e.target.value}
-                        })}
-                      />
-                    </div>
+                    <FileInput
+                      label="Bride Image"
+                      value={aboutForm.bride.image}
+                      onChange={(file) => setAboutForm({
+                        ...aboutForm, 
+                        bride: {...aboutForm.bride, image: file || ''}
+                      })}
+                      previewKey="brideImage"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="brideDescription">Description</Label>
@@ -996,14 +1176,12 @@ export default function UserDashboard() {
 
                 <Separator />
 
-                <div className="space-y-2">
-                  <Label htmlFor="coupleImage">Couple Image URL</Label>
-                  <Input 
-                    id="coupleImage"
-                    value={aboutForm.coupleImage}
-                    onChange={(e) => setAboutForm({...aboutForm, coupleImage: e.target.value})}
-                  />
-                </div>
+                <FileInput
+                  label="Couple Image"
+                  value={aboutForm.coupleImage}
+                  onChange={(file) => setAboutForm({...aboutForm, coupleImage: file || ''})}
+                  previewKey="coupleImage"
+                />
 
                 <div className="flex justify-end">
                   <Button onClick={handleSaveAbout} disabled={aboutLoading}>
@@ -1062,14 +1240,12 @@ export default function UserDashboard() {
                       onChange={(e) => setInvitationForm({...invitationForm, rsvpLink: e.target.value})}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inviteBackground">Background Image</Label>
-                    <Input 
-                      id="inviteBackground"
-                      value={invitationForm.backgroundImage || ''}
-                      onChange={(e) => setInvitationForm({...invitationForm, backgroundImage: e.target.value})}
-                    />
-                  </div>
+                  <FileInput
+                    label="Background Image"
+                    value={invitationForm.backgroundImage || ''}
+                    onChange={(file) => setInvitationForm({...invitationForm, backgroundImage: file || ''})}
+                    previewKey="inviteBackground"
+                  />
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={handleSaveInvitation} disabled={invitationLoading}>
@@ -1178,18 +1354,16 @@ export default function UserDashboard() {
                       rows={3}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`eventImage${index}`}>Image URL</Label>
-                    <Input 
-                      id={`eventImage${index}`}
-                      value={event.image || ''}
-                      onChange={(e) => {
-                        const newEvents = [...eventsForm];
-                        newEvents[index].image = e.target.value;
-                        setEventsForm(newEvents);
-                      }}
-                    />
-                  </div>
+                  <FileInput
+                    label="Event Image"
+                    value={event.image || ''}
+                    onChange={(file) => {
+                      const newEvents = [...eventsForm];
+                      newEvents[index].image = file || '';
+                      setEventsForm(newEvents);
+                    }}
+                    previewKey={`eventImage${index}`}
+                  />
                 </div>
               ))}
               <div className="flex justify-end">
@@ -1276,18 +1450,16 @@ export default function UserDashboard() {
                         rows={3}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`storyImage${index}`}>Image URL</Label>
-                      <Input 
-                        id={`storyImage${index}`}
-                        value={event.image || ''}
-                        onChange={(e) => {
-                          const newStory = [...loveStoryForm];
-                          newStory[index].image = e.target.value;
-                          setLoveStoryForm(newStory);
-                        }}
-                      />
-                    </div>
+                    <FileInput
+                      label="Timeline Image"
+                      value={event.image || ''}
+                      onChange={(file) => {
+                        const newStory = [...loveStoryForm];
+                        newStory[index].image = file || '';
+                        setLoveStoryForm(newStory);
+                      }}
+                      previewKey={`storyImage${index}`}
+                    />
                   </div>
                 ))}
                 <div className="flex justify-end">
