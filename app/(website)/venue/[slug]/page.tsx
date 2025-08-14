@@ -88,7 +88,7 @@ export default function VenueDetailPage() {
             <div className="bg-card border-b px-4 py-3">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link
-                        href="/venues"
+                        href="/venue"
                         className="flex items-center text-muted-foreground hover:text-foreground"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
