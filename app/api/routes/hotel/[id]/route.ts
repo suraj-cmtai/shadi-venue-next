@@ -1,7 +1,33 @@
 import { NextResponse } from "next/server";
 import { ReplaceImage } from "../../../controller/imageController";
-import HotelService from "../../../services/hotelServices";
+import HotelService, { Currency, HotelStatus } from "../../../services/hotelServices";
 import consoleManager from "../../../utils/consoleManager";
+
+// Helper function to handle file uploads
+async function uploadFiles(files: FormDataEntryValue[], width: number, height: number, oldUrls: string[] = []): Promise<string[]> {
+    const uploadedUrls: string[] = [...oldUrls];
+    
+    if (files && files.length > 0) {
+        const uploadPromises = files.map(async (file) => {
+            if (file instanceof File) {
+                const uploadedUrl = await ReplaceImage(file, oldUrls[0] || '', width, height);
+                if (typeof uploadedUrl === 'string') {
+                    consoleManager.log("Image uploaded successfully:", uploadedUrl);
+                    return uploadedUrl;
+                }
+            }
+            return null;
+        });
+        const newUrls = await Promise.all(uploadPromises);
+        const validUrls = newUrls.filter(Boolean) as string[];
+        if (validUrls.length > 0) {
+            uploadedUrls.length = 0; // Clear old URLs
+            uploadedUrls.push(...validUrls);
+        }
+    }
+    
+    return uploadedUrls;
+}
 
 // Get a specific hotel (GET)
 export async function GET(
@@ -43,6 +69,8 @@ export async function GET(
     }
 }
 
+
+
 // Update a hotel (PUT)
 export async function PUT(
     req: Request,
@@ -52,6 +80,7 @@ export async function PUT(
         const { id } = await params;
         const formData = await req.formData();
         
+        // Basic hotel info
         const name = formData.get("name");
         const category = formData.get("category");
         const description = formData.get("description");
@@ -72,6 +101,41 @@ export async function PUT(
         const checkIn = formData.get("checkIn");
         const checkOut = formData.get("checkOut");
         const cancellation = formData.get("cancellation");
+
+        // Additional fields
+        const firstName = formData.get("firstName");
+        const lastName = formData.get("lastName");
+        const companyName = formData.get("companyName");
+        const venueType = formData.get("venueType");
+        const position = formData.get("position");
+        const websiteLink = formData.get("websiteLink");
+        const offerWeddingPackages = formData.get("offerWeddingPackages");
+        const resortCategory = formData.get("resortCategory");
+        const weddingPackagePrice = formData.get("weddingPackagePrice");
+        const servicesOffered = formData.get("servicesOffered");
+        const maxGuestCapacity = formData.get("maxGuestCapacity");
+        const numberOfRooms = formData.get("numberOfRooms");
+        const venueAvailability = formData.get("venueAvailability");
+        const allInclusivePackages = formData.get("allInclusivePackages");
+        const staffAccommodation = formData.get("staffAccommodation");
+        const diningOptions = formData.get("diningOptions");
+        const otherAmenities = formData.get("otherAmenities");
+        const bookingLeadTime = formData.get("bookingLeadTime");
+        const preferredContactMethod = formData.get("preferredContactMethod");
+        const weddingDepositRequired = formData.get("weddingDepositRequired");
+        const refundPolicy = formData.get("refundPolicy");
+        const referralSource = formData.get("referralSource");
+        const partnershipInterest = formData.get("partnershipInterest");
+        const agreeToTerms = formData.get("agreeToTerms") === "true";
+        const agreeToPrivacy = formData.get("agreeToPrivacy") === "true";
+        const signature = formData.get("signature");
+
+        // Image files
+        const imageFiles = formData.getAll("images");
+        const resortPhotoFiles = formData.getAll("uploadResortPhotos");
+        const marriagePhotoFiles = formData.getAll("uploadMarriagePhotos");
+        const weddingBrochureFiles = formData.getAll("uploadWeddingBrochure");
+        const cancelledChequeFiles = formData.getAll("uploadCancelledCheque");
         const files = formData.getAll("images");
 
         // Validate hotel exists
@@ -84,24 +148,21 @@ export async function PUT(
             }, { status: 404 });
         }
 
-        let imageUrls = existingHotel.images;
-        
-        // Handle image uploads
-        if (files && files.length > 0) {
-            const uploadPromises = files.map(async (file, index) => {
-                if (file instanceof File) {
-                    const existingImage = imageUrls[index];
-                    const uploadedUrl = await ReplaceImage(file, existingImage || "", 1200, 800);
-                    return uploadedUrl as string;
-                }
-                return imageUrls[index];
-            });
-            imageUrls = await Promise.all(uploadPromises);
-            consoleManager.log("Hotel images updated:", imageUrls);
-        }
+        // Handle all image uploads
+        const imageUrls = await uploadFiles(imageFiles, 1200, 800, existingHotel.images);
+        const resortPhotoUrls = await uploadFiles(resortPhotoFiles, 1200, 800, existingHotel.uploadResortPhotos || []);
+        const marriagePhotoUrls = await uploadFiles(marriagePhotoFiles, 1200, 800, existingHotel.uploadMarriagePhotos || []);
+        const weddingBrochureUrls = await uploadFiles(weddingBrochureFiles, 1200, 1600, existingHotel.uploadWeddingBrochure || []);
+        const cancelledChequeUrls = await uploadFiles(cancelledChequeFiles, 1200, 800, existingHotel.uploadCancelledCheque || []);
 
         // Update hotel data
-        const hotelData: any = {};
+        const hotelData: any = {
+            images: imageUrls,
+            uploadResortPhotos: resortPhotoUrls,
+            uploadMarriagePhotos: marriagePhotoUrls,
+            uploadWeddingBrochure: weddingBrochureUrls,
+            uploadCancelledCheque: cancelledChequeUrls
+        };
         if (name) hotelData.name = name.toString();
         if (category) hotelData.category = category.toString();
         if (description) hotelData.description = description.toString();
@@ -187,9 +248,8 @@ export async function DELETE(
     try {
         const { id } = await params;
         
-        // Validate hotel exists
-        const existingHotel = await HotelService.getHotelById(id);
-        if (!existingHotel) {
+        const hotel = await HotelService.getHotelById(id);
+        if (!hotel) {
             return NextResponse.json({
                 statusCode: 404,
                 errorCode: "NOT_FOUND",

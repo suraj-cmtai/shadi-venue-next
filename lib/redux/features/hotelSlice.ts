@@ -4,7 +4,8 @@ import { RootState } from "../store";
 import { getErrorMessage } from "@/lib/utils";
 
 // Define interfaces
-interface Hotel {
+export interface Hotel {
+  // Existing fields
   id: string;
   name: string;
   category: string; // e.g., 'luxury', 'business', 'resort', etc.
@@ -42,7 +43,41 @@ interface Hotel {
   };
   createdAt: string;
   updatedAt: string;
+
+  // New form fields
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  venueType?: string;
+  position?: string;
+  websiteLink?: string;
+  offerWeddingPackages?: 'Yes' | 'No';
+  resortCategory?: string;
+  weddingPackagePrice?: string;
+  servicesOffered?: string[];
+  maxGuestCapacity?: string;
+  numberOfRooms?: string;
+  venueAvailability?: string;
+  allInclusivePackages?: ('Yes' | 'No' | 'Partially')[];
+  staffAccommodation?: ('Yes' | 'No' | 'Limited')[];
+  diningOptions?: string[];
+  otherAmenities?: string[];
+  bookingLeadTime?: string;
+  preferredContactMethod?: string[];
+  weddingDepositRequired?: string;
+  refundPolicy?: string;
+  referralSource?: string;
+  partnershipInterest?: string;
+  uploadResortPhotos?: string[];
+  uploadMarriagePhotos?: string[];
+  uploadWeddingBrochure?: string[];
+  uploadCancelledCheque?: string[];
+  agreeToTerms?: boolean;
+  agreeToPrivacy?: boolean;
+  signature?: string;
 }
+
+
 
 interface HotelState {
   hotels: Hotel[];

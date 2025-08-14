@@ -45,6 +45,38 @@ export interface Hotel {
     };
     createdAt: string;
     updatedAt: string;
+
+    // Additional fields
+    firstName?: string;
+    lastName?: string;
+    companyName?: string;
+    venueType?: string;
+    position?: string;
+    websiteLink?: string;
+    offerWeddingPackages?: 'Yes' | 'No';
+    resortCategory?: string;
+    weddingPackagePrice?: string;
+    servicesOffered?: string[];
+    maxGuestCapacity?: string;
+    numberOfRooms?: string;
+    venueAvailability?: string;
+    allInclusivePackages?: ('Yes' | 'No' | 'Partially')[];
+    staffAccommodation?: ('Yes' | 'No' | 'Limited')[];
+    diningOptions?: string[];
+    otherAmenities?: string[];
+    bookingLeadTime?: string;
+    preferredContactMethod?: string[];
+    weddingDepositRequired?: string;
+    refundPolicy?: string;
+    referralSource?: string;
+    partnershipInterest?: string;
+    uploadResortPhotos?: string[];
+    uploadMarriagePhotos?: string[];
+    uploadWeddingBrochure?: string[];
+    uploadCancelledCheque?: string[];
+    agreeToTerms?: boolean;
+    agreeToPrivacy?: boolean;
+    signature?: string;
 }
 
 class HotelService {
@@ -118,6 +150,38 @@ class HotelService {
             },
             createdAt: this.convertTimestamp(data.createdAt),
             updatedAt: this.convertTimestamp(data.updatedAt),
+
+            // Additional fields
+            firstName: data.firstName,
+            lastName: data.lastName,
+            companyName: data.companyName,
+            venueType: data.venueType,
+            position: data.position,
+            websiteLink: data.websiteLink,
+            offerWeddingPackages: data.offerWeddingPackages,
+            resortCategory: data.resortCategory,
+            weddingPackagePrice: data.weddingPackagePrice,
+            servicesOffered: data.servicesOffered || [],
+            maxGuestCapacity: data.maxGuestCapacity,
+            numberOfRooms: data.numberOfRooms,
+            venueAvailability: data.venueAvailability,
+            allInclusivePackages: data.allInclusivePackages || [],
+            staffAccommodation: data.staffAccommodation || [],
+            diningOptions: data.diningOptions || [],
+            otherAmenities: data.otherAmenities || [],
+            bookingLeadTime: data.bookingLeadTime,
+            preferredContactMethod: data.preferredContactMethod || [],
+            weddingDepositRequired: data.weddingDepositRequired,
+            refundPolicy: data.refundPolicy,
+            referralSource: data.referralSource,
+            partnershipInterest: data.partnershipInterest,
+            uploadResortPhotos: data.uploadResortPhotos || [],
+            uploadMarriagePhotos: data.uploadMarriagePhotos || [],
+            uploadWeddingBrochure: data.uploadWeddingBrochure || [],
+            uploadCancelledCheque: data.uploadCancelledCheque || [],
+            agreeToTerms: data.agreeToTerms || false,
+            agreeToPrivacy: data.agreeToPrivacy || false,
+            signature: data.signature,
         };
     }
 
