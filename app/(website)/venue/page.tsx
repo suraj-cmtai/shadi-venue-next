@@ -3,7 +3,7 @@
 import Hero from './Hero';
 import { useRouter } from "next/navigation";
 import { VenueFilters } from "./venueFilter";
-import { CitySelector } from "./citySelector";
+// import { CitySelector } from "./citySelector";
 import { VenueSearch } from "./venueSearch";
 import { VenueCard } from "./venueCard";
 import { useState } from "react";
@@ -75,14 +75,14 @@ const VenuePage = () => {
                 </section>
 
                 {/* City Selector */}
-                <section className="bg-background">
+                {/* <section className="bg-background">
                     <div className="max-w-7xl mx-auto px-4">
                         <CitySelector
                             selectedCity={selectedCity}
                             onCityChange={setSelectedCity}
                         />
                     </div>
-                </section>
+                </section> */}
 
                 {/* Search and Controls */}
                 <VenueSearch
