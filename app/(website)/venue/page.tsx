@@ -7,50 +7,116 @@ import { VenueFilters } from "./venueFilter";
 import { VenueSearch } from "./venueSearch";
 import { VenueCard } from "./venueCard";
 import { useState } from "react";
+import type { Hotel } from "@/lib/redux/features/hotelSlice";
 
 
-// Mock venue data
-const venues = [
+const venues: Hotel[] = [
     {
         id: "1",
         name: "Opulence by Bhullar Resorts",
-        location: "Zirakpur, Zirakpur",
-        city: "Delhi NCR",
+        category: "Banquet Hall",
+        location: {
+            address: "Zirakpur, Zirakpur",
+            city: "Delhi NCR",
+            state: "Delhi",
+            country: "India",
+            zipCode: "110001",
+        },
+        priceRange: {
+            startingPrice: 2000,
+            currency: "INR",
+        },
         rating: 4.8,
-        reviewCount: 19,
+        status: "active",
+        description: "A premium wedding venue with spacious lawns and banquet hall.",
+        amenities: ["WiFi", "Parking", "Air Conditioning"],
+        rooms: [
+            { type: "Deluxe", capacity: 2, pricePerNight: 5000, available: 10 },
+            { type: "Suite", capacity: 4, pricePerNight: 12000, available: 3 },
+        ],
         images: ["/placeholder.svg", "/placeholder.svg"],
-        venueTypes: ["Banquet Halls", "Marriage Garden / Lawns"],
-        capacity: "50-300 guests",
-        priceRange: "₹2,000 - ₹3,500",
-        isHandpicked: true
+        contactInfo: {
+            phone: "+91 99999 99999",
+            email: "info@opulence.com",
+            website: "https://opulence.com",
+        },
+        policies: {
+            checkIn: "12:00 PM",
+            checkOut: "11:00 AM",
+            cancellation: "Free cancellation up to 48 hours before check-in.",
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+
+        // New form fields
+        firstName: "John",
+        lastName: "Doe",
+        companyName: "Opulence Resorts Pvt. Ltd.",
+        venueType: "Banquet Hall",
+        position: "Manager",
+        websiteLink: "https://opulence.com",
+        offerWeddingPackages: "Yes",
+        resortCategory: "Luxury",
+        weddingPackagePrice: "₹5,00,000",
+        servicesOffered: ["Catering", "Decoration", "Music", "Photography"],
+        maxGuestCapacity: "300",
+        numberOfRooms: "25",
+        venueAvailability: "Available Year Round",
+        allInclusivePackages: ["Yes"],
+        staffAccommodation: ["Limited"],
+        diningOptions: ["Buffet", "A la Carte"],
+        otherAmenities: ["Swimming Pool", "Spa"],
+        bookingLeadTime: "3 months",
+        preferredContactMethod: ["Email", "Phone"],
+        weddingDepositRequired: "₹50,000",
+        refundPolicy: "Refundable up to 1 month before event",
+        referralSource: "Social Media",
+        partnershipInterest: "Yes",
+        uploadResortPhotos: ["/photos/resort1.jpg", "/photos/resort2.jpg"],
+        uploadMarriagePhotos: ["/photos/marriage1.jpg"],
+        uploadWeddingBrochure: ["/docs/brochure.pdf"],
+        uploadCancelledCheque: ["/docs/cheque.jpg"],
+        agreeToTerms: true,
+        agreeToPrivacy: true,
+        signature: "John Doe",
     },
     {
         id: "2",
         name: "GITAI Lawns / Banquet Halls",
-        location: "Lohegaon, Pune",
-        city: "Pune",
+        category: "Banquet Hall",
+        location: {
+            address: "Pune, Maharashtra",
+            city: "Pune",
+            state: "Maharashtra",
+            country: "India",
+            zipCode: "411001",
+        },
+        priceRange: {
+            startingPrice: 1800,
+            currency: "INR",
+        },
         rating: 4.9,
-        reviewCount: 13,
+        status: "active",
+        description: "A spacious venue perfect for weddings and receptions.",
+        amenities: ["WiFi", "Parking", "Air Conditioning"],
+        rooms: [{ type: "Luxury Suite", capacity: 2, pricePerNight: 6000, available: 5 }],
         images: ["/placeholder.svg", "/placeholder.svg"],
-        venueTypes: ["Banquet Halls", "Marriage Garden / Lawns"],
-        capacity: "100-500 guests",
-        priceRange: "₹1,500 - ₹2,800",
-        isHandpicked: true
-    },
-    {
-        id: "3",
-        name: "Holiday Inn Jaipur City Centre",
-        location: "Shivaji Nagar, Jaipur",
-        city: "Jaipur",
-        rating: 4.6,
-        reviewCount: 15,
-        images: ["/placeholder.svg", "/placeholder.svg"],
-        venueTypes: ["4 Star & Above Wedding Hotels"],
-        capacity: "75-400 guests",
-        priceRange: "₹2,500 - ₹4,000",
-        isHandpicked: false
+        contactInfo: {
+            phone: "+91 88888 88888",
+            email: "info@gitai.com",
+            website: "https://gitai.com",
+        },
+        policies: {
+            checkIn: "1:00 PM",
+            checkOut: "12:00 PM",
+            cancellation: "Free cancellation up to 72 hours before check-in.",
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
     }
 ];
+
+
 
 const VenuePage = () => {
     const router = useRouter();
@@ -117,7 +183,7 @@ const VenuePage = () => {
                     </div>
                 </main>
             </div>
-     
+
         </section>
     );
 };
@@ -125,6 +191,6 @@ const VenuePage = () => {
 export default VenuePage;
 
 
- 
+
 
 
