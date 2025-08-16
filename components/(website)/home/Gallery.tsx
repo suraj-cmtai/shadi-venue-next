@@ -9,22 +9,19 @@
  */
 
 import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import type { AppDispatch } from "@/lib/redux/store";
+import {
+  fetchActiveGallery,
+  selectActiveGalleryList,
+  selectIsLoading,
+  selectError,
+} from "@/lib/redux/features/gallerySlice";
 
-const galleryImages = [
-  "/images/gallery-image-1.png",
-  "/images/gallery-image-2.png",
-  "/images/gallery-image-3.png",
-  "/images/gallery-image-4.png",
-  "/images/gallery-image-5.png",
-  "/images/gallery-image-6.png",
-  "/images/gallery-image-7.png",
-  "/images/gallery-image-8.png",
-  "/images/gallery-image-9.png",
-  "/images/gallery-image-10.png",
-  "/images/gallery-image-11.png",
-  "/images/gallery-image-12.png",
-];
-
+/**
+ * Figma asset constants
+ */
 const imgEllipseTop = "/images/gallery-ellipse-vector-1.svg";
 const imgEllipseBottom = "/images/gallery-ellipse-vector-2.svg";
 const imgVector08 = "/images/gallery-flower-top-right-vector-.svg";
@@ -36,6 +33,15 @@ const imgVector08 = "/images/gallery-flower-top-right-vector-.svg";
  * - Fully accessible and responsive.
  */
 export default function Gallery() {
+  const dispatch = useDispatch<AppDispatch>();
+  const galleryImages = useSelector(selectActiveGalleryList);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+
+  useEffect(() => {
+    dispatch(fetchActiveGallery());
+  }, [dispatch]);
+
   return (
     <section
       className="relative w-full py-8 md:py-16 bg-white overflow-hidden"
@@ -105,16 +111,34 @@ export default function Gallery() {
                 msOverflowStyle: "none",
               }}
             >
-              {galleryImages.map((src, idx) => (
-                <motion.div
-                  key={src}
-                  className="shrink-0 rounded-xs bg-center bg-cover bg-no-repeat aspect-[3/4] w-40 md:w-72 lg:w-80 xl:w-96 h-60 md:h-96"
-                  style={{ backgroundImage: `url('${src}')` }}
-                  whileHover={{ scale: 1.03 }}
-                  tabIndex={0}
-                  aria-label={`Gallery image ${idx + 1}`}
-                />
-              ))}
+              {isLoading ? (
+                <div className="w-full flex justify-center items-center min-h-32 text-gray-400 text-lg">
+                  Loading gallery...
+                </div>
+              ) : error ? (
+                <div className="w-full flex justify-center items-center min-h-32 text-red-500 text-lg">
+                  {error}
+                </div>
+              ) : galleryImages && galleryImages.length > 0 ? (
+                galleryImages.map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    className="shrink-0 rounded-xs bg-center bg-cover bg-no-repeat aspect-[3/4] w-40 md:w-72 lg:w-80 xl:w-96 h-60 md:h-96"
+                    style={{ backgroundImage: `url('${item.image}')` }}
+                    whileHover={{ scale: 1.03 }}
+                    tabIndex={0}
+                    aria-label={item.title ? `Gallery image: ${item.title}` : `Gallery image ${idx + 1}`}
+                  >
+                    <span className="sr-only">
+                      {item.title || `Gallery image ${idx + 1}`}
+                    </span>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="w-full flex justify-center items-center min-h-32 text-gray-400 text-lg">
+                  No gallery images found.
+                </div>
+              )}
             </div>
             {/* No border overlay */}
           </div>

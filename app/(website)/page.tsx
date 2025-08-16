@@ -21,14 +21,14 @@ const HomePage = () => {
    <HeroExtension />
    <AllLogos />
    <About />
-   <Venue />
+   {/* <Venue /> */}
    <VideoSection />
    <Hotels />
    <Award />
    <Wedding />
    <Gallery />
-   <Testimonials />
    <Blog />
+   <Testimonials />
    <GetInTouch />
    <Offer />
    </>

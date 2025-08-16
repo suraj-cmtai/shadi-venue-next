@@ -1,43 +1,36 @@
 "use client";
 
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
-import BookAnAppointmentButton from "@/components/ui/BookAnAppointmentButton";
+import Link from "next/link";
 import GradientButton from "@/components/GradientButton";
+import {
+  fetchPublishedBlogs,
+  selectPublishedBlogs,
+  selectBlogLoading,
+  selectBlogError,
+} from "@/lib/redux/features/blogSlice";
+import type { AppDispatch } from "@/lib/redux/store";
 
 // Figma MCP asset URLs
-const IMAGES_IMG = "/images/blog-image-1.png";
-const IMAGES1_IMG = "/images/blog-image-2.png";
-const IMAGES2_IMG = "/images/blog-image-3.png";
-
 const VECTOR3_IMG = "/images/blog-decorative-vector-left.svg";
 const VECTOR4_IMG = "/images/blog-decorative-vector-right.svg";
 const VECTOR07_IMG = "/images/blog-flower-shadow-vector-top-left.svg";
-const VECTOR_IMG = "/images/blog-arrow.svg"; // Ensure this is defined for arrow icons
-const VECTOR1_IMG = "/images/blog-arrow-1.svg";
-const VECTOR2_IMG = "/images/blog-arrow-2.svg";
-
-const BLOG_POSTS = [
-  {
-    id: 1,
-    image: IMAGES2_IMG,
-    title: "Wedding Fashion & Style",
-    buttonStyle: "outline"
-  },
-  {
-    id: 2,
-    image: IMAGES1_IMG,
-    title: "2025 Wedding Trends",
-    buttonStyle: "filled"
-  },
-  {
-    id: 3,
-    image: IMAGES_IMG,
-    title: "Local Vendor & Venue Guides",
-    buttonStyle: "outline"
-  }
-];
 
 export default function Blog() {
+  const dispatch = useDispatch<AppDispatch>();
+  const blogs = useSelector(selectPublishedBlogs);
+  const isLoading = useSelector(selectBlogLoading);
+  const error = useSelector(selectBlogError);
+
+  useEffect(() => {
+    dispatch(fetchPublishedBlogs());
+  }, [dispatch]);
+
+  // Only show first 4 published blogs
+  const displayedBlogs = blogs?.slice(0, 4) || [];
+
   return (
     <div className="relative w-full bg-white">
       {/* Decorative Top Left Flower */}
@@ -81,38 +74,60 @@ export default function Blog() {
 
         {/* Blog Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {BLOG_POSTS.map((post, index) => (
-            <motion.div
-              key={post.id}
-              className="relative group"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-            >
-              {/* Card */}
-              <div className="relative h-80 md:h-[400px] rounded-xs overflow-hidden shadow-lg">
-                {/* Background Image */}
-                <div
-                  className="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105"
-                  style={{ backgroundImage: `url('${post.image}')` }}
-                />
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/5 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300" />
-                {/* Border */}
-                <div className="absolute inset-4 border-2 border-white rounded-xs pointer-events-none" />
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
-                  {/* Title */}
-                  <h3 className="font-cormorant font-bold text-center text-xl md:text-xl text-white uppercase mb-4 drop-shadow">
-                    {post.title}
-                  </h3>
-                  {/* CTA Button and Arrow */}
-                 <GradientButton>Get Inspired</GradientButton> 
+          {isLoading ? (
+            <div className="col-span-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">Loading blogs...</span>
+            </div>
+          ) : error ? (
+            <div className="col-span-full flex justify-center items-center min-h-32">
+              <span className="text-red-500 font-cormorant text-lg">{error}</span>
+            </div>
+          ) : displayedBlogs.length === 0 ? (
+            <div className="col-span-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-400 font-cormorant text-lg">No blog posts found.</span>
+            </div>
+          ) : (
+            displayedBlogs.map((post, index) => (
+              <motion.div
+                key={post.id}
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+              >
+                {/* Card */}
+                <div className="relative h-80 md:h-[400px] rounded-xs overflow-hidden shadow-lg">
+                  {/* Background Image */}
+                  <div
+                    className="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105"
+                    style={{
+                      backgroundImage: post.image
+                        ? `url('${post.image}')`
+                        : "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+                    }}
+                  />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/5 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300" />
+                  {/* Border */}
+                  <div className="absolute inset-4 border-2 border-white rounded-xs pointer-events-none" />
+                  {/* Content */}
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
+                    {/* Title */}
+                    <h3 className="font-cormorant font-bold text-center text-xl md:text-xl text-white uppercase mb-4 drop-shadow">
+                      {post.title}
+                    </h3>
+                    {/* CTA Button */}
+                    <Link href={`/blogs/${post.slug}`} tabIndex={-1} aria-label={`Read blog: ${post.title}`}>
+                      <GradientButton>
+                        Get Inspired
+                      </GradientButton>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))
+          )}
         </div>
 
         {/* View All Button */}
@@ -123,9 +138,11 @@ export default function Blog() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <GradientButton>
-            View All Blog Posts
-          </GradientButton>
+          <Link href="/blogs" aria-label="View all blog posts">
+            <GradientButton>
+              View All Blog Posts
+            </GradientButton>
+          </Link>
         </motion.div>
       </div>
     </div>
