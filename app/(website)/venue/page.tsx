@@ -26,10 +26,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
 
+/**
+ * VenuePage displays a list of wedding venues with filters and search.
+ * On first load, it fetches the data using fetchActiveHotels.
+ */
 const VenuePage = () => {
     const router = useRouter();
     const dispatch = useAppDispatch();
-    
+
     // Redux state
     const filteredVenues = useAppSelector(selectFilteredHotels);
     const loading = useAppSelector(selectHotelLoading);
@@ -37,16 +41,15 @@ const VenuePage = () => {
     const searchQuery = useAppSelector(selectSearchQuery);
     const filters = useAppSelector(selectFilters);
     const hasFetched = useAppSelector(selectHotelHasFetched);
-    
+
     // Local state
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
-    // Fetch venues on component mount
+    // Fetch venues on first load (always fetch on mount)
     useEffect(() => {
-        if (!hasFetched) {
-            dispatch(fetchActiveHotels());
-        }
-    }, [dispatch, hasFetched]);
+        dispatch(fetchActiveHotels());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dispatch]);
 
     // Handle search changes
     const handleSearchChange = (query: string) => {
@@ -71,8 +74,8 @@ const VenuePage = () => {
 
     // Loading skeleton component
     const LoadingSkeleton = () => (
-        <div className={`grid gap-6 ${viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+        <div className={`grid gap-6 ${viewMode === 'grid'
+            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
             : 'grid-cols-1'
         }`}>
             {[...Array(6)].map((_, index) => (
@@ -110,10 +113,10 @@ const VenuePage = () => {
                 <p className="text-muted-foreground mb-4">
                     Try adjusting your search criteria or filters
                 </p>
-                <Button 
+                <Button
                     onClick={() => {
                         dispatch(clearFilters());
-                    }} 
+                    }}
                     variant="outline"
                 >
                     Clear Filters
@@ -151,8 +154,8 @@ const VenuePage = () => {
                         {!loading && !error && (
                             <p className="text-muted-foreground">
                                 Showing {filteredVenues.length} results
-                                {(searchQuery || Object.values(filters).some(v => v && v !== '' && !Array.isArray(v) || (Array.isArray(v) && v.length > 0))) 
-                                    ? " as per your search criteria" 
+                                {(searchQuery || Object.values(filters).some(v => v && v !== '' && !Array.isArray(v) || (Array.isArray(v) && v.length > 0)))
+                                    ? " as per your search criteria"
                                     : ""
                                 }
                             </p>
