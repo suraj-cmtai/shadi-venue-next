@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/lib/redux/store";
-import {
+import { AppDispatch } from '@/lib/redux/store';
+import { 
+  selectHotels, 
+  selectHotelLoading, 
+  selectHotelError,
   fetchHotels,
   createHotel,
   updateHotel,
   deleteHotel,
-  selectHotels,
-  selectHotelLoading,
-  selectHotelError,
-  Hotel,
-} from "@/lib/redux/features/hotelSlice";
+  type Hotel
+} from '@/lib/redux/features/hotelSlice';
+import { type Currency } from '@/app/api/services/hotelServices';
+import { uploadImageClient, uploadPDFClient } from '@/lib/firebase-client';
+import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +50,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
   Loader2,
@@ -63,7 +65,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-import { uploadImageClient, uploadPDFClient } from "@/lib/firebase-client";
+
 
 // Helper: Upload a single file and return its URL
 async function uploadFile(file: File): Promise<string> {
@@ -77,6 +79,16 @@ async function uploadFile(file: File): Promise<string> {
     }
   } catch (error: any) {
     throw new Error(`Failed to upload file: ${error.message}`);
+  }
+}
+
+// Helper: Upload multiple files and return their URLs
+async function uploadFiles(files: File[]): Promise<string[]> {
+  try {
+    const uploadPromises = files.map(file => uploadFile(file));
+    return await Promise.all(uploadPromises);
+  } catch (error: any) {
+    throw new Error(`Failed to upload files: ${error.message}`);
   }
 }
 
@@ -106,7 +118,6 @@ interface HotelFormState {
   }[];
   images: string[];
   imageFiles: File[];
-  removeImages: boolean;
   contactInfo: {
     phone: string;
     email: string;
@@ -118,7 +129,7 @@ interface HotelFormState {
     cancellation: string;
   };
 
-  // New form fields matching the slice
+  // Additional form fields
   firstName: string;
   lastName: string;
   companyName: string;
@@ -157,61 +168,60 @@ interface HotelFormState {
 
 const initialFormState: HotelFormState = {
   name: "",
-  category: "",
+  category: "Resort",
   location: {
     address: "",
     city: "",
     state: "",
-    country: "",
+    country: "India",
     zipCode: "",
   },
   priceRange: {
-    startingPrice: 0,
-    currency: "USD",
+    startingPrice: 5000,
+    currency: "INR",
   },
-  rating: 0,
+  rating: 4.0,
   status: "draft",
   description: "",
-  amenities: "",
+  amenities: "WiFi, Pool, Restaurant, Parking",
   rooms: [],
   images: [],
   imageFiles: [],
-  removeImages: false,
   contactInfo: {
     phone: "",
     email: "",
     website: "",
   },
   policies: {
-    checkIn: "",
-    checkOut: "",
-    cancellation: "",
+    checkIn: "14:00",
+    checkOut: "11:00",
+    cancellation: "Free cancellation up to 24 hours before check-in",
   },
 
-  // New fields
+  // Additional fields with defaults
   firstName: "",
   lastName: "",
   companyName: "",
-  venueType: "",
-  position: "",
+  venueType: "Hotel Resort",
+  position: "Manager",
   websiteLink: "",
-  offerWeddingPackages: "No",
-  resortCategory: "",
-  weddingPackagePrice: "",
-  servicesOffered: "",
-  maxGuestCapacity: "",
-  numberOfRooms: "",
-  venueAvailability: "",
-  allInclusivePackages: "",
-  staffAccommodation: "",
-  diningOptions: "",
-  otherAmenities: "",
-  bookingLeadTime: "",
-  preferredContactMethod: "",
-  weddingDepositRequired: "",
-  refundPolicy: "",
-  referralSource: "",
-  partnershipInterest: "",
+  offerWeddingPackages: "Yes",
+  resortCategory: "Luxury",
+  weddingPackagePrice: "50000",
+  servicesOffered: "Wedding Planning, Catering, Photography",
+  maxGuestCapacity: "200",
+  numberOfRooms: "50",
+  venueAvailability: "Year Round",
+  allInclusivePackages: "Yes",
+  staffAccommodation: "Available",
+  diningOptions: "Multi-cuisine Restaurant, Bar, Room Service",
+  otherAmenities: "Spa, Gym, Conference Hall",
+  bookingLeadTime: "30 days",
+  preferredContactMethod: "Email",
+  weddingDepositRequired: "30%",
+  refundPolicy: "Full refund if cancelled 30 days prior",
+  referralSource: "Website",
+  partnershipInterest: "High",
 
   // File uploads
   uploadResortPhotos: [],
@@ -232,15 +242,13 @@ const statusColors: Record<Hotel["status"], string> = {
 };
 
 // Define valid sort keys type
-type SortKey = 'name' | 'category' | 'rating' | 'status' | 'createdAt' | 'updatedAt' | 'city' | 'country' | 'startingPrice' | 'currency';
+  type SortKey = 'name' | 'category' | 'rating' | 'status' | 'createdAt' | 'updatedAt' | 'city' | 'country' | 'startingPrice' | 'currency';
 
 export default function HotelDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const hotels = useSelector(selectHotels);
   const isLoading = useSelector(selectHotelLoading);
-  const error = useSelector(selectHotelError);
-
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const error = useSelector(selectHotelError);  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -281,31 +289,37 @@ export default function HotelDashboard() {
   }, [editHotelForm?.imageFiles, editHotelForm?.images]);
 
   const filteredAndSortedHotels = useMemo(() => {
+    // Ensure hotels is an array and has items
+    if (!Array.isArray(hotels)) {
+      console.warn('hotels is not an array:', hotels);
+      return [];
+    }
+
     let result = hotels.filter(
       (hotel) =>
-        hotel.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location?.country?.toLowerCase().includes(searchQuery.toLowerCase())
+        (hotel?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (hotel?.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (hotel?.location?.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (hotel?.location?.country || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     result.sort((a, b) => {
       let aValue: string | number | undefined;
       let bValue: string | number | undefined;
 
-      // Handle nested fields
+      // Handle nested fields with safe access
       if (sortBy === "city") {
-        aValue = a.location.city;
-        bValue = b.location.city;
+        aValue = a.location?.city || "";
+        bValue = b.location?.city || "";
       } else if (sortBy === "country") {
-        aValue = a.location.country;
-        bValue = b.location.country;
+        aValue = a.location?.country || "";
+        bValue = b.location?.country || "";
       } else if (sortBy === "startingPrice") {
-        aValue = a.priceRange.startingPrice;
-        bValue = b.priceRange.startingPrice;
+        aValue = a.priceRange?.startingPrice || 0;
+        bValue = b.priceRange?.startingPrice || 0;
       } else if (sortBy === "currency") {
-        aValue = a.priceRange.currency;
-        bValue = b.priceRange.currency;
+        aValue = a.priceRange?.currency || "INR";
+        bValue = b.priceRange?.currency || "INR";
       } else {
         aValue = (a as any)[sortBy];
         bValue = (b as any)[sortBy];
@@ -358,33 +372,122 @@ export default function HotelDashboard() {
     setSelectedHotelId(null);
   };
 
-  // Upload all files and return their URLs
-  async function uploadAllFiles(form: HotelFormState) {
-    const uploadFiles = async (files: File[]) => {
-      if (!files || files.length === 0) return [];
-      return await Promise.all(files.map(uploadFile));
-    };
+  // Create request data with uploaded file URLs
+  // Updated createRequestData function for your hotel dashboard
+const createRequestData = async (form: HotelFormState) => {
+  try {
+    // Upload all files first
     const [
-      hotelImages,
-      resortPhotos,
-      marriagePhotos,
-      weddingBrochure,
-      cancelledCheque,
+      imageUrls,
+      resortPhotoUrls,
+      marriagePhotoUrls,
+      weddingBrochureUrls,
+      cancelledChequeUrls
     ] = await Promise.all([
       uploadFiles(form.imageFiles),
       uploadFiles(form.uploadResortPhotos),
       uploadFiles(form.uploadMarriagePhotos),
       uploadFiles(form.uploadWeddingBrochure),
-      uploadFiles(form.uploadCancelledCheque),
+      uploadFiles(form.uploadCancelledCheque)
     ]);
-    return {
-      hotelImages,
-      resortPhotos,
-      marriagePhotos,
-      weddingBrochure,
-      cancelledCheque,
-    };
+
+    // Create FormData object
+    const formData = new FormData();
+    
+    // Basic hotel information
+    formData.append('name', form.name);
+    formData.append('category', form.category);
+    formData.append('description', form.description);
+    formData.append('rating', form.rating.toString());
+    formData.append('status', form.status);
+    formData.append('amenities', form.amenities);
+    
+    // Location - use nested field names to match API expectation
+    formData.append('location[address]', form.location.address);
+    formData.append('location[city]', form.location.city);
+    formData.append('location[state]', form.location.state);
+    formData.append('location[country]', form.location.country);
+    formData.append('location[zipCode]', form.location.zipCode);
+    
+    // Price Range - use nested field names
+    formData.append('priceRange[startingPrice]', form.priceRange.startingPrice.toString());
+    formData.append('priceRange[currency]', form.priceRange.currency);
+    
+    // Contact Info - use nested field names
+    formData.append('contactInfo[phone]', form.contactInfo.phone);
+    formData.append('contactInfo[email]', form.contactInfo.email);
+    formData.append('contactInfo[website]', form.contactInfo.website || "");
+    
+    // Policies - use nested field names
+    formData.append('policies[checkIn]', form.policies.checkIn);
+    formData.append('policies[checkOut]', form.policies.checkOut);
+    formData.append('policies[cancellation]', form.policies.cancellation);
+    
+    // Additional fields - Personal/Business Information
+    formData.append('firstName', form.firstName);
+    formData.append('lastName', form.lastName);
+    formData.append('companyName', form.companyName);
+    formData.append('venueType', form.venueType);
+    formData.append('position', form.position);
+    formData.append('websiteLink', form.websiteLink);
+    
+    // Wedding and Venue Information
+    formData.append('offerWeddingPackages', form.offerWeddingPackages);
+    formData.append('resortCategory', form.resortCategory);
+    formData.append('weddingPackagePrice', form.weddingPackagePrice);
+    formData.append('maxGuestCapacity', form.maxGuestCapacity);
+    formData.append('numberOfRooms', form.numberOfRooms);
+    formData.append('venueAvailability', form.venueAvailability);
+    
+    // Services and Amenities
+    formData.append('servicesOffered', form.servicesOffered);
+    formData.append('allInclusivePackages', form.allInclusivePackages);
+    formData.append('staffAccommodation', form.staffAccommodation);
+    formData.append('diningOptions', form.diningOptions);
+    formData.append('otherAmenities', form.otherAmenities);
+    
+    // Business and Booking Information
+    formData.append('bookingLeadTime', form.bookingLeadTime);
+    formData.append('preferredContactMethod', form.preferredContactMethod);
+    formData.append('weddingDepositRequired', form.weddingDepositRequired);
+    formData.append('refundPolicy', form.refundPolicy);
+    formData.append('referralSource', form.referralSource);
+    formData.append('partnershipInterest', form.partnershipInterest);
+    
+    // Legal and Agreement Fields
+    formData.append('agreeToTerms', form.agreeToTerms.toString());
+    formData.append('agreeToPrivacy', form.agreeToPrivacy.toString());
+    formData.append('signature', form.signature);
+    
+    // Rooms as JSON string
+    formData.append('rooms', JSON.stringify(form.rooms));
+
+    // File URLs - append as indexed arrays
+    imageUrls.forEach((url, index) => {
+      formData.append(`images[${index}]`, url);
+    });
+    
+    resortPhotoUrls.forEach((url, index) => {
+      formData.append(`uploadResortPhotos[${index}]`, url);
+    });
+    
+    marriagePhotoUrls.forEach((url, index) => {
+      formData.append(`uploadMarriagePhotos[${index}]`, url);
+    });
+    
+    weddingBrochureUrls.forEach((url, index) => {
+      formData.append(`uploadWeddingBrochure[${index}]`, url);
+    });
+    
+    cancelledChequeUrls.forEach((url, index) => {
+      formData.append(`uploadCancelledCheque[${index}]`, url);
+    });
+
+    return formData;
+  } catch (error: any) {
+    throw new Error(`Failed to prepare request data: ${error.message}`);
   }
+};
 
   const handleCreate = async () => {
     if (isSubmitting) return;
@@ -418,31 +521,9 @@ export default function HotelDashboard() {
     setIsSubmitting(true);
 
     try {
-      const {
-        hotelImages,
-        resortPhotos,
-        marriagePhotos,
-        weddingBrochure,
-        cancelledCheque,
-      } = await uploadAllFiles(newHotelForm);
-
-      const formData: any = {
-        ...newHotelForm,
-        images: hotelImages,
-        uploadResortPhotos: resortPhotos,
-        uploadMarriagePhotos: marriagePhotos,
-        uploadWeddingBrochure: weddingBrochure,
-        uploadCancelledCheque: cancelledCheque,
-        amenities: newHotelForm.amenities
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      };
-
-      delete formData.imageFiles;
-      delete formData.removeImages;
-
-      await dispatch(createHotel(formData)).unwrap();
+      toast.loading("Uploading files and creating hotel...");
+      const data = await createRequestData(newHotelForm);
+      await dispatch(createHotel(data)).unwrap();
       resetCreateForm();
       setIsCreateDialogOpen(false);
       toast.success("Hotel created successfully!");
@@ -485,31 +566,9 @@ export default function HotelDashboard() {
     setIsSubmitting(true);
 
     try {
-      const {
-        hotelImages,
-        resortPhotos,
-        marriagePhotos,
-        weddingBrochure,
-        cancelledCheque,
-      } = await uploadAllFiles(editHotelForm);
-
-      const formData: any = {
-        ...editHotelForm,
-        images: hotelImages,
-        uploadResortPhotos: resortPhotos,
-        uploadMarriagePhotos: marriagePhotos,
-        uploadWeddingBrochure: weddingBrochure,
-        uploadCancelledCheque: cancelledCheque,
-        amenities: editHotelForm.amenities
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      };
-
-      delete formData.imageFiles;
-      delete formData.removeImages;
-
-      await dispatch(updateHotel({ id: selectedHotelId, data: formData })).unwrap();
+      toast.loading("Uploading files and updating hotel...");
+      const data = await createRequestData(editHotelForm);
+      await dispatch(updateHotel({ id: selectedHotelId, data })).unwrap();
       setIsEditDialogOpen(false);
       resetEditForm();
       toast.success("Hotel updated successfully!");
@@ -540,10 +599,12 @@ export default function HotelDashboard() {
   const handleQuickStatusUpdate = async (hotelId: string, newStatus: Hotel["status"]) => {
     try {
       setIsSubmitting(true);
-      const hotel = hotels.find(h => h.id === hotelId);
+      const hotel = hotels.find((h: Hotel) => h.id === hotelId);
       if (!hotel) return;
-
-      const formData: any = { status: newStatus };
+      
+      const formData = new FormData();
+      formData.append('status', newStatus);
+      
       await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
       toast.success(`Hotel status updated to ${newStatus}`);
     } catch (error: any) {
@@ -593,7 +654,6 @@ export default function HotelDashboard() {
         ...prev,
         imageFiles: files,
         images: objectUrls,
-        removeImages: false,
       }));
     } else {
       setFormState((prev: HotelFormState) => ({
@@ -955,12 +1015,75 @@ export default function HotelDashboard() {
                 }}
               />
             </div>
+            <div className="space-y-2">
+              <Label>Wedding Brochure</Label>
+              <Input
+                type="file"
+                multiple
+                accept="application/pdf,image/*"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  setForm((prev) => ({ ...prev, uploadWeddingBrochure: files }));
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Cancelled Cheque</Label>
+              <Input
+                type="file"
+                multiple
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  setForm((prev) => ({ ...prev, uploadCancelledCheque: files }));
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Services and Amenities */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Services and Amenities</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Services Offered</Label>
+              <Textarea
+                value={form.servicesOffered}
+                onChange={(e) => setForm((prev) => ({ ...prev, servicesOffered: e.target.value }))}
+                placeholder="List services offered"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Dining Options</Label>
+              <Textarea
+                value={form.diningOptions}
+                onChange={(e) => setForm((prev) => ({ ...prev, diningOptions: e.target.value }))}
+                placeholder="Dining options available"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Other Amenities</Label>
+              <Textarea
+                value={form.otherAmenities}
+                onChange={(e) => setForm((prev) => ({ ...prev, otherAmenities: e.target.value }))}
+                placeholder="Additional amenities"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Venue Availability</Label>
+              <Input
+                value={form.venueAvailability}
+                onChange={(e) => setForm((prev) => ({ ...prev, venueAvailability: e.target.value }))}
+                placeholder="Availability schedule"
+              />
+            </div>
           </div>
         </div>
 
         {/* Amenities */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Amenities</h3>
+          <h3 className="text-lg font-medium">Basic Amenities</h3>
           <div className="space-y-2">
             <Label>Amenities (comma separated)</Label>
             <Input
@@ -1016,6 +1139,53 @@ export default function HotelDashboard() {
                 placeholder="Website"
               />
             </div>
+            <div className="space-y-2">
+              <Label>Preferred Contact Method</Label>
+              <Input
+                value={form.preferredContactMethod}
+                onChange={(e) => setForm((prev) => ({ ...prev, preferredContactMethod: e.target.value }))}
+                placeholder="Email, Phone, etc."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Business Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Business Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Booking Lead Time</Label>
+              <Input
+                value={form.bookingLeadTime}
+                onChange={(e) => setForm((prev) => ({ ...prev, bookingLeadTime: e.target.value }))}
+                placeholder="Booking lead time required"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Wedding Deposit Required</Label>
+              <Input
+                value={form.weddingDepositRequired}
+                onChange={(e) => setForm((prev) => ({ ...prev, weddingDepositRequired: e.target.value }))}
+                placeholder="Deposit percentage or amount"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Referral Source</Label>
+              <Input
+                value={form.referralSource}
+                onChange={(e) => setForm((prev) => ({ ...prev, referralSource: e.target.value }))}
+                placeholder="How did you hear about us?"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Partnership Interest</Label>
+              <Input
+                value={form.partnershipInterest}
+                onChange={(e) => setForm((prev) => ({ ...prev, partnershipInterest: e.target.value }))}
+                placeholder="Interest level in partnership"
+              />
+            </div>
           </div>
         </div>
 
@@ -1060,6 +1230,14 @@ export default function HotelDashboard() {
                   }))
                 }
                 placeholder="Cancellation Policy"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Refund Policy</Label>
+              <Textarea
+                value={form.refundPolicy}
+                onChange={(e) => setForm((prev) => ({ ...prev, refundPolicy: e.target.value }))}
+                placeholder="Refund policy details"
               />
             </div>
           </div>
@@ -1177,15 +1355,15 @@ export default function HotelDashboard() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{hotel.category}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {hotel.location.city}, {hotel.location.country}
+                      {hotel.location?.city || 'N/A'}, {hotel.location?.country || 'N/A'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Intl.NumberFormat('en-US', {
+                      {hotel.priceRange ? new Intl.NumberFormat('en-US', {
                         style: 'currency',
-                        currency: hotel.priceRange.currency
-                      }).format(hotel.priceRange.startingPrice)}
+                        currency: hotel.priceRange.currency || 'INR'
+                      }).format(hotel.priceRange.startingPrice || 0) : 'N/A'}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{hotel.rating.toFixed(1)}</TableCell>
+                    <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(hotel.status)}
@@ -1208,20 +1386,19 @@ export default function HotelDashboard() {
                           <DropdownMenuItem
                             onSelect={() => {
                               const hotelForEdit: HotelFormState = {
-                                name: hotel.name,
-                                category: hotel.category,
-                                location: hotel.location,
-                                priceRange: hotel.priceRange,
-                                rating: hotel.rating,
-                                status: hotel.status,
-                                description: hotel.description,
-                                amenities: hotel.amenities.join(", "),
-                                rooms: hotel.rooms,
-                                images: hotel.images,
+                                name: hotel.name || "",
+                                category: hotel.category || "",
+                                location: hotel.location || initialFormState.location,
+                                priceRange: hotel.priceRange || initialFormState.priceRange,
+                                rating: hotel.rating || 0,
+                                status: hotel.status || "draft",
+                                description: hotel.description || "",
+                                amenities: Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : "",
+                                rooms: hotel.rooms || [],
+                                images: hotel.images || [],
                                 imageFiles: [],
-                                removeImages: false,
-                                contactInfo: hotel.contactInfo,
-                                policies: hotel.policies,
+                                contactInfo: hotel.contactInfo || initialFormState.contactInfo,
+                                policies: hotel.policies || initialFormState.policies,
                                 firstName: hotel.firstName || "",
                                 lastName: hotel.lastName || "",
                                 companyName: hotel.companyName || "",
@@ -1237,8 +1414,8 @@ export default function HotelDashboard() {
                                 maxGuestCapacity: hotel.maxGuestCapacity || "",
                                 numberOfRooms: hotel.numberOfRooms || "",
                                 venueAvailability: hotel.venueAvailability || "",
-                                allInclusivePackages: "",
-                                staffAccommodation: "",
+                                allInclusivePackages: hotel.allInclusivePackages?.toString() || "",
+                                staffAccommodation: hotel.staffAccommodation?.toString() || "",
                                 diningOptions: Array.isArray(hotel.diningOptions) 
                                   ? hotel.diningOptions.join(", ") 
                                   : hotel.diningOptions || "",
@@ -1319,7 +1496,7 @@ export default function HotelDashboard() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Hotel</DialogTitle>
             <DialogDescription>
@@ -1358,7 +1535,7 @@ export default function HotelDashboard() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Hotel</DialogTitle>
               <DialogDescription>

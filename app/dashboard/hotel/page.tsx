@@ -1,4 +1,5 @@
 "use client";
+// dashboard/hotel/page.tsx
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";

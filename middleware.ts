@@ -109,6 +109,13 @@ const API_ROUTES: RouteConfig[] = [
     isPublic: true,
   },
 
+  // post(`/api/routes/invite/${rsvpData.userId}/rsvp`, rsvpData);
+  {
+    pattern: /\/api\/routes\/invite\/[^/]+\/rsvp$/,
+    methods: ["POST"],
+    isPublic: true,
+  },
+
   // ===== ROLE-BASED API ROUTES =====
   
   // Super Admin Only Routes

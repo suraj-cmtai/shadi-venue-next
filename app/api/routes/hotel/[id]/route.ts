@@ -29,6 +29,32 @@ async function uploadFiles(files: FormDataEntryValue[], width: number, height: n
     return uploadedUrls;
 }
 
+// Helper function to safely parse string values as arrays or return as strings
+function parseStringOrArray(value: string | undefined, fallback: any = []): any {
+    if (!value) return fallback;
+    
+    try {
+        // Try to parse as JSON array
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [value];
+    } catch {
+        // If parsing fails, treat as comma-separated string
+        return value.includes(',') ? value.split(',').map(item => item.trim()) : value;
+    }
+}
+
+// Helper function to safely convert string to number
+function safeParseNumber(value: string | undefined, fallback: number = 0): number {
+    if (!value) return fallback;
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? fallback : parsed;
+}
+
+// Helper function to safely convert string to boolean
+function safeParseBoolean(value: string | undefined): boolean {
+    return value === "true";
+}
+
 // Get a specific hotel (GET)
 export async function GET(
     req: Request,
@@ -69,9 +95,6 @@ export async function GET(
     }
 }
 
-
-
-// Update a hotel (PUT)
 // Update a hotel (PUT)
 export async function PUT(
     req: Request,
@@ -81,63 +104,6 @@ export async function PUT(
         const { id } = await params;
         const formData = await req.formData();
         
-        // Basic hotel info
-        const name = formData.get("name");
-        const category = formData.get("category");
-        const description = formData.get("description");
-        const address = formData.get("address");
-        const city = formData.get("city");
-        const state = formData.get("state");
-        const country = formData.get("country");
-        const zipCode = formData.get("zipCode");
-        const startingPrice = formData.get("startingPrice");
-        const currency = formData.get("currency");
-        const rating = formData.get("rating");
-        const status = formData.get("status");
-        const amenities = formData.get("amenities");
-        const rooms = formData.get("rooms");
-        const phone = formData.get("phone");
-        const email = formData.get("email");
-        const website = formData.get("website");
-        const checkIn = formData.get("checkIn");
-        const checkOut = formData.get("checkOut");
-        const cancellation = formData.get("cancellation");
-
-        // Additional fields
-        const firstName = formData.get("firstName");
-        const lastName = formData.get("lastName");
-        const companyName = formData.get("companyName");
-        const venueType = formData.get("venueType");
-        const position = formData.get("position");
-        const websiteLink = formData.get("websiteLink");
-        const offerWeddingPackages = formData.get("offerWeddingPackages");
-        const resortCategory = formData.get("resortCategory");
-        const weddingPackagePrice = formData.get("weddingPackagePrice");
-        const servicesOffered = formData.get("servicesOffered");
-        const maxGuestCapacity = formData.get("maxGuestCapacity");
-        const numberOfRooms = formData.get("numberOfRooms");
-        const venueAvailability = formData.get("venueAvailability");
-        const allInclusivePackages = formData.get("allInclusivePackages");
-        const staffAccommodation = formData.get("staffAccommodation");
-        const diningOptions = formData.get("diningOptions");
-        const otherAmenities = formData.get("otherAmenities");
-        const bookingLeadTime = formData.get("bookingLeadTime");
-        const preferredContactMethod = formData.get("preferredContactMethod");
-        const weddingDepositRequired = formData.get("weddingDepositRequired");
-        const refundPolicy = formData.get("refundPolicy");
-        const referralSource = formData.get("referralSource");
-        const partnershipInterest = formData.get("partnershipInterest");
-        const agreeToTerms = formData.get("agreeToTerms") === "true";
-        const agreeToPrivacy = formData.get("agreeToPrivacy") === "true";
-        const signature = formData.get("signature");
-
-        // Image files
-        const imageFiles = formData.getAll("images");
-        const resortPhotoFiles = formData.getAll("uploadResortPhotos");
-        const marriagePhotoFiles = formData.getAll("uploadMarriagePhotos");
-        const weddingBrochureFiles = formData.getAll("uploadWeddingBrochure");
-        const cancelledChequeFiles = formData.getAll("uploadCancelledCheque");
-
         // Validate hotel exists
         const existingHotel = await HotelService.getHotelById(id);
         if (!existingHotel) {
@@ -148,16 +114,23 @@ export async function PUT(
             }, { status: 404 });
         }
 
+        // Extract and handle file uploads first
+        const imageFiles = formData.getAll("images");
+        const resortPhotoFiles = formData.getAll("uploadResortPhotos");
+        const marriagePhotoFiles = formData.getAll("uploadMarriagePhotos");
+        const weddingBrochureFiles = formData.getAll("uploadWeddingBrochure");
+        const cancelledChequeFiles = formData.getAll("uploadCancelledCheque");
+
         // Handle all image uploads
-        const imageUrls = await uploadFiles(imageFiles, 1200, 800, existingHotel.images);
+        const imageUrls = await uploadFiles(imageFiles, 1200, 800, existingHotel.images || []);
         const resortPhotoUrls = await uploadFiles(resortPhotoFiles, 1200, 800, existingHotel.uploadResortPhotos || []);
         const marriagePhotoUrls = await uploadFiles(marriagePhotoFiles, 1200, 800, existingHotel.uploadMarriagePhotos || []);
         const weddingBrochureUrls = await uploadFiles(weddingBrochureFiles, 1200, 1600, existingHotel.uploadWeddingBrochure || []);
         const cancelledChequeUrls = await uploadFiles(cancelledChequeFiles, 1200, 800, existingHotel.uploadCancelledCheque || []);
 
-        // Update hotel data
+        // Build update data object
         const hotelData: any = {
-            // Images
+            // Always update images
             images: imageUrls,
             uploadResortPhotos: resortPhotoUrls,
             uploadMarriagePhotos: marriagePhotoUrls,
@@ -166,114 +139,208 @@ export async function PUT(
         };
 
         // Basic hotel information
-        if (name) hotelData.name = name.toString();
-        if (category) hotelData.category = category.toString();
-        if (description) hotelData.description = description.toString();
-        if (rating) hotelData.rating = Number(rating);
-        if (status) hotelData.status = status.toString();
-        if (amenities) hotelData.amenities = amenities.toString().split(',').map(item => item.trim());
-        if (rooms) hotelData.rooms = JSON.parse(rooms.toString());
+        const name = formData.get("name")?.toString();
+        const category = formData.get("category")?.toString();
+        const description = formData.get("description")?.toString();
+        const rating = formData.get("rating")?.toString();
+        const status = formData.get("status")?.toString();
+        const amenities = formData.get("amenities")?.toString();
+        const rooms = formData.get("rooms")?.toString();
 
-        // Location
+        if (name) hotelData.name = name;
+        if (category) hotelData.category = category;
+        if (description) hotelData.description = description;
+        if (rating) hotelData.rating = safeParseNumber(rating);
+        if (status) hotelData.status = status as HotelStatus;
+        if (amenities) hotelData.amenities = amenities.split(',').map(item => item.trim());
+        if (rooms) {
+            try {
+                hotelData.rooms = JSON.parse(rooms);
+            } catch {
+                consoleManager.warn("Failed to parse rooms JSON, keeping existing rooms");
+            }
+        }
+
+        // Location information - check for nested field names
+        const address = formData.get("location[address]")?.toString() || formData.get("address")?.toString();
+        const city = formData.get("location[city]")?.toString() || formData.get("city")?.toString();
+        const state = formData.get("location[state]")?.toString() || formData.get("state")?.toString();
+        const country = formData.get("location[country]")?.toString() || formData.get("country")?.toString();
+        const zipCode = formData.get("location[zipCode]")?.toString() || formData.get("zipCode")?.toString();
+
         if (address || city || state || country || zipCode) {
             hotelData.location = {
-                address: address?.toString() || existingHotel.location?.address || "",
-                city: city?.toString() || existingHotel.location?.city || "",
-                state: state?.toString() || existingHotel.location?.state || "",
-                country: country?.toString() || existingHotel.location?.country || "",
-                zipCode: zipCode?.toString() || existingHotel.location?.zipCode || "",
+                address: address || existingHotel.location?.address || "",
+                city: city || existingHotel.location?.city || "",
+                state: state || existingHotel.location?.state || "",
+                country: country || existingHotel.location?.country || "",
+                zipCode: zipCode || existingHotel.location?.zipCode || "",
             };
         }
 
-        // Price Range
+        // Price Range - check for nested field names
+        const startingPrice = formData.get("priceRange[startingPrice]")?.toString() || formData.get("startingPrice")?.toString();
+        const currency = formData.get("priceRange[currency]")?.toString() || formData.get("currency")?.toString();
+
         if (startingPrice || currency) {
             hotelData.priceRange = {
-                startingPrice: startingPrice ? Number(startingPrice) : existingHotel.priceRange?.startingPrice || 0,
-                currency: (currency?.toString()) || existingHotel.priceRange?.currency || "INR",
+                startingPrice: startingPrice ? safeParseNumber(startingPrice) : existingHotel.priceRange?.startingPrice || 0,
+                currency: (currency as Currency) || existingHotel.priceRange?.currency || "INR",
             };
         }
 
-        // Contact Info
+        // Contact Info - check for nested field names
+        const phone = formData.get("contactInfo[phone]")?.toString() || formData.get("phone")?.toString();
+        const email = formData.get("contactInfo[email]")?.toString() || formData.get("email")?.toString();
+        const website = formData.get("contactInfo[website]")?.toString() || formData.get("website")?.toString();
+
         if (phone || email || website) {
             hotelData.contactInfo = {
-                phone: phone?.toString() || existingHotel.contactInfo?.phone || "",
-                email: email?.toString() || existingHotel.contactInfo?.email || "",
-                website: website?.toString() || existingHotel.contactInfo?.website || "",
+                phone: phone || existingHotel.contactInfo?.phone || "",
+                email: email || existingHotel.contactInfo?.email || "",
+                website: website || existingHotel.contactInfo?.website || "",
             };
         }
 
-        // Policies
+        // Policies - check for nested field names
+        const checkIn = formData.get("policies[checkIn]")?.toString() || formData.get("checkIn")?.toString();
+        const checkOut = formData.get("policies[checkOut]")?.toString() || formData.get("checkOut")?.toString();
+        const cancellation = formData.get("policies[cancellation]")?.toString() || formData.get("cancellation")?.toString();
+
         if (checkIn || checkOut || cancellation) {
             hotelData.policies = {
-                checkIn: checkIn?.toString() || existingHotel.policies?.checkIn || "",
-                checkOut: checkOut?.toString() || existingHotel.policies?.checkOut || "",
-                cancellation: cancellation?.toString() || existingHotel.policies?.cancellation || "",
+                checkIn: checkIn || existingHotel.policies?.checkIn || "",
+                checkOut: checkOut || existingHotel.policies?.checkOut || "",
+                cancellation: cancellation || existingHotel.policies?.cancellation || "",
             };
         }
 
-        // Owner/Manager Information
-        if (firstName) hotelData.firstName = firstName.toString();
-        if (lastName) hotelData.lastName = lastName.toString();
-        if (companyName) hotelData.companyName = companyName.toString();
-        if (position) hotelData.position = position.toString();
+        // Personal/Business Information
+        const firstName = formData.get("firstName")?.toString();
+        const lastName = formData.get("lastName")?.toString();
+        const companyName = formData.get("companyName")?.toString();
+        const venueType = formData.get("venueType")?.toString();
+        const position = formData.get("position")?.toString();
+        const websiteLink = formData.get("websiteLink")?.toString();
 
-        // Venue Information
-        if (venueType) hotelData.venueType = venueType.toString();
-        if (websiteLink) hotelData.websiteLink = websiteLink.toString();
-        if (resortCategory) hotelData.resortCategory = resortCategory.toString();
-        if (maxGuestCapacity) hotelData.maxGuestCapacity = Number(maxGuestCapacity);
-        if (numberOfRooms) hotelData.numberOfRooms = Number(numberOfRooms);
+        if (firstName !== undefined) hotelData.firstName = firstName;
+        if (lastName !== undefined) hotelData.lastName = lastName;
+        if (companyName !== undefined) hotelData.companyName = companyName;
+        if (venueType !== undefined) hotelData.venueType = venueType;
+        if (position !== undefined) hotelData.position = position;
+        if (websiteLink !== undefined) hotelData.websiteLink = websiteLink;
 
-        // Wedding-specific Information
-        if (offerWeddingPackages) hotelData.offerWeddingPackages = offerWeddingPackages.toString() === "true";
-        if (weddingPackagePrice) hotelData.weddingPackagePrice = Number(weddingPackagePrice);
-        if (servicesOffered) {
-            // Handle as array or comma-separated string
-            try {
-                hotelData.servicesOffered = JSON.parse(servicesOffered.toString());
-            } catch {
-                hotelData.servicesOffered = servicesOffered.toString().split(',').map(item => item.trim());
-            }
-        }
-        if (venueAvailability) {
-            // Handle as array or comma-separated string
-            try {
-                hotelData.venueAvailability = JSON.parse(venueAvailability.toString());
-            } catch {
-                hotelData.venueAvailability = venueAvailability.toString().split(',').map(item => item.trim());
-            }
-        }
+        // Wedding and Venue Information
+        const offerWeddingPackages = formData.get("offerWeddingPackages")?.toString();
+        const resortCategory = formData.get("resortCategory")?.toString();
+        const weddingPackagePrice = formData.get("weddingPackagePrice")?.toString();
+        const maxGuestCapacity = formData.get("maxGuestCapacity")?.toString();
+        const numberOfRooms = formData.get("numberOfRooms")?.toString();
+        const venueAvailability = formData.get("venueAvailability")?.toString();
 
-        // Additional Services and Amenities
-        if (allInclusivePackages) hotelData.allInclusivePackages = allInclusivePackages.toString() === "true";
-        if (staffAccommodation) hotelData.staffAccommodation = staffAccommodation.toString() === "true";
-        if (diningOptions) {
-            try {
-                hotelData.diningOptions = JSON.parse(diningOptions.toString());
-            } catch {
-                hotelData.diningOptions = diningOptions.toString().split(',').map(item => item.trim());
-            }
-        }
-        if (otherAmenities) {
-            try {
-                hotelData.otherAmenities = JSON.parse(otherAmenities.toString());
-            } catch {
-                hotelData.otherAmenities = otherAmenities.toString().split(',').map(item => item.trim());
-            }
-        }
+        if (offerWeddingPackages !== undefined) hotelData.offerWeddingPackages = offerWeddingPackages as 'Yes' | 'No';
+        if (resortCategory !== undefined) hotelData.resortCategory = resortCategory;
+        if (weddingPackagePrice !== undefined) hotelData.weddingPackagePrice = weddingPackagePrice;
+        if (maxGuestCapacity !== undefined) hotelData.maxGuestCapacity = maxGuestCapacity;
+        if (numberOfRooms !== undefined) hotelData.numberOfRooms = numberOfRooms;
+        if (venueAvailability !== undefined) hotelData.venueAvailability = venueAvailability;
 
-        // Booking and Business Information
-        if (bookingLeadTime) hotelData.bookingLeadTime = bookingLeadTime.toString();
-        if (preferredContactMethod) hotelData.preferredContactMethod = preferredContactMethod.toString();
-        if (weddingDepositRequired) hotelData.weddingDepositRequired = Number(weddingDepositRequired);
-        if (refundPolicy) hotelData.refundPolicy = refundPolicy.toString();
-        if (referralSource) hotelData.referralSource = referralSource.toString();
-        if (partnershipInterest) hotelData.partnershipInterest = partnershipInterest.toString();
+        // Services and Amenities (handle as arrays or strings)
+        const servicesOffered = formData.get("servicesOffered")?.toString();
+        const diningOptions = formData.get("diningOptions")?.toString();
+        const otherAmenities = formData.get("otherAmenities")?.toString();
+        const allInclusivePackages = formData.get("allInclusivePackages")?.toString();
+        const staffAccommodation = formData.get("staffAccommodation")?.toString();
+
+        if (servicesOffered !== undefined) hotelData.servicesOffered = parseStringOrArray(servicesOffered, []);
+        if (diningOptions !== undefined) hotelData.diningOptions = parseStringOrArray(diningOptions, []);
+        if (otherAmenities !== undefined) hotelData.otherAmenities = parseStringOrArray(otherAmenities, []);
+        if (allInclusivePackages !== undefined) hotelData.allInclusivePackages = allInclusivePackages;
+        if (staffAccommodation !== undefined) hotelData.staffAccommodation = staffAccommodation;
+
+        // Business and Booking Information
+        const bookingLeadTime = formData.get("bookingLeadTime")?.toString();
+        const preferredContactMethod = formData.get("preferredContactMethod")?.toString();
+        const weddingDepositRequired = formData.get("weddingDepositRequired")?.toString();
+        const refundPolicy = formData.get("refundPolicy")?.toString();
+        const referralSource = formData.get("referralSource")?.toString();
+        const partnershipInterest = formData.get("partnershipInterest")?.toString();
+
+        if (bookingLeadTime !== undefined) hotelData.bookingLeadTime = bookingLeadTime;
+        if (preferredContactMethod !== undefined) hotelData.preferredContactMethod = preferredContactMethod;
+        if (weddingDepositRequired !== undefined) hotelData.weddingDepositRequired = weddingDepositRequired;
+        if (refundPolicy !== undefined) hotelData.refundPolicy = refundPolicy;
+        if (referralSource !== undefined) hotelData.referralSource = referralSource;
+        if (partnershipInterest !== undefined) hotelData.partnershipInterest = partnershipInterest;
 
         // Legal and Agreement Fields
-        hotelData.agreeToTerms = agreeToTerms;
-        hotelData.agreeToPrivacy = agreeToPrivacy;
-        if (signature) hotelData.signature = signature.toString();
+        const agreeToTerms = formData.get("agreeToTerms")?.toString();
+        const agreeToPrivacy = formData.get("agreeToPrivacy")?.toString();
+        const signature = formData.get("signature")?.toString();
+
+        if (agreeToTerms !== undefined) hotelData.agreeToTerms = safeParseBoolean(agreeToTerms);
+        if (agreeToPrivacy !== undefined) hotelData.agreeToPrivacy = safeParseBoolean(agreeToPrivacy);
+        if (signature !== undefined) hotelData.signature = signature;
+
+        // Extract image URLs that are sent as individual indexed entries
+        const imageUrlsFromForm: string[] = [];
+        const resortPhotoUrlsFromForm: string[] = [];
+        const marriagePhotoUrlsFromForm: string[] = [];
+        const weddingBrochureUrlsFromForm: string[] = [];
+        const cancelledChequeUrlsFromForm: string[] = [];
+
+        // Check for indexed image URLs
+        let index = 0;
+        while (formData.get(`images[${index}]`)) {
+            const url = formData.get(`images[${index}]`)?.toString();
+            if (url) imageUrlsFromForm.push(url);
+            index++;
+        }
+
+        index = 0;
+        while (formData.get(`uploadResortPhotos[${index}]`)) {
+            const url = formData.get(`uploadResortPhotos[${index}]`)?.toString();
+            if (url) resortPhotoUrlsFromForm.push(url);
+            index++;
+        }
+
+        index = 0;
+        while (formData.get(`uploadMarriagePhotos[${index}]`)) {
+            const url = formData.get(`uploadMarriagePhotos[${index}]`)?.toString();
+            if (url) marriagePhotoUrlsFromForm.push(url);
+            index++;
+        }
+
+        index = 0;
+        while (formData.get(`uploadWeddingBrochure[${index}]`)) {
+            const url = formData.get(`uploadWeddingBrochure[${index}]`)?.toString();
+            if (url) weddingBrochureUrlsFromForm.push(url);
+            index++;
+        }
+
+        index = 0;
+        while (formData.get(`uploadCancelledCheque[${index}]`)) {
+            const url = formData.get(`uploadCancelledCheque[${index}]`)?.toString();
+            if (url) cancelledChequeUrlsFromForm.push(url);
+            index++;
+        }
+
+        // Merge existing URLs with any URLs sent from the form (if no new files uploaded)
+        if (imageFiles.length === 0 && imageUrlsFromForm.length > 0) {
+            hotelData.images = imageUrlsFromForm;
+        }
+        if (resortPhotoFiles.length === 0 && resortPhotoUrlsFromForm.length > 0) {
+            hotelData.uploadResortPhotos = resortPhotoUrlsFromForm;
+        }
+        if (marriagePhotoFiles.length === 0 && marriagePhotoUrlsFromForm.length > 0) {
+            hotelData.uploadMarriagePhotos = marriagePhotoUrlsFromForm;
+        }
+        if (weddingBrochureFiles.length === 0 && weddingBrochureUrlsFromForm.length > 0) {
+            hotelData.uploadWeddingBrochure = weddingBrochureUrlsFromForm;
+        }
+        if (cancelledChequeFiles.length === 0 && cancelledChequeUrlsFromForm.length > 0) {
+            hotelData.uploadCancelledCheque = cancelledChequeUrlsFromForm;
+        }
 
         // Preserve createdAt and update updatedAt
         hotelData.createdAt = existingHotel.createdAt;
