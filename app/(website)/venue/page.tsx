@@ -1,162 +1,146 @@
 'use client';
 
-import Hero from './Hero';
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import {
+  fetchActiveHotels,
+  selectFilteredHotels,
+  selectHotelLoading,
+  selectHotelError,
+  selectSearchQuery,
+  selectFilters,
+  setSearchQuery,
+  setFilters,
+  clearFilters,
+  clearError,
+  selectHotelHasFetched
+} from "@/lib/redux/features/hotelSlice";
+
+import Hero from './Hero';
 import { VenueFilters } from "./venueFilter";
-// import { CitySelector } from "./citySelector";
 import { VenueSearch } from "./venueSearch";
 import { VenueCard } from "./venueCard";
-import { useState } from "react";
-import type { Hotel } from "@/lib/redux/features/hotelSlice";
-
-
-const venues: Hotel[] = [
-    {
-        id: "1",
-        name: "Opulence by Bhullar Resorts",
-        category: "Banquet Hall",
-        location: {
-            address: "Zirakpur, Zirakpur",
-            city: "Delhi NCR",
-            state: "Delhi",
-            country: "India",
-            zipCode: "110001",
-        },
-        priceRange: {
-            startingPrice: 2000,
-            currency: "INR",
-        },
-        rating: 4.8,
-        status: "active",
-        description: "A premium wedding venue with spacious lawns and banquet hall.",
-        amenities: ["WiFi", "Parking", "Air Conditioning"],
-        rooms: [
-            { type: "Deluxe", capacity: 2, pricePerNight: 5000, available: 10 },
-            { type: "Suite", capacity: 4, pricePerNight: 12000, available: 3 },
-        ],
-        images: ["/placeholder.svg", "/placeholder.svg"],
-        contactInfo: {
-            phone: "+91 99999 99999",
-            email: "info@opulence.com",
-            website: "https://opulence.com",
-        },
-        policies: {
-            checkIn: "12:00 PM",
-            checkOut: "11:00 AM",
-            cancellation: "Free cancellation up to 48 hours before check-in.",
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-
-        // New form fields
-        firstName: "John",
-        lastName: "Doe",
-        companyName: "Opulence Resorts Pvt. Ltd.",
-        venueType: "Banquet Hall",
-        position: "Manager",
-        websiteLink: "https://opulence.com",
-        offerWeddingPackages: "Yes",
-        resortCategory: "Luxury",
-        weddingPackagePrice: "₹5,00,000",
-        servicesOffered: ["Catering", "Decoration", "Music", "Photography"],
-        maxGuestCapacity: "300",
-        numberOfRooms: "25",
-        venueAvailability: "Available Year Round",
-        allInclusivePackages: ["Yes"],
-        staffAccommodation: ["Limited"],
-        diningOptions: ["Buffet", "A la Carte"],
-        otherAmenities: ["Swimming Pool", "Spa"],
-        bookingLeadTime: "3 months",
-        preferredContactMethod: ["Email", "Phone"],
-        weddingDepositRequired: "₹50,000",
-        refundPolicy: "Refundable up to 1 month before event",
-        referralSource: "Social Media",
-        partnershipInterest: "Yes",
-        uploadResortPhotos: ["/photos/resort1.jpg", "/photos/resort2.jpg"],
-        uploadMarriagePhotos: ["/photos/marriage1.jpg"],
-        uploadWeddingBrochure: ["/docs/brochure.pdf"],
-        uploadCancelledCheque: ["/docs/cheque.jpg"],
-        agreeToTerms: true,
-        agreeToPrivacy: true,
-        signature: "John Doe",
-    },
-    {
-        id: "2",
-        name: "GITAI Lawns / Banquet Halls",
-        category: "Banquet Hall",
-        location: {
-            address: "Pune, Maharashtra",
-            city: "Pune",
-            state: "Maharashtra",
-            country: "India",
-            zipCode: "411001",
-        },
-        priceRange: {
-            startingPrice: 1800,
-            currency: "INR",
-        },
-        rating: 4.9,
-        status: "active",
-        description: "A spacious venue perfect for weddings and receptions.",
-        amenities: ["WiFi", "Parking", "Air Conditioning"],
-        rooms: [{ type: "Luxury Suite", capacity: 2, pricePerNight: 6000, available: 5 }],
-        images: ["/placeholder.svg", "/placeholder.svg"],
-        contactInfo: {
-            phone: "+91 88888 88888",
-            email: "info@gitai.com",
-            website: "https://gitai.com",
-        },
-        policies: {
-            checkIn: "1:00 PM",
-            checkOut: "12:00 PM",
-            cancellation: "Free cancellation up to 72 hours before check-in.",
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }
-];
-
-
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
 
 const VenuePage = () => {
     const router = useRouter();
-    const [selectedCity, setSelectedCity] = useState("delhi");
-    const [searchQuery, setSearchQuery] = useState("");
+    const dispatch = useAppDispatch();
+    
+    // Redux state
+    const filteredVenues = useAppSelector(selectFilteredHotels);
+    const loading = useAppSelector(selectHotelLoading);
+    const error = useAppSelector(selectHotelError);
+    const searchQuery = useAppSelector(selectSearchQuery);
+    const filters = useAppSelector(selectFilters);
+    const hasFetched = useAppSelector(selectHotelHasFetched);
+    
+    // Local state
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
-    const [filters, setFilters] = useState({});
 
+    // Fetch venues on component mount
+    useEffect(() => {
+        if (!hasFetched) {
+            dispatch(fetchActiveHotels());
+        }
+    }, [dispatch, hasFetched]);
+
+    // Handle search changes
+    const handleSearchChange = (query: string) => {
+        dispatch(setSearchQuery(query));
+    };
+
+    // Handle filter changes
+    const handleFiltersChange = (newFilters: any) => {
+        dispatch(setFilters(newFilters));
+    };
+
+    // Handle venue click
     const handleVenueClick = (venueId: string) => {
         router.push(`/venue/${venueId}`);
     };
+
+    // Handle error retry
+    const handleRetry = () => {
+        dispatch(clearError());
+        dispatch(fetchActiveHotels());
+    };
+
+    // Loading skeleton component
+    const LoadingSkeleton = () => (
+        <div className={`grid gap-6 ${viewMode === 'grid' 
+            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+            : 'grid-cols-1'
+        }`}>
+            {[...Array(6)].map((_, index) => (
+                <div key={index} className="space-y-3">
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-1/4" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    // Error component
+    const ErrorDisplay = () => (
+        <div className="flex flex-col items-center justify-center py-12">
+            <Alert className="max-w-md mb-4">
+                <AlertDescription>
+                    {error || "Failed to load venues. Please try again."}
+                </AlertDescription>
+            </Alert>
+            <Button onClick={handleRetry} variant="outline">
+                Try Again
+            </Button>
+        </div>
+    );
+
+    // No results component
+    const NoResults = () => (
+        <div className="flex flex-col items-center justify-center py-12">
+            <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">No venues found</h3>
+                <p className="text-muted-foreground mb-4">
+                    Try adjusting your search criteria or filters
+                </p>
+                <Button 
+                    onClick={() => {
+                        dispatch(clearFilters());
+                    }} 
+                    variant="outline"
+                >
+                    Clear Filters
+                </Button>
+            </div>
+        </div>
+    );
+
     return (
-        <section >
+        <section>
             <Hero />
 
             <div className="min-h-screen bg-background">
                 {/* Filters */}
                 <section className="border-b bg-card/50">
                     <div className="max-w-7xl mx-auto px-4 py-6">
-                        <VenueFilters onFiltersChange={setFilters} />
+                        <VenueFilters onFiltersChange={handleFiltersChange} />
                     </div>
                 </section>
-
-                {/* City Selector */}
-                {/* <section className="bg-background">
-                    <div className="max-w-7xl mx-auto px-4">
-                        <CitySelector
-                            selectedCity={selectedCity}
-                            onCityChange={setSelectedCity}
-                        />
-                    </div>
-                </section> */}
 
                 {/* Search and Controls */}
                 <VenueSearch
                     searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
+                    onSearchChange={handleSearchChange}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
-                    resultCount={venues.length}
+                    resultCount={filteredVenues.length}
                     selectedFilters={filters}
                 />
 
@@ -164,33 +148,47 @@ const VenuePage = () => {
                 <main className="max-w-7xl mx-auto px-4 py-8">
                     <div className="mb-6">
                         <h2 className="text-2xl font-bold mb-2">Wedding Venues</h2>
-                        <p className="text-muted-foreground">
-                            Showing {venues.length} results as per your search criteria
-                        </p>
+                        {!loading && !error && (
+                            <p className="text-muted-foreground">
+                                Showing {filteredVenues.length} results
+                                {(searchQuery || Object.values(filters).some(v => v && v !== '' && !Array.isArray(v) || (Array.isArray(v) && v.length > 0))) 
+                                    ? " as per your search criteria" 
+                                    : ""
+                                }
+                            </p>
+                        )}
                     </div>
 
-                    <div className={`grid gap-6 ${viewMode === 'grid'
-                        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                        : 'grid-cols-1'
+                    {/* Loading State */}
+                    {loading && <LoadingSkeleton />}
+
+                    {/* Error State */}
+                    {error && !loading && <ErrorDisplay />}
+
+                    {/* No Results State */}
+                    {!loading && !error && filteredVenues.length === 0 && hasFetched && (
+                        <NoResults />
+                    )}
+
+                    {/* Venues Grid */}
+                    {!loading && !error && filteredVenues.length > 0 && (
+                        <div className={`grid gap-6 ${viewMode === 'grid'
+                            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                            : 'grid-cols-1'
                         }`}>
-                        {venues.map((venue) => (
-                            <VenueCard
-                                key={venue.id}
-                                venue={venue}
-                                onVenueClick={handleVenueClick}
-                            />
-                        ))}
-                    </div>
+                            {filteredVenues.map((venue) => (
+                                <VenueCard
+                                    key={venue.id}
+                                    venue={venue}
+                                    onVenueClick={handleVenueClick}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </main>
             </div>
-
         </section>
     );
 };
 
 export default VenuePage;
-
-
-
-
-
