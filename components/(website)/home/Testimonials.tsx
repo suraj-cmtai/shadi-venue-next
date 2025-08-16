@@ -4,10 +4,9 @@ import { cn } from "@/lib/utils";
 import  GradientButton  from "@/components/GradientButton";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 // Image constants
-const imgImages02 = "/images/testimonials-image-2.png";
-const imgImages01 = "/images/testimonials-image-1.png";
 const imgArrow02 = "/images/testimonials-arrow-right-vector.svg";
 const imgArrow01 = "/images/testimonials-arrow-left-vector.svg";
 const imgVector = "/images/testimonials-flower-right-side-vector.svg";
@@ -17,14 +16,36 @@ const imgVector2 = "/images/testimonials-decorative-left-vector.svg";
 const imgVector3 = "/images/testimonials-decorative-right-vector.svg";
 const imgVector05 = "/images/testimonials-flower-top-left-bg-vector.svg";
 
-// Testimonial data (for mapping if needed in future)
-const testimonial = {
-  name: "Rohan Malhotra",
-  text: `SHADIVENUE made our wedding planning so effortless. Organized, proactive and detail-driven - we arrived at our wedding feeling completely relaxed and excited for the festivities.`,
-  images: [imgImages01, imgImages02],
-};
+// Testimonial data
+const testimonials = [
+  {
+    name: "@kashtag90 & @jhalakshah",
+    text: `SHADIVENUE made our wedding planning so effortless. Organized, proactive and detail-driven - we arrived at our wedding feeling completely relaxed and excited for the festivities.`,
+    images: [
+      "/images/home page/testimo 2.jpg",
+      "/images/home page/testimo2.1.jpg"
+    ],
+  },
+  {
+    name: "Happy Couple",
+    text: `We couldn't have asked for a better wedding planning experience. The attention to detail and professionalism was outstanding.`,
+    images: [
+      "/images/home page/testimo2.1.jpg",
+      "/images/home page/testimo2.2.jpg"
+    ],
+  }
+];
 
 export default function Testimonials() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextTestimonial = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
   return (
     <section className="relative w-full py-12 md:py-24 bg-white overflow-hidden" id="testimonials">
       {/* Decorative flower bg left */}
@@ -84,7 +105,7 @@ export default function Testimonials() {
               className="relative rounded-xs overflow-hidden shadow-lg border-4 border-white"
             >
               <Image
-                src={testimonial.images[0]}
+                src={testimonials[currentIndex].images[0]}
                 alt="Wedding testimonial 1"
                 width={200}
                 height={260}
@@ -99,7 +120,7 @@ export default function Testimonials() {
               className="relative rounded-xs overflow-hidden shadow-lg border-4 border-white"
             >
               <Image
-                src={testimonial.images[1]}
+                src={testimonials[currentIndex].images[1]}
                 alt="Wedding testimonial 2"
                 width={220}
                 height={280}
@@ -128,10 +149,10 @@ export default function Testimonials() {
               </span>
               {/* Name */}
             <div className="text-[#212d47] text-lg md:text-2xl font-cormorant font-semibold uppercase text-center mt-2">
-              {testimonial.name}
+              {testimonials[currentIndex].name}
             </div>
               <p className="text-[#7d7d7d] text-base md:text-lg font-cinzel lowercase leading-relaxed">
-                {testimonial.text}
+                {testimonials[currentIndex].text}
               </p>
               {/* Button */}
             <div className="flex justify-center mt-2">
@@ -148,15 +169,17 @@ export default function Testimonials() {
         {/* Slider controls */}
         <div className="w-full flex items-center justify-center gap-4 mt-8 md:mt-12">
           <button
+            onClick={prevTestimonial}
             aria-label="Previous testimonial"
             className="p-2 rounded-full hover:bg-neutral-100 transition"
           >
             <Image src={imgArrow01} alt="Previous" width={32} height={32} className="w-6 h-6 rotate-180" />
           </button>
           <span className="font-cormorant text-[#212d47] text-base md:text-lg font-normal">
-            1 / 4
+            {currentIndex + 1} / {testimonials.length}
           </span>
           <button
+            onClick={nextTestimonial}
             aria-label="Next testimonial"
             className="p-2 rounded-full hover:bg-neutral-100 transition"
           >

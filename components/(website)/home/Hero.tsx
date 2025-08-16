@@ -2,25 +2,67 @@
 
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
+import { useState } from "react";
+import Image from "next/image";
 
-// Figma MCP asset URLs
-const HERO_BG_IMG = "/images/hero.png";
-const POLYGON_IMG = "/images/polygon.svg";
+// Hero Images
+const heroImages = [
+  "/images/home page/hero1.jpg",
+  "/images/home page/hero2.jpg"
+];
+
 const ARROW_IMG = "/images/arrow.svg";
 const ARROW1_IMG = "/images/arrow1.svg";
 
 export default function Hero() {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url('${HERO_BG_IMG}')` }}
-        aria-hidden="true"
-      />
+      <motion.div 
+        key={currentImageIndex}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="absolute inset-0"
+      >
+        <Image
+          src={heroImages[currentImageIndex]}
+          alt="Wedding hero image"
+          fill
+          className="object-cover"
+          priority
+        />
+      </motion.div>
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      
+      {/* Slider Navigation */}
+      <button 
+        onClick={prevImage} 
+        className="absolute left-4 z-20 transform hover:scale-110 transition-transform"
+        aria-label="Previous image"
+      >
+        <img src={ARROW_IMG} alt="Previous" className="h-12 w-auto" />
+      </button>
+      
+      <button 
+        onClick={nextImage} 
+        className="absolute right-4 z-20 transform hover:scale-110 transition-transform"
+        aria-label="Next image"
+      >
+        <img src={ARROW1_IMG} alt="Next" className="h-12 w-auto" />
+      </button>
       
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center text-white">
