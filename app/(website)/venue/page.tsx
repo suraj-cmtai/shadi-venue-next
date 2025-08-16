@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   fetchActiveHotels,
-  selectFilteredHotels,
+  selectActiveHotels,
   selectHotelLoading,
   selectHotelError,
   selectSearchQuery,
@@ -14,7 +14,7 @@ import {
   setFilters,
   clearFilters,
   clearError,
-  selectHotelHasFetched
+  selectHotelHasFetched,
 } from "@/lib/redux/features/hotelSlice";
 
 import Hero from './Hero';
@@ -27,15 +27,16 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
 
 /**
- * VenuePage displays a list of wedding venues with filters and search.
+ * VenuePage displays a list of active wedding venues with filters and search.
  * On first load, it fetches the data using fetchActiveHotels.
+ * Only active hotels are shown, and categories/cities are dynamically derived using selectors.
  */
 const VenuePage = () => {
     const router = useRouter();
     const dispatch = useAppDispatch();
 
     // Redux state
-    const filteredVenues = useAppSelector(selectFilteredHotels);
+    const activeHotels = useAppSelector(selectActiveHotels);
     const loading = useAppSelector(selectHotelLoading);
     const error = useAppSelector(selectHotelError);
     const searchQuery = useAppSelector(selectSearchQuery);
@@ -45,11 +46,55 @@ const VenuePage = () => {
     // Local state
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
-    // Fetch venues on first load (always fetch on mount)
+    // Fetch active hotels on first load
     useEffect(() => {
         dispatch(fetchActiveHotels());
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch]);
+
+    // Dynamically derive categories and cities from active hotels (no useMemo, just plain logic)
+    const categories = [];
+    const categorySet = new Set();
+    for (const hotel of activeHotels) {
+        if (hotel.category && !categorySet.has(hotel.category)) {
+            categories.push(hotel.category);
+            categorySet.add(hotel.category);
+        }
+    }
+
+    const cities = [];
+    const citySet = new Set();
+    for (const hotel of activeHotels) {
+        if (hotel.location?.city && !citySet.has(hotel.location.city)) {
+            cities.push(hotel.location.city);
+            citySet.add(hotel.location.city);
+        }
+    }
+
+    // Filter and search logic for active hotels (no useMemo)
+    const filteredVenues = activeHotels.filter(hotel => {
+        // Text search
+        const matchesSearch = !searchQuery ||
+            hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            hotel.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            hotel.location.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            hotel.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+        // Category filter
+        const matchesCategory = !filters.category || hotel.category === filters.category;
+
+        // City filter
+        const matchesCity = !filters.city || hotel.location.city === filters.city;
+
+        // Price range filter
+        const matchesPrice = hotel.priceRange.startingPrice >= (filters.priceRange?.[0] ?? 0) &&
+            hotel.priceRange.startingPrice <= (filters.priceRange?.[1] ?? 10000);
+
+        // Rating filter
+        const matchesRating = !filters.rating || hotel.rating >= filters.rating;
+
+        return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating;
+    });
 
     // Handle search changes
     const handleSearchChange = (query: string) => {
@@ -133,7 +178,12 @@ const VenuePage = () => {
                 {/* Filters */}
                 <section className="border-b bg-card/50">
                     <div className="max-w-7xl mx-auto px-4 py-6">
-                        <VenueFilters onFiltersChange={handleFiltersChange} />
+                        <VenueFilters
+                            onFiltersChange={handleFiltersChange}
+                            // If VenueFilters expects categories/cities, pass as props here
+                            // categories={categories}
+                            // cities={cities}
+                        />
                     </div>
                 </section>
 
@@ -145,6 +195,8 @@ const VenuePage = () => {
                     onViewModeChange={setViewMode}
                     resultCount={filteredVenues.length}
                     selectedFilters={filters}
+                    // categories={categories}
+                    // cities={cities}
                 />
 
                 {/* Results */}
