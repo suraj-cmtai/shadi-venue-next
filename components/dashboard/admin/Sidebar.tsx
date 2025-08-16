@@ -43,6 +43,9 @@ const links = [
   { name: "Hotel", href: "/dashboard/admin/hotel", icon: HotelIcon, badge : null },
   { name: "Users", href: "/dashboard/admin/users", icon: Users, badge: null },
   { name: "Wedding Themes", href: "/dashboard/admin/wedding", icon: GalleryVerticalEnd, badge:null},
+  { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
+  { name: "Testimonials", href: "/dashboard/admin/testimonials", icon: Users2, badge: null },
+
 ];
 
 interface SidebarProps {

@@ -106,10 +106,10 @@ export default function Hotels() {
                 <div className="absolute left-0 bottom-0 w-full">
                   <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
                     <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                      <Link href="/wedding" passHref legacyBehavior>
-              <a tabIndex={0} aria-label="Explore more wedding themes">
+                      <Link href="/wedding" passHref >
+              
                         {hotel.name || "Hotel Name"}
-              </a>
+              
             </Link>
                     </p>
                   </div>
@@ -126,10 +126,8 @@ export default function Hotels() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <Link href="/hotels" passHref legacyBehavior>
-              <a tabIndex={0} aria-label="Explore more Hotels">
+          <Link href="/hotels" passHref >
                 <GradientButton>EXPLORE MORE</GradientButton>
-              </a>
             </Link>
         </motion.div>
       </div>

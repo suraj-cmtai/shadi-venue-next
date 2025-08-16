@@ -122,6 +122,19 @@ const API_ROUTES: RouteConfig[] = [
     isPublic: true,
   },
 
+  // hero active
+  // testimonial active
+  {
+    pattern: /\/api\/routes\/hero\/active$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
+  {
+    pattern: /\/api\/routes\/testimonial\/active$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
+
   // ===== ROLE-BASED API ROUTES =====
   
   // Super Admin Only Routes

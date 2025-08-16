@@ -122,10 +122,8 @@ export default function Wedding() {
                         {theme.description}
                       </span>
                       <div className="mt-4 md:mt-6 w-full flex justify-center">
-                        <Link href={`/wedding/${theme.id}`} passHref legacyBehavior>
-                          <a tabIndex={0} aria-label={`Explore theme ${theme.theme}`}>
+                        <Link href={`/wedding/${theme.id}`} passHref >
                             <GradientButton>Explore Theme</GradientButton>
-                          </a>
                         </Link>
                       </div>
                     </div>
@@ -158,10 +156,8 @@ export default function Wedding() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.7 }}
           >
-            <Link href="/wedding" passHref legacyBehavior>
-              <a tabIndex={0} aria-label="Explore more wedding themes">
+            <Link href="/wedding" passHref >
                 <GradientButton>EXPLORE MORE</GradientButton>
-              </a>
             </Link>
           </motion.div>
         </div>
