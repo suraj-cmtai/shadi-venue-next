@@ -115,6 +115,12 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["POST"],
     isPublic: true,
   },
+  // /api/routes/wedding/KOSsjxjviRjS2BQkTwGy
+  {
+    pattern: /\/api\/routes\/wedding\/[^/]+$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
 
   // ===== ROLE-BASED API ROUTES =====
   

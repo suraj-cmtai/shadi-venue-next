@@ -21,6 +21,12 @@ import {
   clearSelectedHotel,
   clearError
 } from "@/lib/redux/features/hotelSlice"
+import {
+  createContact,
+  selectContactLoading,
+  selectContactError,
+  selectContacts
+} from "@/lib/redux/features/contactSlice"
 
 // Default venue images
 const DEFAULT_VENUE_IMAGES = [
@@ -62,7 +68,14 @@ export default function HotelDetailsPage() {
     const hotel = useAppSelector(selectSelectedHotel)
     const loading = useAppSelector(selectHotelLoading)
     const error = useAppSelector(selectHotelError)
-    
+
+    // Contact form redux state
+    const contactLoading = useAppSelector(selectContactLoading)
+    const contactError = useAppSelector(selectContactError)
+    // Use selectContacts to check for last success
+    const contacts = useAppSelector(selectContacts)
+    const [contactSuccess, setContactSuccess] = useState(false)
+
     // Define room type interface
     interface Room {
         type: string;
@@ -84,8 +97,6 @@ export default function HotelDetailsPage() {
       roomType: '',
       message: ''
     })
-    const [formLoading, setFormLoading] = useState(false)
-    const [formSubmitted, setFormSubmitted] = useState(false)
 
     // Fetch hotel data on mount
     useEffect(() => {
@@ -93,10 +104,10 @@ export default function HotelDetailsPage() {
         if (hotelId) {
             dispatch(fetchHotelById(hotelId))
         }
-        
         // Cleanup on unmount
         return () => {
             dispatch(clearSelectedHotel())
+            setContactSuccess(false)
         }
     }, [params.id, dispatch])
 
@@ -114,28 +125,79 @@ export default function HotelDetailsPage() {
         }
     }, [hotel])
 
+    // Watch contacts for success (assume last contact is the latest submission)
+    useEffect(() => {
+        if (contacts && Array.isArray(contacts) && contacts.length > 0) {
+            // You may want to check for a status or timestamp, but for now, just set success on new contact
+            setContactSuccess(true)
+        }
+    }, [contacts])
+
     // Handle form input changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
-    // Handle form submission
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setFormLoading(true)
-        
-        try {
-            // Simulate API call - replace with actual API endpoint
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            console.log('Form submitted:', { ...formData, hotelId: hotel?.id })
-            setFormSubmitted(true)
-        } catch (err) {
-            console.error('Form submission error:', err)
-        } finally {
-            setFormLoading(false)
-        }
-    }
+    // Handle form submission using only createContact and sending formData
+    // Handle form submission using only createContact and sending formData
+// Handle form submission using only createContact and sending formData
+const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Compose subject with hotel name and ID
+    const subject = `Booking Inquiry: ${hotel?.name || "Hotel"} (ID: ${params.id})`
+
+    // Compose message with all other fields
+    const {
+        name,
+        email,
+        phone,
+        checkIn,
+        checkOut,
+        guests,
+        roomType,
+        message: userMessage
+    } = formData
+
+    const message = `Hotel Booking Inquiry Details:
+
+Hotel Information:
+- Name: ${hotel?.name || 'N/A'}
+- Location: ${hotel?.location?.city || 'N/A'}, ${hotel?.location?.state || 'N/A'}
+- Category: ${hotel?.category || 'N/A'}
+- Rating: ${hotel?.rating || 'N/A'} stars
+- Starting Price: ₹${hotel?.priceRange?.startingPrice?.toLocaleString() || 'N/A'}
+
+Customer Information:
+- Name: ${name}
+- Email: ${email}
+- Phone: ${phone || 'Not provided'}
+
+Booking Details:
+- Check-in Date: ${checkIn || 'Not specified'}
+- Check-out Date: ${checkOut || 'Not specified'}
+- Number of Guests: ${guests}
+- Preferred Room Type: ${roomType || 'Not selected'}
+
+Customer Message:
+${userMessage || 'No additional message provided'}
+
+---
+This inquiry was submitted on ${new Date().toLocaleString()}`
+
+    // Create FormData object for API (matching the wedding form style)
+    const data = new FormData()
+    data.append("name", name)
+    data.append("email", email)
+    data.append("phone", phone || "")
+    data.append("subject", subject)
+    data.append("message", message)
+
+    // Send the contact form data
+    dispatch(createContact(data))
+    setContactSuccess(false) // Reset, will be set true on contacts update
+}
 
     // Handle retry on error
     const handleRetry = () => {
@@ -478,7 +540,7 @@ export default function HotelDetailsPage() {
                             </p>
                         </CardHeader>
                         <CardContent className="p-6">
-                            {formSubmitted ? (
+                            {contactSuccess ? (
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
@@ -490,7 +552,19 @@ export default function HotelDetailsPage() {
                                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
                                     <p className="text-gray-600 mb-6">Your inquiry has been submitted successfully. We'll contact you soon!</p>
                                     <Button 
-                                        onClick={() => setFormSubmitted(false)}
+                                        onClick={() => {
+                                            setFormData({
+                                                name: '',
+                                                email: '',
+                                                phone: '',
+                                                checkIn: '',
+                                                checkOut: '',
+                                                guests: '2',
+                                                roomType: hotel?.rooms?.[0]?.type || '',
+                                                message: ''
+                                            })
+                                            setContactSuccess(false)
+                                        }}
                                         variant="outline"
                                     >
                                         Submit Another Inquiry
@@ -498,6 +572,13 @@ export default function HotelDetailsPage() {
                                 </motion.div>
                             ) : (
                                 <form onSubmit={handleFormSubmit} className="space-y-6">
+                                    {contactError && (
+                                        <Alert variant="destructive">
+                                            <AlertDescription>
+                                                {contactError}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <Label htmlFor="name">Full Name *</Label>
@@ -607,9 +688,9 @@ export default function HotelDetailsPage() {
                                     <Button 
                                         type="submit" 
                                         className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                                        disabled={formLoading}
+                                        disabled={contactLoading}
                                     >
-                                        {formLoading ? (
+                                        {contactLoading ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 Submitting...
