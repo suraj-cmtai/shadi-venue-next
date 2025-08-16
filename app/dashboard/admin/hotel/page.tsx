@@ -63,17 +63,21 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+import { uploadImageClient, uploadPDFClient } from "@/lib/firebase-client";
+
 // Helper: Upload a single file and return its URL
 async function uploadFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
-  if (!res.ok) throw new Error("Failed to upload file");
-  const data = await res.json();
-  return data.url;
+  try {
+    if (file.type.startsWith('image/')) {
+      return await uploadImageClient(file);
+    } else if (file.type === 'application/pdf') {
+      return await uploadPDFClient(file);
+    } else {
+      throw new Error('Unsupported file type');
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to upload file: ${error.message}`);
+  }
 }
 
 interface HotelFormState {
