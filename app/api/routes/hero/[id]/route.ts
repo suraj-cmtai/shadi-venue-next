@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import HeroService from "../../../services/heroServices";
 
-// Helper to extract ID from params Promise
-async function getIdFromParams(paramsPromise: Promise<{ params: { id: string } }>): Promise<string | undefined> {
-  const { params } = await paramsPromise;
-  return params?.id;
-}
-
 // GET: Fetch hero slide by ID
 export async function GET(
-  request: NextRequest,
-  paramsPromise: Promise<{ params: { id: string } }>
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = await getIdFromParams(paramsPromise);
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({
@@ -46,12 +40,12 @@ export async function GET(
 
 // PUT: Update hero slide by ID
 export async function PUT(
-  request: NextRequest,
-  paramsPromise: Promise<{ params: { id: string } }>
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = await getIdFromParams(paramsPromise);
-    const updatedData = await request.json();
+    const { id } = await params;
+    const updatedData = await req.json();
 
     if (!id) {
       return NextResponse.json({
@@ -86,11 +80,11 @@ export async function PUT(
 
 // DELETE: Delete hero slide by ID
 export async function DELETE(
-  request: NextRequest,
-  paramsPromise: Promise<{ params: { id: string } }>
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = await getIdFromParams(paramsPromise);
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({
