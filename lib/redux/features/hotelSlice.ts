@@ -24,19 +24,19 @@ export interface Hotel {
   status: 'active' | 'draft' | 'archived';
   description: string;
   amenities: string[];
-  rooms?: {
+  rooms: {
     type: string;
     capacity: number;
     pricePerNight: number;
     available: number;
   }[];
   images: string[];
-  contactInfo?: {
+  contactInfo: {
     phone: string;
     email: string;
     website?: string;
   };
-  policies?: {
+  policies: {
     checkIn: string;
     checkOut: string;
     cancellation: string;

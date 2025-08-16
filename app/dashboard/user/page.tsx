@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
+import { uploadImageClient, replaceImageClient } from '@/lib/firebase-client';
 import {
   Check,
   Image,
@@ -343,14 +344,44 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setAboutLoading(true);
     try {
-      const formData = createFormData({ about: aboutForm });
-      // Convert form data to server-side type
+      // Handle image uploads
+      let processedAbout = { ...aboutForm };
+      
+      if (aboutForm.groom.image instanceof File) {
+        const groomImageUrl = await uploadImageClient(aboutForm.groom.image);
+        processedAbout.groom.image = groomImageUrl;
+      }
+      
+      if (aboutForm.bride.image instanceof File) {
+        const brideImageUrl = await uploadImageClient(aboutForm.bride.image);
+        processedAbout.bride.image = brideImageUrl;
+      }
+      
+      if (aboutForm.coupleImage instanceof File) {
+        const coupleImageUrl = await uploadImageClient(aboutForm.coupleImage);
+        processedAbout.coupleImage = coupleImageUrl;
+      }
+      
+      // Convert to server data format
       const serverData: AboutSection = {
-        ...aboutForm,
-        groom: { ...aboutForm.groom, image: aboutForm.groom.image instanceof File ? '' : aboutForm.groom.image },
-        bride: { ...aboutForm.bride, image: aboutForm.bride.image instanceof File ? '' : aboutForm.bride.image },
-        coupleImage: aboutForm.coupleImage instanceof File ? '' : aboutForm.coupleImage
+        title: processedAbout.title,
+        subtitle: processedAbout.subtitle,
+        groom: {
+          name: processedAbout.groom.name,
+          description: processedAbout.groom.description,
+          image: processedAbout.groom.image as string,
+          socials: processedAbout.groom.socials
+        },
+        bride: {
+          name: processedAbout.bride.name,
+          description: processedAbout.bride.description,
+          image: processedAbout.bride.image as string,
+          socials: processedAbout.bride.socials
+        },
+        coupleImage: processedAbout.coupleImage as string
       };
+      
+      const formData = createFormData({ about: serverData });
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
         inviteData: { about: serverData }
@@ -367,12 +398,26 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setEventsLoading(true);
     try {
-      const formData = createFormData({ weddingEvents: eventsForm });
-      // Convert form data to server-side type
-      const serverData: WeddingEvent[] = eventsForm.map(event => ({
-        ...event,
-        image: event.image instanceof File ? '' : event.image
+      // Handle image uploads for events
+      const processedEvents = await Promise.all(eventsForm.map(async event => {
+        if (event.image instanceof File) {
+          const imageUrl = await uploadImageClient(event.image);
+          return { ...event, image: imageUrl };
+        }
+        return event;
       }));
+      
+      // Convert to server data format
+      const serverData: WeddingEvent[] = processedEvents.map(event => ({
+        title: event.title,
+        date: event.date,
+        time: event.time,
+        venue: event.venue,
+        description: event.description,
+        image: event.image as string | undefined
+      }));
+      
+      const formData = createFormData({ weddingEvents: serverData });
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
         inviteData: { weddingEvents: serverData }
@@ -428,11 +473,19 @@ export default function UserDashboard() {
     if (!auth?.data?.roleId) return;
     setInvitationLoading(true);
     try {
-      const formData = createFormData({ invitation: invitationForm });
+      // Handle background image upload
+      let processedInvitation = { ...invitationForm };
+      
+      if (invitationForm.backgroundImage instanceof File) {
+        const backgroundImageUrl = await uploadImageClient(invitationForm.backgroundImage);
+        processedInvitation.backgroundImage = backgroundImageUrl;
+      }
+      
+      const formData = createFormData({ invitation: processedInvitation });
       // Convert form data to server-side type
       const serverData: InviteSection = {
-        ...invitationForm,
-        backgroundImage: invitationForm.backgroundImage instanceof File ? '' : invitationForm.backgroundImage
+        ...processedInvitation,
+        backgroundImage: processedInvitation.backgroundImage as string
       };
       await dispatch(updateInvite({
         roleId: auth.data.roleId,
@@ -454,10 +507,14 @@ export default function UserDashboard() {
       formData.append('name', profileForm.name);
       if (profileForm.phoneNumber) formData.append('phoneNumber', profileForm.phoneNumber);
       
+      // Handle avatar upload/update using Firebase
       if (profileForm.avatar instanceof File) {
-        formData.append('avatar', profileForm.avatar);
+        const newAvatarUrl = await replaceImageClient(profileForm.avatar, user?.avatar);
+        if (newAvatarUrl) {
+          formData.append('avatar', newAvatarUrl);
+        }
       } else if (typeof profileForm.avatar === 'string' && profileForm.avatar) {
-        formData.append('avatarUrl', profileForm.avatar);
+        formData.append('avatar', profileForm.avatar);
       }
       
       formData.append('address', JSON.stringify(profileForm.address));

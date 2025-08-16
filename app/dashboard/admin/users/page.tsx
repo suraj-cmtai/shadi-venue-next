@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { uploadImageClient, replaceImageClient } from "@/lib/firebase-client";
 import { AppDispatch, RootState } from "@/lib/redux/store";
 import {
   selectUsers,
@@ -380,10 +381,17 @@ export default function UsersPage() {
         formData.append("zipCode", userForm.zipCode);
       }
 
+      // Handle avatar upload/replace with Firebase
       if (userForm.avatarFile) {
-        formData.append("avatar", userForm.avatarFile);
+        const newAvatarUrl = await replaceImageClient(userForm.avatarFile, userForm.avatar || undefined);
+        if (newAvatarUrl) {
+          formData.append("avatar", newAvatarUrl);
+        }
+      } else if (userForm.removeAvatar) {
+        // Handle avatar removal
+        await replaceImageClient(null, userForm.avatar || undefined);
+        formData.append("avatar", "");
       }
-      formData.append("removeAvatar", userForm.removeAvatar.toString());
 
       await dispatch(updateUser({ id: selectedUserId, data: formData })).unwrap();
       toast.success("User details updated successfully");
@@ -520,13 +528,24 @@ export default function UsersPage() {
   };
 
   // Update wedding event
-  const updateWeddingEventLocal = (index: number, updatedEvent: WeddingEvent) => {
-    const updatedEvents = [...inviteForm.weddingEvents];
-    updatedEvents[index] = updatedEvent;
-    setInviteForm({
-      ...inviteForm,
-      weddingEvents: updatedEvents,
-    });
+  const updateWeddingEventLocal = async (index: number, updatedEvent: WeddingEvent, newImage?: File) => {
+    try {
+      const updatedEvents = [...inviteForm.weddingEvents];
+      
+      // Handle image upload if there's a new image
+      if (newImage) {
+        const newImageUrl = await uploadImageClient(newImage);
+        updatedEvent.image = newImageUrl;
+      }
+      
+      updatedEvents[index] = updatedEvent;
+      setInviteForm({
+        ...inviteForm,
+        weddingEvents: updatedEvents,
+      });
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to upload image");
+    }
   };
 
   // Remove wedding event
@@ -1095,20 +1114,40 @@ export default function UsersPage() {
                     {user.notifications.filter((n) => !n.read).length} unread
                   </p>
 
-                  {user.role === "user" && user.invite && (
+                  {user.role === "user" && (
                     <div className="mt-3 pt-3 border-t">
                       <h4 className="font-semibold mb-2 text-sm">Wedding Invite</h4>
                       <div className="space-y-1 text-xs">
-                        <p>
-                          <strong>Status:</strong>{" "}
-                          {user.invite.isEnabled ? "Enabled" : "Disabled"}
-                        </p>
-                        <p>
-                          <strong>Events:</strong> {user.invite.weddingEvents?.length || 0}
-                        </p>
-                        <p>
-                          <strong>Love Story:</strong> {user.invite.loveStory?.length || 0} items
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <strong>Status:</strong>
+                          <Button
+                            variant={user.invite?.isEnabled ? "default" : "outline"}
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await dispatch(toggleInviteStatus({
+                                  roleId: user.id,
+                                  isEnabled: !user.invite?.isEnabled
+                                })).unwrap();
+                                toast.success("Invite status updated successfully");
+                              } catch (err: any) {
+                                toast.error(err?.message || "Failed to update invite status");
+                              }
+                            }}
+                          >
+                            {user.invite?.isEnabled ? "Enabled" : "Disabled"}
+                          </Button>
+                        </div>
+                        {user.invite && (
+                          <>
+                            <p>
+                              <strong>Events:</strong> {user.invite.weddingEvents?.length || 0}
+                            </p>
+                            <p>
+                              <strong>Love Story:</strong> {user.invite.loveStory?.length || 0} items
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

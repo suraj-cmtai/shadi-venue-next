@@ -72,6 +72,7 @@ export async function GET(
 
 
 // Update a hotel (PUT)
+// Update a hotel (PUT)
 export async function PUT(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -136,7 +137,6 @@ export async function PUT(
         const marriagePhotoFiles = formData.getAll("uploadMarriagePhotos");
         const weddingBrochureFiles = formData.getAll("uploadWeddingBrochure");
         const cancelledChequeFiles = formData.getAll("uploadCancelledCheque");
-        const files = formData.getAll("images");
 
         // Validate hotel exists
         const existingHotel = await HotelService.getHotelById(id);
@@ -157,59 +157,123 @@ export async function PUT(
 
         // Update hotel data
         const hotelData: any = {
+            // Images
             images: imageUrls,
             uploadResortPhotos: resortPhotoUrls,
             uploadMarriagePhotos: marriagePhotoUrls,
             uploadWeddingBrochure: weddingBrochureUrls,
             uploadCancelledCheque: cancelledChequeUrls
         };
+
+        // Basic hotel information
         if (name) hotelData.name = name.toString();
         if (category) hotelData.category = category.toString();
         if (description) hotelData.description = description.toString();
+        if (rating) hotelData.rating = Number(rating);
+        if (status) hotelData.status = status.toString();
+        if (amenities) hotelData.amenities = amenities.toString().split(',').map(item => item.trim());
+        if (rooms) hotelData.rooms = JSON.parse(rooms.toString());
 
         // Location
         if (address || city || state || country || zipCode) {
             hotelData.location = {
-                address: address?.toString() || existingHotel.location.address,
-                city: city?.toString() || existingHotel.location.city,
-                state: state?.toString() || existingHotel.location.state,
-                country: country?.toString() || existingHotel.location.country,
-                zipCode: zipCode?.toString() || existingHotel.location.zipCode,
+                address: address?.toString() || existingHotel.location?.address || "",
+                city: city?.toString() || existingHotel.location?.city || "",
+                state: state?.toString() || existingHotel.location?.state || "",
+                country: country?.toString() || existingHotel.location?.country || "",
+                zipCode: zipCode?.toString() || existingHotel.location?.zipCode || "",
             };
         }
 
         // Price Range
         if (startingPrice || currency) {
             hotelData.priceRange = {
-                startingPrice: startingPrice ? Number(startingPrice) : existingHotel.priceRange.startingPrice,
-                currency: currency?.toString() || existingHotel.priceRange.currency,
+                startingPrice: startingPrice ? Number(startingPrice) : existingHotel.priceRange?.startingPrice || 0,
+                currency: (currency?.toString()) || existingHotel.priceRange?.currency || "INR",
             };
         }
-
-        if (rating) hotelData.rating = Number(rating);
-        if (status) hotelData.status = status.toString();
-        if (amenities) hotelData.amenities = amenities.toString().split(',').map(item => item.trim());
-        if (rooms) hotelData.rooms = JSON.parse(rooms.toString());
 
         // Contact Info
         if (phone || email || website) {
             hotelData.contactInfo = {
-                phone: phone?.toString() || existingHotel.contactInfo.phone,
-                email: email?.toString() || existingHotel.contactInfo.email,
-                website: website?.toString() || existingHotel.contactInfo.website,
+                phone: phone?.toString() || existingHotel.contactInfo?.phone || "",
+                email: email?.toString() || existingHotel.contactInfo?.email || "",
+                website: website?.toString() || existingHotel.contactInfo?.website || "",
             };
         }
 
         // Policies
         if (checkIn || checkOut || cancellation) {
             hotelData.policies = {
-                checkIn: checkIn?.toString() || existingHotel.policies.checkIn,
-                checkOut: checkOut?.toString() || existingHotel.policies.checkOut,
-                cancellation: cancellation?.toString() || existingHotel.policies.cancellation,
+                checkIn: checkIn?.toString() || existingHotel.policies?.checkIn || "",
+                checkOut: checkOut?.toString() || existingHotel.policies?.checkOut || "",
+                cancellation: cancellation?.toString() || existingHotel.policies?.cancellation || "",
             };
         }
 
-        if (imageUrls.length > 0) hotelData.images = imageUrls;
+        // Owner/Manager Information
+        if (firstName) hotelData.firstName = firstName.toString();
+        if (lastName) hotelData.lastName = lastName.toString();
+        if (companyName) hotelData.companyName = companyName.toString();
+        if (position) hotelData.position = position.toString();
+
+        // Venue Information
+        if (venueType) hotelData.venueType = venueType.toString();
+        if (websiteLink) hotelData.websiteLink = websiteLink.toString();
+        if (resortCategory) hotelData.resortCategory = resortCategory.toString();
+        if (maxGuestCapacity) hotelData.maxGuestCapacity = Number(maxGuestCapacity);
+        if (numberOfRooms) hotelData.numberOfRooms = Number(numberOfRooms);
+
+        // Wedding-specific Information
+        if (offerWeddingPackages) hotelData.offerWeddingPackages = offerWeddingPackages.toString() === "true";
+        if (weddingPackagePrice) hotelData.weddingPackagePrice = Number(weddingPackagePrice);
+        if (servicesOffered) {
+            // Handle as array or comma-separated string
+            try {
+                hotelData.servicesOffered = JSON.parse(servicesOffered.toString());
+            } catch {
+                hotelData.servicesOffered = servicesOffered.toString().split(',').map(item => item.trim());
+            }
+        }
+        if (venueAvailability) {
+            // Handle as array or comma-separated string
+            try {
+                hotelData.venueAvailability = JSON.parse(venueAvailability.toString());
+            } catch {
+                hotelData.venueAvailability = venueAvailability.toString().split(',').map(item => item.trim());
+            }
+        }
+
+        // Additional Services and Amenities
+        if (allInclusivePackages) hotelData.allInclusivePackages = allInclusivePackages.toString() === "true";
+        if (staffAccommodation) hotelData.staffAccommodation = staffAccommodation.toString() === "true";
+        if (diningOptions) {
+            try {
+                hotelData.diningOptions = JSON.parse(diningOptions.toString());
+            } catch {
+                hotelData.diningOptions = diningOptions.toString().split(',').map(item => item.trim());
+            }
+        }
+        if (otherAmenities) {
+            try {
+                hotelData.otherAmenities = JSON.parse(otherAmenities.toString());
+            } catch {
+                hotelData.otherAmenities = otherAmenities.toString().split(',').map(item => item.trim());
+            }
+        }
+
+        // Booking and Business Information
+        if (bookingLeadTime) hotelData.bookingLeadTime = bookingLeadTime.toString();
+        if (preferredContactMethod) hotelData.preferredContactMethod = preferredContactMethod.toString();
+        if (weddingDepositRequired) hotelData.weddingDepositRequired = Number(weddingDepositRequired);
+        if (refundPolicy) hotelData.refundPolicy = refundPolicy.toString();
+        if (referralSource) hotelData.referralSource = referralSource.toString();
+        if (partnershipInterest) hotelData.partnershipInterest = partnershipInterest.toString();
+
+        // Legal and Agreement Fields
+        hotelData.agreeToTerms = agreeToTerms;
+        hotelData.agreeToPrivacy = agreeToPrivacy;
+        if (signature) hotelData.signature = signature.toString();
 
         // Preserve createdAt and update updatedAt
         hotelData.createdAt = existingHotel.createdAt;
