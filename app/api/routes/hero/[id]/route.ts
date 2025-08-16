@@ -1,30 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import HeroService from "../../../services/heroServices";
 
+// Helper to extract ID from params Promise
+async function getIdFromParams(paramsPromise: Promise<{ params: { id: string } }>): Promise<string | undefined> {
+  const { params } = await paramsPromise;
+  return params?.id;
+}
+
 // GET: Fetch hero slide by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
-    
+    const id = await getIdFromParams(paramsPromise);
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Hero slide ID is required"
       }, { status: 400 });
     }
-    
+
     const heroSlide = await HeroService.getHeroSlideById(id);
-    
+
     if (!heroSlide) {
       return NextResponse.json({
         success: false,
         message: "Hero slide not found"
       }, { status: 404 });
     }
-    
+
     return NextResponse.json({
       success: true,
       data: heroSlide,
@@ -41,19 +47,19 @@ export async function GET(
 // PUT: Update hero slide by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
+    const id = await getIdFromParams(paramsPromise);
     const updatedData = await request.json();
-    
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Hero slide ID is required"
       }, { status: 400 });
     }
-    
+
     // Check if hero slide exists first
     const existingHero = await HeroService.getHeroSlideById(id);
     if (!existingHero) {
@@ -62,9 +68,9 @@ export async function PUT(
         message: "Hero slide not found"
       }, { status: 404 });
     }
-    
+
     const updatedHeroSlide = await HeroService.updateHeroSlide(id, updatedData);
-    
+
     return NextResponse.json({
       success: true,
       data: updatedHeroSlide,
@@ -81,18 +87,18 @@ export async function PUT(
 // DELETE: Delete hero slide by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
-    
+    const id = await getIdFromParams(paramsPromise);
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Hero slide ID is required"
       }, { status: 400 });
     }
-    
+
     // Check if hero slide exists first
     const existingHero = await HeroService.getHeroSlideById(id);
     if (!existingHero) {
@@ -101,9 +107,9 @@ export async function DELETE(
         message: "Hero slide not found"
       }, { status: 404 });
     }
-    
+
     const result = await HeroService.deleteHeroSlide(id);
-    
+
     return NextResponse.json({
       success: true,
       data: result,

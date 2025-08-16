@@ -1,30 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import TestimonialService from "../../../services/testimonialServices";
 
+// Helper to extract ID from params Promise
+async function getIdFromParams(paramsPromise: Promise<{ params: { id: string } }>): Promise<string | undefined> {
+  const { params } = await paramsPromise;
+  return params?.id;
+}
+
 // GET: Fetch testimonial by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
-    
+    const id = await getIdFromParams(paramsPromise);
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Testimonial ID is required"
       }, { status: 400 });
     }
-    
+
     const testimonial = await TestimonialService.getTestimonialById(id);
-    
+
     if (!testimonial) {
       return NextResponse.json({
         success: false,
         message: "Testimonial not found"
       }, { status: 404 });
     }
-    
+
     return NextResponse.json({
       success: true,
       data: testimonial,
@@ -41,19 +47,19 @@ export async function GET(
 // PUT: Update testimonial by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
+    const id = await getIdFromParams(paramsPromise);
     const updatedData = await request.json();
-    
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Testimonial ID is required"
       }, { status: 400 });
     }
-    
+
     // Check if testimonial exists first
     const existingTestimonial = await TestimonialService.getTestimonialById(id);
     if (!existingTestimonial) {
@@ -62,9 +68,9 @@ export async function PUT(
         message: "Testimonial not found"
       }, { status: 404 });
     }
-    
+
     const updatedTestimonial = await TestimonialService.updateTestimonial(id, updatedData);
-    
+
     return NextResponse.json({
       success: true,
       data: updatedTestimonial,
@@ -81,18 +87,18 @@ export async function PUT(
 // DELETE: Delete testimonial by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  paramsPromise: Promise<{ params: { id: string } }>
 ) {
   try {
-    const { id } = params;
-    
+    const id = await getIdFromParams(paramsPromise);
+
     if (!id) {
       return NextResponse.json({
         success: false,
         message: "Testimonial ID is required"
       }, { status: 400 });
     }
-    
+
     // Check if testimonial exists first
     const existingTestimonial = await TestimonialService.getTestimonialById(id);
     if (!existingTestimonial) {
@@ -101,9 +107,9 @@ export async function DELETE(
         message: "Testimonial not found"
       }, { status: 404 });
     }
-    
+
     const result = await TestimonialService.deleteTestimonial(id);
-    
+
     return NextResponse.json({
       success: true,
       data: result,
