@@ -1,43 +1,38 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import  GradientButton  from "@/components/GradientButton";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
+import { fetchActiveTestimonials, selectActiveTestimonials, selectIsLoading } from "@/lib/redux/features/testimonialSlice";
+import GradientButton from "@/components/GradientButton";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useState } from "react";
 
 // Image constants
-const imgArrow02 = "/images/testimonials-arrow-right-vector.svg";
-const imgArrow01 = "/images/testimonials-arrow-left-vector.svg";
-const imgVector = "/images/testimonials-flower-right-side-vector.svg";
-const imgVector1 = "/images/testimonials-decorative-right-vector.svg";
-const img = "/images/testimonials-quotes-vector.svg";
-const imgVector2 = "/images/testimonials-decorative-left-vector.svg";
-const imgVector3 = "/images/testimonials-decorative-right-vector.svg";
-const imgVector05 = "/images/testimonials-flower-top-left-bg-vector.svg";
-
-// Testimonial data
-const testimonials = [
-  {
-    name: "@kashtag90 & @jhalakshah",
-    text: `SHADIVENUE made our wedding planning so effortless. Organized, proactive and detail-driven - we arrived at our wedding feeling completely relaxed and excited for the festivities.`,
-    images: [
-      "/images/home page/testimo 2.jpg",
-      "/images/home page/testimo2.1.jpg"
-    ],
-  },
-  {
-    name: "Happy Couple",
-    text: `We couldn't have asked for a better wedding planning experience. The attention to detail and professionalism was outstanding.`,
-    images: [
-      "/images/home page/testimo2.1.jpg",
-      "/images/home page/testimo2.2.jpg"
-    ],
-  }
-];
+const imgArrowRight = "/images/testimonials-arrow-right-vector.svg";
+const imgArrowLeft = "/images/testimonials-arrow-left-vector.svg";
+const imgVectorFlowerRight = "/images/testimonials-flower-right-side-vector.svg";
+const imgVectorDecorativeLeft = "/images/testimonials-decorative-left-vector.svg";
+const imgVectorDecorativeRight = "/images/testimonials-decorative-right-vector.svg";
+const imgQuotes = "/images/testimonials-quotes-vector.svg";
+const imgVectorFlowerTopLeft = "/images/testimonials-flower-top-left-bg-vector.svg";
 
 export default function Testimonials() {
+  const dispatch = useAppDispatch();
+  const testimonials = useAppSelector(selectActiveTestimonials);
+  const isLoading = useAppSelector(selectIsLoading);
+
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    dispatch(fetchActiveTestimonials());
+  }, [dispatch]);
+
+  // Reset index if testimonials change
+  useEffect(() => {
+    if (testimonials.length > 0 && currentIndex >= testimonials.length) {
+      setCurrentIndex(0);
+    }
+  }, [testimonials, currentIndex]);
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -46,6 +41,9 @@ export default function Testimonials() {
   const prevTestimonial = () => {
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
+
+  const currentTestimonial = testimonials[currentIndex];
+
   return (
     <section className="relative w-full py-12 md:py-24 bg-white overflow-hidden" id="testimonials">
       {/* Decorative flower bg left */}
@@ -57,7 +55,7 @@ export default function Testimonials() {
         aria-hidden="true"
       >
         <Image
-          src={imgVector05}
+          src={imgVectorFlowerTopLeft}
           alt="Decorative flower"
           width={300}
           height={300}
@@ -71,16 +69,16 @@ export default function Testimonials() {
         <div className="w-full flex flex-col items-center mb-8 md:mb-12 relative">
           {/* Subtitle */}
           <div className="flex items-center gap-2 mb-2">
-          {/* Decorative left vector */}
-          <span className="hidden md:inline-block">
-            <Image src={imgVector2} alt="Decorative" width={18} height={18} className="w-4 h-4" />
-          </span>
+            {/* Decorative left vector */}
+            <span className="hidden md:inline-block">
+              <Image src={imgVectorDecorativeLeft} alt="Decorative" width={18} height={18} className="w-4 h-4" />
+            </span>
             <span className="uppercase tracking-[0.15em] text-sm md:text-base font-cormorant text-black font-medium">
               OUR Testimonials
             </span>
             {/* Decorative right vector */}
             <span className="hidden md:inline-block">
-              <Image src={imgVector3} alt="Decorative" width={18} height={18} className="w-4 h-4" />
+              <Image src={imgVectorDecorativeRight} alt="Decorative" width={18} height={18} className="w-4 h-4" />
             </span>
           </div>
           {/* Main Title */}
@@ -98,36 +96,27 @@ export default function Testimonials() {
         <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 relative z-10">
           {/* Images */}
           <div className="flex flex-row gap-4 md:gap-6 items-end">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="relative rounded-xs overflow-hidden shadow-lg border-4 border-white"
-            >
-              <Image
-                src={testimonials[currentIndex].images[0]}
-                alt="Wedding testimonial 1"
-                width={200}
-                height={260}
-                className="w-32 md:w-44 lg:w-56 h-auto object-cover"
-                priority
-              />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative rounded-xs overflow-hidden shadow-lg border-4 border-white"
-            >
-              <Image
-                src={testimonials[currentIndex].images[1]}
-                alt="Wedding testimonial 2"
-                width={220}
-                height={280}
-                className="w-36 md:w-52 lg:w-64 h-auto object-cover"
-                priority
-              />
-            </motion.div>
+            {currentTestimonial && currentTestimonial.images && currentTestimonial.images.slice(0, 2).map((imgSrc, idx) => (
+              <motion.div
+                key={imgSrc}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1 * (idx + 1) }}
+                className="relative rounded-xs overflow-hidden shadow-lg border-4 border-white"
+              >
+                <Image
+                  src={imgSrc}
+                  alt={`Wedding testimonial ${idx + 1}`}
+                  width={idx === 0 ? 200 : 220}
+                  height={idx === 0 ? 260 : 280}
+                  className={idx === 0
+                    ? "w-32 md:w-44 lg:w-56 h-auto object-cover"
+                    : "w-36 md:w-52 lg:w-64 h-auto object-cover"
+                  }
+                  priority
+                />
+              </motion.div>
+            ))}
           </div>
 
           {/* Testimonial Card */}
@@ -139,20 +128,19 @@ export default function Testimonials() {
           >
             {/* Decorative flower right */}
             <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/3 pointer-events-none hidden md:block">
-              <Image src={imgVector} alt="Decorative flower" width={120} height={120} className="w-32 h-auto" />
+              <Image src={imgVectorFlowerRight} alt="Decorative flower" width={120} height={120} className="w-32 h-auto" />
             </div>
-            {/* Quotes icon */}
-            {/* Quotes icon just before the testimonial text */}
+            {/* Quotes icon and testimonial content */}
             <div className="flex items-start flex-col gap-2">
               <span>
-                <Image src={img} alt="Quotes" width={48} height={48} className="w-12 md:w-14 h-auto" />
+                <Image src={imgQuotes} alt="Quotes" width={48} height={48} className="w-12 md:w-14 h-auto" />
               </span>
               {/* Name */}
-            <div className="text-[#212d47] text-lg md:text-2xl font-cormorant font-semibold uppercase text-center mt-2">
-              {testimonials[currentIndex].name}
-            </div>
+              <div className="text-[#212d47] text-lg md:text-2xl font-cormorant font-semibold uppercase text-center mt-2">
+                {currentTestimonial?.name}
+              </div>
               <p className="text-[#7d7d7d] text-base md:text-lg font-cinzel lowercase leading-relaxed">
-                {testimonials[currentIndex].text}
+                {currentTestimonial?.text}
               </p>
               {/* Button */}
             <div className="flex justify-center mt-2">
@@ -172,18 +160,20 @@ export default function Testimonials() {
             onClick={prevTestimonial}
             aria-label="Previous testimonial"
             className="p-2 rounded-full hover:bg-neutral-100 transition"
+            disabled={isLoading || testimonials.length === 0}
           >
-            <Image src={imgArrow01} alt="Previous" width={32} height={32} className="w-6 h-6 rotate-180" />
+            <Image src={imgArrowLeft} alt="Previous" width={32} height={32} className="w-6 h-6 rotate-180" />
           </button>
           <span className="font-cormorant text-[#212d47] text-base md:text-lg font-normal">
-            {currentIndex + 1} / {testimonials.length}
+            {testimonials.length > 0 ? currentIndex + 1 : 0} / {testimonials.length}
           </span>
           <button
             onClick={nextTestimonial}
             aria-label="Next testimonial"
             className="p-2 rounded-full hover:bg-neutral-100 transition"
+            disabled={isLoading || testimonials.length === 0}
           >
-            <Image src={imgArrow02} alt="Next" width={32} height={32} className="w-6 h-6" />
+            <Image src={imgArrowRight} alt="Next" width={32} height={32} className="w-6 h-6" />
           </button>
         </div>
       </div>
