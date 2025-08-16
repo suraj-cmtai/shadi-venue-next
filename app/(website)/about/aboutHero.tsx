@@ -1,16 +1,26 @@
 import { Fullscreen } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function AboutHero() {
     return (
         <section
             className="relative flex items-center justify-center overflow-hidden"
             style={{
-                background: '#595959',
                 height: '417px',
                 flexShrink: 0,
             }}
         >
+            {/* Hero Background Image */}
+            <div className="absolute inset-0">
+                <Image
+                    src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+                    alt="Beautiful Wedding Mandap"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+            </div>
             {/* Background Overlays */}
             <div className="absolute inset-0 z-0">
                 <div className="absolute inset-0 bg-[#595959] opacity-60"></div>

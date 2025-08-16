@@ -4,7 +4,12 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 const WEDDING_IMAGES = [
-    "/images/wedding/wed.jpg",
+    "/images/about-new/A gorgeous mandap decor and a beautiful….jpg",
+    "/images/about-new/Bride & Groom_- @kashtag90 & @jhalakshah_ Wedding….jpg",
+    "/images/about-new/0b9fae5d-37fd-45af-bb64-1d4f2c5cb42e.jpg",
+    "/images/about-new/7f868e0a-82b4-4dd3-be86-697a81425751.jpg",
+    "/images/about-new/af0255f9-1b5a-48b3-8ef9-98ba9d15afe5.jpg",
+    "/images/about-new/bd7db971-6e5a-444e-8cc6-b8a744299113.jpg",
 ];
 
 export default function WeddingSection() {
@@ -14,28 +19,25 @@ export default function WeddingSection() {
 
             <div className="relative overflow-hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-16">
 
-                {/* Leaves decoration - left */}
-                <div className="absolute -left-12 ml-4 transform -translate-y-1/2 rotate-12 hidden md:block pointer-events-none z-0">
-                    <div className="relative w-[160px] h-[320px] mt-36">
-                        <Image
-                            src="/images/about/weddingSec.jpg"
-                            alt="Decorative leaf"
-                            fill
-                            className="object-contain"
-                        />
-                    </div>
-                </div>
-
-                {/* Leaves decoration - right */}
-                <div className="absolute -right-0.5 mr-4 transform -translate-y-1/2 -rotate-12 hidden md:block pointer-events-none z-0">
-                    <div className="relative w-[160px] h-[320px] mt-20">
-                        <Image
-                            src="/images/about/weddingSec2.jpg"
-                            alt="Decorative leaf"
-                            fill
-                            className="object-contain"
-                        />
-                    </div>
+                {/* Image Gallery Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+                    {WEDDING_IMAGES.map((image, index) => (
+                        <motion.div
+                            key={index}
+                            className="relative h-64 rounded-lg overflow-hidden shadow-lg"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                        >
+                            <Image
+                                src={image}
+                                alt={`Wedding moment ${index + 1}`}
+                                fill
+                                className="object-cover hover:scale-110 transition-transform duration-500"
+                                priority={index < 4}
+                            />
+                        </motion.div>
+                    ))}
                 </div>
 
                 {/* Section Header */}
