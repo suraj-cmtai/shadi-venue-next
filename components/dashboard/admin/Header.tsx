@@ -63,6 +63,7 @@ const searchSuggestions = [
   { label: "Users", value: "users", href: "/dashboard/admin/users" },
   { label: "Wedding Themes", value: "themes", href: "/dashboard/admin/wedding"},
   { label: "Hero", value: "hero", href: "/dashboard/admin/hero" },
+  { label: "Hero Extension", value: "hero-extension", href: "/dashboard/admin/hero-extension" },
   { label: "Testimonials", value: "testimonials", href: "/dashboard/admin/testimonials" },
 ];
 
