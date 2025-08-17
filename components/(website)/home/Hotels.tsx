@@ -126,7 +126,7 @@ export default function Hotels() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <Link href="/hotels" passHref >
+          <Link href="/venue" passHref >
                 <GradientButton>EXPLORE MORE</GradientButton>
             </Link>
         </motion.div>
