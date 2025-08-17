@@ -1,5 +1,5 @@
 "use client";
-
+// dashboard/admin/hotel/page.tsx
 import { AppDispatch } from '@/lib/redux/store';
 import { 
   selectHotels, 
