@@ -2,18 +2,22 @@
 
 import GradientButton from "@/components/GradientButton";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "@/lib/redux/store";
+import {
+  fetchActiveImages,
+  fetchContent,
+  selectActiveImages,
+  selectContent,
+  selectRandomImageByType,
+  selectIsLoading,
+  ImageType
+} from "@/lib/redux/features/heroExtensionSlice";
+import Link from "next/link";
 
-// NOTE: A placeholder GradientButton is used as the original component was not provided.
-// You should replace this with your actual GradientButton component.
-
-
-/**
- * HeroExtension section with precise Figma fidelity.
- * All images and vectors are positioned and sized to match the provided screenshot.
- * Responsive, accessible, and uses only Tailwind utility classes.
- */
-
-const IMAGES = [
+// Fallback images in case no images are available
+const FALLBACK_IMAGES = [
   "/images/hero-extension-1.png", // Tall left
   "/images/hero-extension-2.png", // Main center
   "/images/hero-extension-3.png", // Bottom left
@@ -21,12 +25,68 @@ const IMAGES = [
   "/images/hero-extension-5.png", // Top right
   "/images/hero-extension-6.png", // Far right
 ];
+
 const VECTOR_LEFT = "/images/hero-extension-vector-1.svg";
 const VECTOR_RIGHT = "/images/hero-extension-vector.svg";
 const VECTOR_SHADOW_FLOWER_TOP_RIGHT = "/images/hero-extension-vector-2.svg";
 
+// Helper function to get a random image from an array
+const getRandomImage = (images: any[]) => {
+  if (!images || images.length === 0) return null;
+  return images[Math.floor(Math.random() * images.length)];
+};
 
 export default function HeroExtension() {
+  const dispatch = useDispatch<AppDispatch>();
+  const activeImages = useSelector(selectActiveImages);
+  const content = useSelector(selectContent);
+  const isLoading = useSelector(selectIsLoading);
+
+  useEffect(() => {
+    dispatch(fetchActiveImages());
+    dispatch(fetchContent());
+  }, [dispatch]);
+
+  // Get random images for each type, with fallbacks
+  const getImageForType = (type: ImageType, fallbackIndex: number) => {
+    const typeImages = activeImages[type] || [];
+    const randomImage = getRandomImage(typeImages);
+    return randomImage ? {
+      src: randomImage.imageUrl,
+      alt: randomImage.altText
+    } : {
+      src: FALLBACK_IMAGES[fallbackIndex],
+      alt: `Wedding image ${fallbackIndex + 1}`
+    };
+  };
+
+  const images = {
+    tallLeft: getImageForType('tall_left', 0),
+    mainCenter: getImageForType('main_center', 1),
+    bottomLeft: getImageForType('bottom_left', 2),
+    centerBottom: getImageForType('center_bottom', 3),
+    topRight: getImageForType('top_right', 4),
+    farRight: getImageForType('far_right', 5)
+  };
+
+  // Default content with fallbacks
+  const sectionContent = content || {
+    title: "Effortless Planning for Your Dream Wedding",
+    subtitle: "HELLO,",
+    buttonText: "Contact Us",
+    buttonLink: "/contact"
+  };
+
+  if (isLoading) {
+    return (
+      <section className="relative w-full bg-white overflow-hidden font-cormorant">
+        <div className="flex justify-center items-center py-24">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative w-full bg-white overflow-hidden font-cormorant">
       {/* Decorative Vectors */}
@@ -40,7 +100,7 @@ export default function HeroExtension() {
         aria-hidden="true"
       />
       
-       <motion.img
+      <motion.img
         src={VECTOR_RIGHT}
         alt=""
         className="pointer-events-none select-none hidden md:block absolute right-[2%] top-[55%] h-auto w-[18%] max-w-[250px]"
@@ -49,6 +109,7 @@ export default function HeroExtension() {
         transition={{ duration: 0.8, delay: 0.6 }}
         aria-hidden="true"
       />
+      
       <motion.img
         src={VECTOR_SHADOW_FLOWER_TOP_RIGHT}
         alt=""
@@ -69,15 +130,15 @@ export default function HeroExtension() {
         >
           <div className="rounded-lg overflow-hidden shadow-lg w-full">
             <img
-              src={IMAGES[0]}
-              alt="Bride and groom in a decorated hall"
+              src={images.tallLeft.src}
+              alt={images.tallLeft.alt}
               className="object-cover w-full h-full"
             />
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg w-full">
             <img
-              src={IMAGES[2]}
-              alt="Outdoor wedding canopy at dusk"
+              src={images.bottomLeft.src}
+              alt={images.bottomLeft.alt}
               className="object-cover w-full h-full"
             />
           </div>
@@ -95,8 +156,8 @@ export default function HeroExtension() {
                 transition={{ duration: 0.7, delay: 0.2 }}
               >
                 <img
-                  src={IMAGES[1]}
-                  alt="Bride showering groom with rose petals"
+                  src={images.mainCenter.src}
+                  alt={images.mainCenter.alt}
                   className="object-cover w-full h-full aspect-[3/4]"
                 />
               </motion.div>
@@ -107,13 +168,17 @@ export default function HeroExtension() {
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
                 <span className="font-bold text-base text-[#212d47] uppercase tracking-widest">
-                  HELLO,
+                  {sectionContent.subtitle}
                 </span>
                 <h2 className="font-bold text-4xl lg:text-5xl text-[#212d47] leading-tight my-4">
-                  Effortless Planning for Your Dream Wedding
+                  {sectionContent.title}
                 </h2>
                 <div className="mt-2">
-                   <GradientButton>Contact Us</GradientButton>
+                  <Link href={sectionContent.buttonLink}>
+                    <GradientButton>
+                      {sectionContent.buttonText}
+                    </GradientButton>
+                  </Link>
                 </div>
               </motion.div>
             </div>
@@ -125,8 +190,8 @@ export default function HeroExtension() {
               transition={{ duration: 0.7, delay: 0.4 }}
             >
               <img
-                src={IMAGES[3]}
-                alt="Bride and groom on a floral stage"
+                src={images.centerBottom.src}
+                alt={images.centerBottom.alt}
                 className="object-cover w-full h-full aspect-[16/7]"
               />
             </motion.div>
@@ -142,15 +207,15 @@ export default function HeroExtension() {
         >
           <div className="rounded-lg overflow-hidden shadow-lg w-full">
             <img
-              src={IMAGES[4]}
-              alt="Wedding ceremony by the sea"
+              src={images.topRight.src}
+              alt={images.topRight.alt}
               className="object-cover w-full h-full"
             />
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg w-full">
             <img
-              src={IMAGES[5]}
-              alt="Outdoor wedding aisle with floral arrangements"
+              src={images.farRight.src}
+              alt={images.farRight.alt}
               className="object-cover w-full h-full"
             />
           </div>

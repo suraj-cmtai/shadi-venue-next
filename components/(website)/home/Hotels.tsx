@@ -106,7 +106,7 @@ export default function Hotels() {
                 <div className="absolute left-0 bottom-0 w-full">
                   <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
                     <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                      <Link href="/wedding" passHref >
+                      <Link href={`venue/${hotel.id}`} passHref >
               
                         {hotel.name || "Hotel Name"}
               
