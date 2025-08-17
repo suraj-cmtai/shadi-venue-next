@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { 
   MapPin, 
@@ -72,10 +73,28 @@ import {
   BarChart3,
   Shield,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 
 import { Hotel } from "@/lib/redux/features/hotelSlice";
+
+// Helper function to safely convert array or string to comma-separated string
+const arrayToString = (value: any): string => {
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  return '';
+};
+
+// Helper function to safely convert comma-separated string to array
+const stringToArray = (value: string): string[] => {
+  if (!value || typeof value !== 'string') return [];
+  return value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+};
 
 // Form state interface
 interface HotelFormState {
@@ -118,6 +137,9 @@ interface HotelFormState {
   refundPolicy: string;
   referralSource: string;
   partnershipInterest: string;
+  agreeToTerms: boolean;
+  agreeToPrivacy: boolean;
+  signature: string;
 
   // File uploads
   uploadResortPhotos: File[];
@@ -151,6 +173,7 @@ const getAmenityIcon = (amenity: string) => {
 // Helper to safely initialize form state from potentially incomplete hotel data
 const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
   if (!hotel) return null;
+  
   return {
     name: hotel.name || '',
     category: hotel.category || '',
@@ -159,7 +182,7 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
     rating: hotel.rating || 0,
     status: hotel.status || 'draft',
     description: hotel.description || '',
-    amenities: (hotel.amenities || []).join(', '),
+    amenities: arrayToString(hotel.amenities),
     rooms: hotel.rooms || [],
     images: hotel.images || [],
     imageFiles: [],
@@ -170,34 +193,73 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
       website: hotel.contactInfo?.website || '' 
     },
     policies: hotel.policies || { checkIn: '', checkOut: '', cancellation: '' },
+    
+    // Personal information
     firstName: hotel.firstName || '',
     lastName: hotel.lastName || '',
     companyName: hotel.companyName || '',
     venueType: hotel.venueType || '',
     position: hotel.position || '',
     websiteLink: hotel.websiteLink || '',
+    
+    // Wedding services
     offerWeddingPackages: hotel.offerWeddingPackages || 'No',
     resortCategory: hotel.resortCategory || '',
     weddingPackagePrice: hotel.weddingPackagePrice || '',
-    servicesOffered: (hotel.servicesOffered || []).join(', '),
+    servicesOffered: arrayToString(hotel.servicesOffered),
     maxGuestCapacity: hotel.maxGuestCapacity || '',
     numberOfRooms: hotel.numberOfRooms || '',
     venueAvailability: hotel.venueAvailability || '',
-    allInclusivePackages: (hotel.allInclusivePackages || []).join(', '),
-    staffAccommodation: (hotel.staffAccommodation || []).join(', '),
-    diningOptions: (hotel.diningOptions || []).join(', '),
-    otherAmenities: (hotel.otherAmenities || []).join(', '),
+    allInclusivePackages: arrayToString(hotel.allInclusivePackages),
+    staffAccommodation: arrayToString(hotel.staffAccommodation),
+    diningOptions: arrayToString(hotel.diningOptions),
+    otherAmenities: arrayToString(hotel.otherAmenities),
+    
+    // Business information
     bookingLeadTime: hotel.bookingLeadTime || '',
-    preferredContactMethod: (hotel.preferredContactMethod || []).join(', '),
+    preferredContactMethod: arrayToString(hotel.preferredContactMethod),
     weddingDepositRequired: hotel.weddingDepositRequired || '',
     refundPolicy: hotel.refundPolicy || '',
     referralSource: hotel.referralSource || '',
     partnershipInterest: hotel.partnershipInterest || '',
+    
+    // Agreement fields
+    agreeToTerms: hotel.agreeToTerms || false,
+    agreeToPrivacy: hotel.agreeToPrivacy || false,
+    signature: hotel.signature || '',
+
+    // File uploads (initialize as empty arrays for new uploads)
     uploadResortPhotos: [],
     uploadMarriagePhotos: [],
     uploadWeddingBrochure: [],
     uploadCancelledCheque: [],
   };
+};
+
+// File upload helper functions
+const uploadFile = async (file: File): Promise<string> => {
+  try {
+    if (file.type.startsWith('image/')) {
+      return await uploadImageClient(file);
+    } else if (file.type === 'application/pdf') {
+      return await uploadPDFClient(file);
+    } else {
+      throw new Error('Unsupported file type');
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to upload file: ${error.message}`);
+  }
+};
+
+const uploadFiles = async (files: File[]): Promise<string[]> => {
+  if (!files.length) return [];
+  
+  try {
+    const uploadPromises = files.map(file => uploadFile(file));
+    return await Promise.all(uploadPromises);
+  } catch (error: any) {
+    throw new Error(`Failed to upload files: ${error.message}`);
+  }
 };
 
 export default function HotelDashboard() {
@@ -234,31 +296,14 @@ export default function HotelDashboard() {
     formData.append('status', newStatus);
     
     try {
+      setIsSubmitting(true);
       await dispatch(updateHotel({ id: auth.data.roleId, data: formData })).unwrap();
       toast.success(`Hotel status updated to ${newStatus}`);
     } catch (err: any) {
       toast.error(err?.message || "Failed to update status");
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleImageUpload = async (files: File[], category: string) => {
-    if (!files.length) return [];
-    
-    setUploadProgress(0);
-    const uploadedUrls: string[] = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      try {
-        const url = await uploadImageClient(files[i]);
-        uploadedUrls.push(url);
-        setUploadProgress(((i + 1) / files.length) * 100);
-      } catch (error) {
-        toast.error(`Failed to upload ${files[i].name}`);
-      }
-    }
-    
-    setUploadProgress(0);
-    return uploadedUrls;
   };
 
   const handleEdit = async () => {
@@ -271,35 +316,107 @@ export default function HotelDashboard() {
 
     setIsSubmitting(true);
     try {
-      // Handle file uploads first
-      const uploadedImages = await handleImageUpload(editHotelForm.imageFiles, 'images');
-      const uploadedResortPhotos = await handleImageUpload(editHotelForm.uploadResortPhotos, 'resort');
-      const uploadedMarriagePhotos = await handleImageUpload(editHotelForm.uploadMarriagePhotos, 'marriage');
+      // Handle file uploads first with progress tracking
+      setUploadProgress(10);
+      const uploadedImages = await uploadFiles(editHotelForm.imageFiles);
+      setUploadProgress(30);
+      const uploadedResortPhotos = await uploadFiles(editHotelForm.uploadResortPhotos);
+      setUploadProgress(50);
+      const uploadedMarriagePhotos = await uploadFiles(editHotelForm.uploadMarriagePhotos);
+      setUploadProgress(70);
+      const uploadedWeddingBrochures = await uploadFiles(editHotelForm.uploadWeddingBrochure);
+      setUploadProgress(90);
+      const uploadedCancelledCheques = await uploadFiles(editHotelForm.uploadCancelledCheque);
       
       const formData = new FormData();
       
-      // Append all form fields
-      Object.entries(editHotelForm).forEach(([key, value]) => {
-        if (key.includes('Files') || key.includes('upload')) return; // Skip file arrays
-        
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-          formData.append(key, String(value));
-        } else if (typeof value === 'object' && value !== null) {
-          formData.append(key, JSON.stringify(value));
-        }
+      // Basic hotel information
+      formData.append('name', editHotelForm.name);
+      formData.append('category', editHotelForm.category);
+      formData.append('description', editHotelForm.description);
+      formData.append('rating', editHotelForm.rating.toString());
+      formData.append('status', editHotelForm.status);
+      
+      // Location - use nested field names
+      formData.append('location[address]', editHotelForm.location.address);
+      formData.append('location[city]', editHotelForm.location.city);
+      formData.append('location[state]', editHotelForm.location.state);
+      formData.append('location[country]', editHotelForm.location.country);
+      formData.append('location[zipCode]', editHotelForm.location.zipCode);
+      
+      // Price Range
+      formData.append('priceRange[startingPrice]', editHotelForm.priceRange.startingPrice.toString());
+      formData.append('priceRange[currency]', editHotelForm.priceRange.currency);
+      
+      // Contact Info
+      formData.append('contactInfo[phone]', editHotelForm.contactInfo.phone);
+      formData.append('contactInfo[email]', editHotelForm.contactInfo.email);
+      formData.append('contactInfo[website]', editHotelForm.contactInfo.website);
+      
+      // Policies
+      formData.append('policies[checkIn]', editHotelForm.policies.checkIn);
+      formData.append('policies[checkOut]', editHotelForm.policies.checkOut);
+      formData.append('policies[cancellation]', editHotelForm.policies.cancellation);
+      
+      // Personal information
+      formData.append('firstName', editHotelForm.firstName);
+      formData.append('lastName', editHotelForm.lastName);
+      formData.append('companyName', editHotelForm.companyName);
+      formData.append('venueType', editHotelForm.venueType);
+      formData.append('position', editHotelForm.position);
+      formData.append('websiteLink', editHotelForm.websiteLink);
+      
+      // Wedding and venue information
+      formData.append('offerWeddingPackages', editHotelForm.offerWeddingPackages);
+      formData.append('resortCategory', editHotelForm.resortCategory);
+      formData.append('weddingPackagePrice', editHotelForm.weddingPackagePrice);
+      formData.append('maxGuestCapacity', editHotelForm.maxGuestCapacity);
+      formData.append('numberOfRooms', editHotelForm.numberOfRooms);
+      formData.append('venueAvailability', editHotelForm.venueAvailability);
+      formData.append('bookingLeadTime', editHotelForm.bookingLeadTime);
+      formData.append('weddingDepositRequired', editHotelForm.weddingDepositRequired);
+      formData.append('refundPolicy', editHotelForm.refundPolicy);
+      formData.append('referralSource', editHotelForm.referralSource);
+      formData.append('partnershipInterest', editHotelForm.partnershipInterest);
+      
+      // Agreement fields
+      formData.append('agreeToTerms', editHotelForm.agreeToTerms.toString());
+      formData.append('agreeToPrivacy', editHotelForm.agreeToPrivacy.toString());
+      formData.append('signature', editHotelForm.signature);
+      
+      // Convert comma-separated strings to arrays for API
+      formData.append('amenities', JSON.stringify(stringToArray(editHotelForm.amenities)));
+      formData.append('servicesOffered', JSON.stringify(stringToArray(editHotelForm.servicesOffered)));
+      formData.append('diningOptions', JSON.stringify(stringToArray(editHotelForm.diningOptions)));
+      formData.append('otherAmenities', JSON.stringify(stringToArray(editHotelForm.otherAmenities)));
+      formData.append('allInclusivePackages', JSON.stringify(stringToArray(editHotelForm.allInclusivePackages)));
+      formData.append('staffAccommodation', JSON.stringify(stringToArray(editHotelForm.staffAccommodation)));
+      formData.append('preferredContactMethod', JSON.stringify(stringToArray(editHotelForm.preferredContactMethod)));
+      
+      // Rooms
+      formData.append('rooms', JSON.stringify(editHotelForm.rooms));
+
+      // Handle images - combine existing with new uploads
+      const allImages = [...editHotelForm.images, ...uploadedImages];
+      allImages.forEach((url, index) => {
+        formData.append(`images[${index}]`, url);
+      });
+      
+      // File uploads
+      uploadedResortPhotos.forEach((url, index) => {
+        formData.append(`uploadResortPhotos[${index}]`, url);
+      });
+      uploadedMarriagePhotos.forEach((url, index) => {
+        formData.append(`uploadMarriagePhotos[${index}]`, url);
+      });
+      uploadedWeddingBrochures.forEach((url, index) => {
+        formData.append(`uploadWeddingBrochure[${index}]`, url);
+      });
+      uploadedCancelledCheques.forEach((url, index) => {
+        formData.append(`uploadCancelledCheque[${index}]`, url);
       });
 
-      // Add uploaded file URLs
-      if (uploadedImages.length) {
-        formData.append('images', JSON.stringify([...editHotelForm.images, ...uploadedImages]));
-      }
-      if (uploadedResortPhotos.length) {
-        formData.append('uploadResortPhotos', JSON.stringify(uploadedResortPhotos));
-      }
-      if (uploadedMarriagePhotos.length) {
-        formData.append('uploadMarriagePhotos', JSON.stringify(uploadedMarriagePhotos));
-      }
-
+      setUploadProgress(100);
       await dispatch(updateHotel({ id: auth.data.roleId, data: formData })).unwrap();
       setIsEditDialogOpen(false);
       toast.success("Hotel updated successfully!");
@@ -307,6 +424,7 @@ export default function HotelDashboard() {
       toast.error(err?.message || "Failed to update hotel.");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
@@ -352,7 +470,10 @@ export default function HotelDashboard() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-blue-600" />
+          <p className="text-gray-600">Loading hotel data...</p>
+        </div>
       </div>
     );
   }
@@ -399,7 +520,11 @@ export default function HotelDashboard() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Select value={selectedHotel.status} onValueChange={handleStatusChange}>
+              <Select 
+                value={selectedHotel.status} 
+                onValueChange={handleStatusChange}
+                disabled={isSubmitting}
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -410,7 +535,11 @@ export default function HotelDashboard() {
                 </SelectContent>
               </Select>
               
-              <Button onClick={() => setIsEditDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={() => setIsEditDialogOpen(true)} 
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isSubmitting}
+              >
                 <Edit3 className="h-4 w-4 mr-2" />
                 Edit Details
               </Button>
@@ -464,7 +593,7 @@ export default function HotelDashboard() {
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Starting Price</p>
                       <p className="text-2xl font-bold">
-                        {selectedHotel.priceRange.currency} {selectedHotel.priceRange.startingPrice}
+                        {selectedHotel.priceRange?.currency} {selectedHotel.priceRange?.startingPrice}
                       </p>
                     </div>
                   </div>
@@ -573,9 +702,9 @@ export default function HotelDashboard() {
                   <div className="flex items-start space-x-3">
                     <MapPin className="h-5 w-5 text-gray-500 mt-1" />
                     <div>
-                      <p>{selectedHotel.location.address}</p>
-                      <p>{selectedHotel.location.city}, {selectedHotel.location.state}</p>
-                      <p>{selectedHotel.location.country} {selectedHotel.location.zipCode}</p>
+                      <p>{selectedHotel.location?.address}</p>
+                      <p>{selectedHotel.location?.city}, {selectedHotel.location?.state}</p>
+                      <p>{selectedHotel.location?.country} {selectedHotel.location?.zipCode}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -605,8 +734,33 @@ export default function HotelDashboard() {
                     <div>
                       <Label className="text-sm font-medium text-gray-600 mb-2 block">Services Offered</Label>
                       <div className="flex flex-wrap gap-2">
-                        {selectedHotel.servicesOffered.map((service, index) => (
+                        {(Array.isArray(selectedHotel.servicesOffered) ? selectedHotel.servicesOffered : [selectedHotel.servicesOffered]).map((service, index) => (
                           <Badge key={index} variant="secondary">{service}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedHotel.diningOptions && selectedHotel.diningOptions.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600 mb-2 block">Dining Options</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(Array.isArray(selectedHotel.diningOptions) ? selectedHotel.diningOptions : [selectedHotel.diningOptions]).map((option, index) => (
+                          <Badge key={index} variant="secondary">{option}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedHotel.amenities && selectedHotel.amenities.length > 0 && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600 mb-2 block">Amenities</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {(Array.isArray(selectedHotel.amenities) ? selectedHotel.amenities : [selectedHotel.amenities]).map((amenity, index) => (
+                          <Badge key={index} variant="outline" className="flex items-center gap-1">
+                            {getAmenityIcon(amenity)}
+                            {amenity}
+                          </Badge>
                         ))}
                       </div>
                     </div>
@@ -668,7 +822,7 @@ export default function HotelDashboard() {
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Price per Night</Label>
-                          <p className="font-medium">{selectedHotel.priceRange.currency} {room.pricePerNight}</p>
+                          <p className="font-medium">{selectedHotel.priceRange?.currency} {room.pricePerNight}</p>
                         </div>
                         <div>
                           <Label className="text-sm text-gray-600">Available</Label>
@@ -715,12 +869,13 @@ export default function HotelDashboard() {
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {[...(selectedHotel.images || []), ...(selectedHotel.uploadResortPhotos || [])].map((image, index) => (
-                    <div key={index} className="relative group">
+                  {/* Main hotel images */}
+                  {(selectedHotel.images || []).map((image, index) => (
+                    <div key={`main-${index}`} className="relative group">
                       <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
                         <Image 
                           src={image} 
-                          alt={`Gallery image ${index + 1}`} 
+                          alt={`Hotel image ${index + 1}`} 
                           width={300}
                           height={200}
                           className="object-cover w-full h-full"
@@ -736,55 +891,84 @@ export default function HotelDashboard() {
                       </Button>
                     </div>
                   ))}
+                  
+                  {/* Resort photos */}
+                  {(selectedHotel.uploadResortPhotos || []).map((image, index) => (
+                    <div key={`resort-${index}`} className="relative group">
+                      <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                        <Image 
+                          src={image} 
+                          alt={`Resort photo ${index + 1}`} 
+                          width={300}
+                          height={200}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                      <Badge className="absolute bottom-2 left-2 bg-blue-500">Resort</Badge>
+                    </div>
+                  ))}
+
+                  {/* Marriage photos */}
+                  {(selectedHotel.uploadMarriagePhotos || []).map((image, index) => (
+                    <div key={`marriage-${index}`} className="relative group">
+                      <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                        <Image 
+                          src={image} 
+                          alt={`Marriage photo ${index + 1}`} 
+                          width={300}
+                          height={200}
+                          className="object-cover w-full h-full"
+                        />
+                      </div>
+                      <Badge className="absolute bottom-2 left-2 bg-pink-500">Wedding</Badge>
+                    </div>
+                  ))}
                 </div>
                 
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-600 mb-4">Drag and drop images here, or click to browse</p>
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'imageFiles')}
-                    className="hidden"
-                    id="gallery-upload"
-                  />
-                  <Label htmlFor="gallery-upload" className="cursor-pointer">
-                    <Button asChild>
-                      <span>Choose Images</span>
-                    </Button>
-                  </Label>
+                  <p className="text-gray-600 mb-4">Upload more images to showcase your venue</p>
+                  <Button onClick={() => setIsEditDialogOpen(true)}>
+                    <Camera className="h-4 w-4 mr-2" />
+                    Upload Images
+                  </Button>
                 </div>
               </CardContent>
             </Card>
             
-            {selectedHotel.uploadWeddingBrochure?.length || selectedHotel.uploadMarriagePhotos?.length || selectedHotel.uploadCancelledCheque?.length ? (
+            {(selectedHotel.uploadWeddingBrochure?.length || selectedHotel.uploadCancelledCheque?.length) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Documents & Files</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {selectedHotel.uploadWeddingBrochure?.length && (
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                      <span>Wedding Brochure ({selectedHotel.uploadWeddingBrochure.length} files)</span>
-                    </div>
-                  )}
-                  {selectedHotel.uploadMarriagePhotos?.length && (
-                    <div className="flex items-center space-x-3">
-                      <Camera className="h-5 w-5 text-green-600" />
-                      <span>Marriage Photos ({selectedHotel.uploadMarriagePhotos.length} files)</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        <span>Wedding Brochure ({selectedHotel.uploadWeddingBrochure.length} files)</span>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
                     </div>
                   )}
                   {selectedHotel.uploadCancelledCheque?.length && (
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-purple-600" />
-                      <span>Cancelled Cheque ({selectedHotel.uploadCancelledCheque.length} files)</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-purple-600" />
+                        <span>Banking Documents ({selectedHotel.uploadCancelledCheque.length} files)</span>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
-            ) : null}
+            )}
           </TabsContent>
 
           {/* Analytics Tab */}
@@ -848,7 +1032,7 @@ export default function HotelDashboard() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Hotel Information</DialogTitle>
             <DialogDescription>
@@ -856,34 +1040,48 @@ export default function HotelDashboard() {
             </DialogDescription>
           </DialogHeader>
           
+          {uploadProgress > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm">Uploading files...</span>
+                <span className="text-sm">{Math.round(uploadProgress)}%</span>
+              </div>
+              <Progress value={uploadProgress} />
+            </div>
+          )}
+          
           {editHotelForm && (
             <div className="space-y-6">
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="basic">Basic Info</TabsTrigger>
                   <TabsTrigger value="contact">Contact</TabsTrigger>
                   <TabsTrigger value="wedding">Wedding Services</TabsTrigger>
+                  <TabsTrigger value="amenities">Amenities</TabsTrigger>
                   <TabsTrigger value="files">Files</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="basic" className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Hotel/Venue Name</Label>
+                      <Label htmlFor="name">Hotel/Venue Name *</Label>
                       <Input
+                        id="name"
                         value={editHotelForm.name}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>Company Name</Label>
+                      <Label htmlFor="companyName">Company Name</Label>
                       <Input
+                        id="companyName"
                         value={editHotelForm.companyName}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, companyName: e.target.value } : null)}
                       />
                     </div>
                     <div>
-                      <Label>Category</Label>
+                      <Label htmlFor="category">Category</Label>
                       <Select value={editHotelForm.category} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, category: val } : null)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -894,6 +1092,24 @@ export default function HotelDashboard() {
                           <SelectItem value="resort">Resort</SelectItem>
                           <SelectItem value="boutique">Boutique</SelectItem>
                           <SelectItem value="budget">Budget</SelectItem>
+                          <SelectItem value="heritage">Heritage</SelectItem>
+                          <SelectItem value="eco">Eco-Friendly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="venueType">Venue Type</Label>
+                      <Select value={editHotelForm.venueType} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, venueType: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select venue type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Hotel Resort">Hotel Resort</SelectItem>
+                          <SelectItem value="Beach Resort">Beach Resort</SelectItem>
+                          <SelectItem value="Mountain Resort">Mountain Resort</SelectItem>
+                          <SelectItem value="City Hotel">City Hotel</SelectItem>
+                          <SelectItem value="Heritage Property">Heritage Property</SelectItem>
+                          <SelectItem value="Boutique Hotel">Boutique Hotel</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -920,111 +1136,209 @@ export default function HotelDashboard() {
                         />
                       </div>
                     </div>
+                    <div>
+                      <Label htmlFor="rating">Rating (1-5)</Label>
+                      <Input
+                        id="rating"
+                        type="number"
+                        min="1"
+                        max="5"
+                        step="0.1"
+                        value={editHotelForm.rating}
+                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, rating: Number(e.target.value) } : null)}
+                      />
+                    </div>
                   </div>
                   
                   <div>
-                    <Label>Description</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
+                      id="description"
                       value={editHotelForm.description}
                       onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, description: e.target.value } : null)}
                       rows={4}
                     />
                   </div>
 
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Address Information</h3>
+                  
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Address</Label>
+                      <Label htmlFor="country">Country/Region *</Label>
+                      <Select value={editHotelForm.location.country} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, location: { ...prev.location, country: val } } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="India">India</SelectItem>
+                          <SelectItem value="United States">United States</SelectItem>
+                          <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                          <SelectItem value="Canada">Canada</SelectItem>
+                          <SelectItem value="Australia">Australia</SelectItem>
+                          <SelectItem value="France">France</SelectItem>
+                          <SelectItem value="Germany">Germany</SelectItem>
+                          <SelectItem value="Japan">Japan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="address">Address *</Label>
                       <Input
+                        id="address"
                         value={editHotelForm.location.address}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, location: { ...prev.location, address: e.target.value } } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>City</Label>
+                      <Label htmlFor="city">City *</Label>
                       <Input
+                        id="city"
                         value={editHotelForm.location.city}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, location: { ...prev.location, city: e.target.value } } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>State</Label>
+                      <Label htmlFor="state">State</Label>
                       <Input
+                        id="state"
                         value={editHotelForm.location.state}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, location: { ...prev.location, state: e.target.value } } : null)}
                       />
                     </div>
                     <div>
-                      <Label>Zip Code</Label>
+                      <Label htmlFor="zipCode">Zip/Postal Code *</Label>
                       <Input
+                        id="zipCode"
                         value={editHotelForm.location.zipCode}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, location: { ...prev.location, zipCode: e.target.value } } : null)}
+                        required
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <Label>Amenities (comma-separated)</Label>
-                    <Textarea
-                      value={editHotelForm.amenities}
-                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, amenities: e.target.value } : null)}
-                      placeholder="WiFi, Parking, Pool, Gym, Restaurant..."
-                    />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="contact" className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label>First Name</Label>
+                      <Label htmlFor="firstName">First Name *</Label>
                       <Input
+                        id="firstName"
                         value={editHotelForm.firstName}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, firstName: e.target.value } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>Last Name</Label>
+                      <Label htmlFor="lastName">Last Name</Label>
                       <Input
+                        id="lastName"
                         value={editHotelForm.lastName}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, lastName: e.target.value } : null)}
                       />
                     </div>
                     <div>
-                      <Label>Position</Label>
+                      <Label htmlFor="position">Position *</Label>
                       <Input
+                        id="position"
                         value={editHotelForm.position}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, position: e.target.value } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>Phone</Label>
+                      <Label htmlFor="phone">Phone *</Label>
                       <Input
+                        id="phone"
                         value={editHotelForm.contactInfo.phone}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, contactInfo: { ...prev.contactInfo, phone: e.target.value } } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>Email</Label>
+                      <Label htmlFor="email">Email *</Label>
                       <Input
+                        id="email"
                         type="email"
                         value={editHotelForm.contactInfo.email}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, contactInfo: { ...prev.contactInfo, email: e.target.value } } : null)}
+                        required
                       />
                     </div>
                     <div>
-                      <Label>Website</Label>
+                      <Label htmlFor="website">Website Link</Label>
                       <Input
+                        id="website"
                         value={editHotelForm.websiteLink}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, websiteLink: e.target.value } : null)}
                         placeholder="https://..."
                       />
                     </div>
                   </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Preferred Contact Method *</h3>
+                  <div className="space-y-2">
+                    {['Email', 'Phone', 'Direct Message (Website)'].map((method) => (
+                      <div key={method} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={method}
+                          checked={stringToArray(editHotelForm.preferredContactMethod).includes(method)}
+                          onCheckedChange={(checked) => {
+                            const currentMethods = stringToArray(editHotelForm.preferredContactMethod);
+                            const newMethods = checked 
+                              ? [...currentMethods, method]
+                              : currentMethods.filter(m => m !== method);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              preferredContactMethod: newMethods.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={method}>{method}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="checkIn">Check-In Time</Label>
+                      <Input
+                        id="checkIn"
+                        value={editHotelForm.policies.checkIn}
+                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, policies: { ...prev.policies, checkIn: e.target.value } } : null)}
+                        placeholder="e.g., 14:00"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="checkOut">Check-Out Time</Label>
+                      <Input
+                        id="checkOut"
+                        value={editHotelForm.policies.checkOut}
+                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, policies: { ...prev.policies, checkOut: e.target.value } } : null)}
+                        placeholder="e.g., 11:00"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cancellation">Cancellation Policy</Label>
+                    <Textarea
+                      id="cancellation"
+                      value={editHotelForm.policies.cancellation}
+                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, policies: { ...prev.policies, cancellation: e.target.value } } : null)}
+                      placeholder="Describe your cancellation policy..."
+                    />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="wedding" className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Offer Wedding Packages?</Label>
+                      <Label>Do You Offer Wedding Packages? *</Label>
                       <Select value={editHotelForm.offerWeddingPackages} onValueChange={(val: "Yes" | "No") => setEditHotelForm(prev => prev ? { ...prev, offerWeddingPackages: val } : null)}>
                         <SelectTrigger>
                           <SelectValue />
@@ -1036,92 +1350,395 @@ export default function HotelDashboard() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Wedding Package Price</Label>
+                      <Label htmlFor="resortCategory">Your Resort/Hotel Category *</Label>
+                      <Select value={editHotelForm.resortCategory} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, resortCategory: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Luxury">Luxury</SelectItem>
+                          <SelectItem value="Premium">Premium</SelectItem>
+                          <SelectItem value="Deluxe">Deluxe</SelectItem>
+                          <SelectItem value="Standard">Standard</SelectItem>
+                          <SelectItem value="Budget">Budget</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="weddingPackagePrice">Wedding Package Price Range (2 Nights)</Label>
                       <Input
+                        id="weddingPackagePrice"
                         value={editHotelForm.weddingPackagePrice}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, weddingPackagePrice: e.target.value } : null)}
+                        placeholder="e.g., $5000 - $15000"
                       />
                     </div>
                     <div>
-                      <Label>Max Guest Capacity</Label>
+                      <Label htmlFor="maxGuestCapacity">Maximum Guest Capacity in Numbers</Label>
                       <Input
+                        id="maxGuestCapacity"
+                        type="number"
                         value={editHotelForm.maxGuestCapacity}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, maxGuestCapacity: e.target.value } : null)}
+                        placeholder="e.g., 200"
                       />
                     </div>
                     <div>
-                      <Label>Number of Rooms</Label>
+                      <Label htmlFor="numberOfRooms">Number of Rooms Available for Guests</Label>
                       <Input
+                        id="numberOfRooms"
+                        type="number"
                         value={editHotelForm.numberOfRooms}
                         onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, numberOfRooms: e.target.value } : null)}
+                        placeholder="e.g., 50"
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="venueAvailability">Wedding Venue Availability</Label>
+                      <Select value={editHotelForm.venueAvailability} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, venueAvailability: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select availability" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Year Round">Year Round</SelectItem>
+                          <SelectItem value="Seasonal">Seasonal</SelectItem>
+                          <SelectItem value="Peak Season Only">Peak Season Only</SelectItem>
+                          <SelectItem value="Off Season Only">Off Season Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="bookingLeadTime">Booking Lead Time</Label>
+                      <Select value={editHotelForm.bookingLeadTime} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, bookingLeadTime: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select lead time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-3 Months">1-3 Months</SelectItem>
+                          <SelectItem value="3-6 Months">3-6 Months</SelectItem>
+                          <SelectItem value="6-12 Months">6-12 Months</SelectItem>
+                          <SelectItem value="1+ Year">1+ Year</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="weddingDepositRequired">Wedding Deposit Required?</Label>
+                      <Select value={editHotelForm.weddingDepositRequired} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, weddingDepositRequired: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select deposit requirement" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10%">10%</SelectItem>
+                          <SelectItem value="20%">20%</SelectItem>
+                          <SelectItem value="30%">30%</SelectItem>
+                          <SelectItem value="50%">50%</SelectItem>
+                          <SelectItem value="Full Payment">Full Payment</SelectItem>
+                          <SelectItem value="No Deposit">No Deposit</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Services Offered (comma-separated)</Label>
-                    <Textarea
-                      value={editHotelForm.servicesOffered}
-                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, servicesOffered: e.target.value } : null)}
-                      placeholder="Catering, Decoration, Photography, Music..."
-                    />
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Services Offered *</h3>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {[
+                      'Ceremony Venue',
+                      'Reception Venue', 
+                      'Catering',
+                      'Bridal Suite',
+                      'Wedding Planner/Coordinator',
+                      'Floral Arrangements',
+                      'Photography',
+                      'Entertainment',
+                      'Officiant',
+                      'Transportation'
+                    ].map((service) => (
+                      <div key={service} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={service}
+                          checked={stringToArray(editHotelForm.servicesOffered).includes(service)}
+                          onCheckedChange={(checked) => {
+                            const currentServices = stringToArray(editHotelForm.servicesOffered);
+                            const newServices = checked 
+                              ? [...currentServices, service]
+                              : currentServices.filter(s => s !== service);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              servicesOffered: newServices.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={service}>{service}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Do you offer all-inclusive wedding packages? *</h3>
+                  <div className="space-y-2">
+                    {['Yes', 'No', 'Partially'].map((option) => (
+                      <div key={option} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={option}
+                          checked={stringToArray(editHotelForm.allInclusivePackages).includes(option)}
+                          onCheckedChange={(checked) => {
+                            const currentOptions = stringToArray(editHotelForm.allInclusivePackages);
+                            const newOptions = checked 
+                              ? [...currentOptions, option]
+                              : currentOptions.filter(o => o !== option);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              allInclusivePackages: newOptions.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={option}>{option}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">On-Site Accommodation of Drivers & Help *</h3>
+                  <div className="space-y-2">
+                    {['Yes', 'No', 'Limited'].map((option) => (
+                      <div key={option} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`staff-${option}`}
+                          checked={stringToArray(editHotelForm.staffAccommodation).includes(option)}
+                          onCheckedChange={(checked) => {
+                            const currentOptions = stringToArray(editHotelForm.staffAccommodation);
+                            const newOptions = checked 
+                              ? [...currentOptions, option]
+                              : currentOptions.filter(o => o !== option);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              staffAccommodation: newOptions.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={`staff-${option}`}>{option}</Label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Available Dining Options *</h3>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {[
+                      'Buffet',
+                      'Plated Meals',
+                      'Custom Menus',
+                      'Vegetarian',
+                      'Non Vegetarian'
+                    ].map((option) => (
+                      <div key={option} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`dining-${option}`}
+                          checked={stringToArray(editHotelForm.diningOptions).includes(option)}
+                          onCheckedChange={(checked) => {
+                            const currentOptions = stringToArray(editHotelForm.diningOptions);
+                            const newOptions = checked 
+                              ? [...currentOptions, option]
+                              : currentOptions.filter(o => o !== option);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              diningOptions: newOptions.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={`dining-${option}`}>{option}</Label>
+                      </div>
+                    ))}
                   </div>
 
                   <div>
-                    <Label>Dining Options (comma-separated)</Label>
+                    <Label htmlFor="refundPolicy">Refund/Cancellation Policy</Label>
                     <Textarea
-                      value={editHotelForm.diningOptions}
-                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, diningOptions: e.target.value } : null)}
-                      placeholder="Restaurant, Bar, Room Service, Banquet..."
+                      id="refundPolicy"
+                      value={editHotelForm.refundPolicy}
+                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, refundPolicy: e.target.value } : null)}
+                      placeholder="Describe your refund and cancellation policy..."
+                      rows={3}
                     />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="referralSource">How did you hear about our shadi venue website? *</Label>
+                      <Select value={editHotelForm.referralSource} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, referralSource: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select source" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Google Search">Google Search</SelectItem>
+                          <SelectItem value="Social Media">Social Media</SelectItem>
+                          <SelectItem value="Word of Mouth">Word of Mouth</SelectItem>
+                          <SelectItem value="Advertisement">Advertisement</SelectItem>
+                          <SelectItem value="Business Partner">Business Partner</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="partnershipInterest">Partnership/Promotional Interest *</Label>
+                      <Select value={editHotelForm.partnershipInterest} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, partnershipInterest: val } : null)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select interest level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Very Interested">Very Interested</SelectItem>
+                          <SelectItem value="Interested">Interested</SelectItem>
+                          <SelectItem value="Maybe">Maybe</SelectItem>
+                          <SelectItem value="Not Interested">Not Interested</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="amenities" className="space-y-4">
+                  <div>
+                    <Label htmlFor="amenities">Amenities (comma-separated)</Label>
+                    <Textarea
+                      id="amenities"
+                      value={editHotelForm.amenities}
+                      onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, amenities: e.target.value } : null)}
+                      placeholder="WiFi, Parking, Pool, Gym, Restaurant, Bar, Spa..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Other Amenities *</h3>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {[
+                      'Spa',
+                      'Pool',
+                      'Fitness Center',
+                      'Golf Course',
+                      'Business Center',
+                      'Conference Rooms',
+                      'Airport Shuttle',
+                      'Concierge Service',
+                      'Room Service',
+                      'Laundry Service',
+                      'Other'
+                    ].map((amenity) => (
+                      <div key={amenity} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`amenity-${amenity}`}
+                          checked={stringToArray(editHotelForm.otherAmenities).includes(amenity)}
+                          onCheckedChange={(checked) => {
+                            const currentAmenities = stringToArray(editHotelForm.otherAmenities);
+                            const newAmenities = checked 
+                              ? [...currentAmenities, amenity]
+                              : currentAmenities.filter(a => a !== amenity);
+                            setEditHotelForm(prev => prev ? { 
+                              ...prev, 
+                              otherAmenities: newAmenities.join(', ')
+                            } : null);
+                          }}
+                        />
+                        <Label htmlFor={`amenity-${amenity}`}>{amenity}</Label>
+                      </div>
+                    ))}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="files" className="space-y-4">
                   <div className="space-y-4">
                     <div>
-                      <Label>Venue Images</Label>
+                      <Label htmlFor="hotelImages">Upload Hotel Images</Label>
                       <Input
+                        id="hotelImages"
                         type="file"
                         multiple
                         accept="image/*"
                         onChange={(e) => handleFileChange(e, 'imageFiles')}
                       />
+                      <p className="text-sm text-gray-500 mt-1">Upload up to 20 photos/videos</p>
                     </div>
+                    
                     <div>
-                      <Label>Resort Photos</Label>
+                      <Label htmlFor="resortPhotos">Upload Resort Photos *</Label>
                       <Input
+                        id="resortPhotos"
                         type="file"
                         multiple
-                        accept="image/*"
+                        accept="image/*,video/*"
                         onChange={(e) => handleFileChange(e, 'uploadResortPhotos')}
                       />
+                      <p className="text-sm text-gray-500 mt-1">Upload up to 20 photos/videos of your resort</p>
                     </div>
+                    
                     <div>
-                      <Label>Marriage Photos</Label>
+                      <Label htmlFor="marriagePhotos">Upload Marriage Photos</Label>
                       <Input
+                        id="marriagePhotos"
                         type="file"
                         multiple
-                        accept="image/*"
+                        accept="image/*,video/*"
                         onChange={(e) => handleFileChange(e, 'uploadMarriagePhotos')}
                       />
+                      <p className="text-sm text-gray-500 mt-1">Upload up to 30 photos/videos of weddings hosted at your venue</p>
                     </div>
+                    
                     <div>
-                      <Label>Wedding Brochure</Label>
+                      <Label htmlFor="weddingBrochure">Upload Wedding Package Brochure</Label>
                       <Input
+                        id="weddingBrochure"
                         type="file"
                         multiple
                         accept=".pdf,.doc,.docx"
                         onChange={(e) => handleFileChange(e, 'uploadWeddingBrochure')}
                       />
+                      <p className="text-sm text-gray-500 mt-1">Upload your wedding package brochure (PDF, DOC, DOCX)</p>
                     </div>
+                    
                     <div>
-                      <Label>Cancelled Cheque</Label>
+                      <Label htmlFor="cancelledCheque">Cancel Cheque Copy of Your Resort Account</Label>
                       <Input
+                        id="cancelledCheque"
                         type="file"
                         multiple
-                        accept=".pdf,.jpg,.png"
+                        accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(e, 'uploadCancelledCheque')}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">Upload a cancelled cheque for verification (PDF, JPG, PNG)</p>
+                    </div>
+                  </div>
+
+                  <Separator />
+                  <h3 className="text-lg font-semibold">Terms & Agreements</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="agreeTerms"
+                        checked={editHotelForm.agreeToTerms}
+                        onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToTerms: !!checked } : null)}
+                        required
+                      />
+                      <Label htmlFor="agreeTerms">I agree to the Terms and Conditions *</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="agreePrivacy"
+                        checked={editHotelForm.agreeToPrivacy}
+                        onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToPrivacy: !!checked } : null)}
+                        required
+                      />
+                      <Label htmlFor="agreePrivacy">I agree to the Privacy Policy *</Label>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="signature">Digital Signature</Label>
+                      <Input
+                        id="signature"
+                        value={editHotelForm.signature}
+                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, signature: e.target.value } : null)}
+                        placeholder="Type your full name as signature"
                       />
                     </div>
                   </div>
@@ -1131,11 +1748,29 @@ export default function HotelDashboard() {
           )}
 
           <DialogFooter className="mt-6 gap-2">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)} 
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleEdit} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
-              {isSubmitting ? "Saving..." : "Save Changes"}
+            <Button 
+              onClick={handleEdit} 
+              disabled={isSubmitting || !editHotelForm?.name?.trim()} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
