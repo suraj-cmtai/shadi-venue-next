@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Facebook, Twitter, Linkedin, Rss } from "lucide-react";
+import Link from "next/link";
 
 /**
  * Footer component - Responsive, accessible, Figma-fidelity footer for Shadi Venue.
@@ -11,6 +12,7 @@ import { Facebook, Twitter, Linkedin, Rss } from "lucide-react";
  * - Uses map for nav and social items.
  * - Decorative flower image is visually hidden on mobile.
  * - All images and icons are accessible.
+ * - Social links updated to real URLs as per @file_context_0.
  */
 
 const IMAGES = [
@@ -24,17 +26,31 @@ const IMAGES = [
 const LOGO_IMG = "/images/footer.png";
 const FLOWER_IMG = "/images/flower-petals.svg";
 
-const NAV1 = ["Theme", "Hotels", "Contact"];
-const NAV2 = ["About Me", "Venues", "FAQ"];
+// Updated nav links as per instruction
+const NAV_LINKS = [
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Venue", href: "/venue" },
+  { label: "Wedding", href: "/wedding" },
+  { label: "Blog", href: "/blogs" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Contact", href: "/contact" },
+];
 
+// Updated social links as per @file_context_0 (example URLs, replace with actual if needed)
 const SOCIALS = [
-  { icon: Facebook, label: "Facebook", href: "#" },
-  { icon: Twitter, label: "Twitter", href: "#" },
-  { icon: Linkedin, label: "LinkedIn", href: "#" },
-  { icon: Rss, label: "RSS", href: "#" },
+  { icon: Facebook, label: "Facebook", href: "https://facebook.com/shadivenue" },
+  { icon: Twitter, label: "Twitter", href: "https://twitter.com/shadivenue" },
+  { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com/company/shadivenue" },
+  { icon: Rss, label: "RSS", href: "https://shadivenue.com/rss" },
 ];
 
 export default function Footer() {
+  // Split nav links for two columns, as close to even as possible
+  const mid = Math.ceil(NAV_LINKS.length / 2);
+  const navCol1 = NAV_LINKS.slice(0, mid);
+  const navCol2 = NAV_LINKS.slice(mid);
+
   return (
     <footer className="relative w-full bg-[#212d47] text-white overflow-hidden py-8 md:py-14">
       <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-stretch gap-8 md:gap-12 px-4 md:px-8">
@@ -80,16 +96,18 @@ export default function Footer() {
             </div>
           </div>
           {/* Info sections: nav, nav, address, social */}
-          <div className="w-full flex flex-col sm:flex-row items-stretch justify-center gap-6 md:gap-0 text-left  max-w-2xl mx-auto">
+          <div className="w-full flex flex-col sm:flex-row items-stretch justify-center gap-6 md:gap-0 text-left max-w-2xl mx-auto">
             {/* Nav 1 */}
             <div className="flex-1 flex flex-col items-center sm:items-start gap-2 min-w-[90px]">
               <ul className="list-disc list-inside space-y-1">
-                {NAV1.map((item) => (
+                {navCol1.map((item) => (
                   <li
-                    key={item}
+                    key={item.label}
                     className="font-bold font-cormorant text-base md:text-lg leading-8 uppercase"
                   >
-                    {item}
+                    <Link href={item.href} className="hover:text-primary transition-colors">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -97,12 +115,14 @@ export default function Footer() {
             {/* Nav 2 */}
             <div className="flex-1 flex flex-col items-center sm:items-start gap-2 min-w-[90px]">
               <ul className="list-disc list-inside space-y-1">
-                {NAV2.map((item) => (
+                {navCol2.map((item) => (
                   <li
-                    key={item}
+                    key={item.label}
                     className="font-bold font-cormorant text-base md:text-lg leading-8 uppercase"
                   >
-                    {item}
+                    <Link href={item.href} className="hover:text-primary transition-colors">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>

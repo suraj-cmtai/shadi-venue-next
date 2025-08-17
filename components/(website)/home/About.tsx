@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
+import Link from "next/link";
 
 // Figma MCP asset URLs
 const IMAGE_IMG = "/images/about-shadi-image-1.png";
@@ -132,9 +133,11 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
+              <Link href="/about">
               <GradientButton>
                 More
               </GradientButton>
+              </Link>
             </motion.div>
           </motion.div>
 

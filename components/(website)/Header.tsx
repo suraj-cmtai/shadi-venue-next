@@ -21,10 +21,10 @@ const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Venue", href: "/venue" },
-  // { label: "Hotels", href: "/hotels" },
   { label: "Wedding", href: "/wedding" },
   { label: "Blog", href: "/blogs" },
   { label: "Gallery", href: "/gallery" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const LOCATIONS = ["Delhi", "Mumbai", "Bangalore", "Jaipur", "Goa"];
