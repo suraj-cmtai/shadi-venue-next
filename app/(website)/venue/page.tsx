@@ -90,8 +90,8 @@ const DynamicVenuePage: React.FC = () => {
       .sort((a, b) => a - b);
     
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
-    const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 50000;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 10000;
+    const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 5000;
     
     const priceRanges = prices.length > 0 ? [
       `₹ ${minPrice} - ₹ ${midPrice}`,
@@ -140,8 +140,8 @@ const DynamicVenuePage: React.FC = () => {
       const matchesCity = !filters.city || 
         (hotel.location?.city && hotel.location.city.trim() !== '' && hotel.location.city === filters.city);
 
-      // Price range filter - show all venues if default range (0, 100000) or venue has no price data
-      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 100000;
+      // Price range filter - show all venues if default range (0, 10000) or venue has no price data
+      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
       const matchesPrice = isDefaultPriceRange || 
         !hotel.priceRange?.startingPrice || 
         hotel.priceRange.startingPrice === 0 ||
@@ -168,7 +168,7 @@ const DynamicVenuePage: React.FC = () => {
       // Reset to default values that show all venues
       const resetFilter: any = {};
       if (category === 'priceRange') {
-        resetFilter[category] = [0, 100000] as [number, number];
+        resetFilter[category] = [0, 10000] as [number, number];
       } else if (category === 'rating') {
         resetFilter[category] = 0;
       } else {
@@ -223,7 +223,7 @@ const DynamicVenuePage: React.FC = () => {
     if (filters.category) count++;
     if (filters.city) count++;
     if (filters.rating > 0) count++;
-    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 100000) count++;
+    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 10000) count++;
     return count;
   }, [filters]);
 
