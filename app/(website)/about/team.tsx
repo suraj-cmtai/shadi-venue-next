@@ -12,7 +12,7 @@ const TEAM_MEMBERS = [
     {
         name: "Michael Chen",
         position: "Creative Director",
-        image: "/images/team/team2.png",
+        image: "/images/wedding/team2.png",
     },
 ];
 const SUB_MEMBERS = [
