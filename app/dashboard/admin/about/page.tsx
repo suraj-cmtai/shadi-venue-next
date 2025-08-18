@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { 
@@ -26,6 +26,7 @@ import {
   ProcessStep
 } from "@/lib/redux/features/aboutSlice";
 import { AppDispatch } from "@/lib/redux/store";
+import { uploadImageClient, replaceImageClient } from "@/lib/firebase-client";
 
 type TabType = "aboutContent" | "processSteps";
 
@@ -64,6 +65,13 @@ export default function AdminAboutPage() {
     status: "active" as "active" | "inactive"
   });
 
+  // File input refs for About Content image and Process Step icon
+  const aboutImageFileRef = useRef<HTMLInputElement>(null);
+  const processIconFileRef = useRef<HTMLInputElement>(null);
+
+  // Local state for upload progress
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
   useEffect(() => {
     dispatch(fetchAboutContent());
     dispatch(fetchProcessSteps());
@@ -89,12 +97,16 @@ export default function AdminAboutPage() {
       status: "active"
     });
     setIsEditing(false);
+    setUploadProgress(null);
+    if (aboutImageFileRef.current) aboutImageFileRef.current.value = "";
+    if (processIconFileRef.current) processIconFileRef.current.value = "";
     dispatch(clearSelectedAboutContent());
     dispatch(clearSelectedProcessStep());
   };
 
   const openModal = (type: "create" | "edit", item?: AboutContent | ProcessStep) => {
     setIsModalOpen(true);
+    setUploadProgress(null);
     if (type === "edit" && item) {
       setIsEditing(true);
       if (activeTab === "aboutContent" && "subtitle" in item) {
@@ -132,23 +144,69 @@ export default function AdminAboutPage() {
     resetForms();
   };
 
+  const handleAboutImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadProgress(0);
+    try {
+      let imageUrl: string | null;
+      if (isEditing && selectedAboutContent?.image) {
+        imageUrl = await replaceImageClient(file, selectedAboutContent.image);
+      } else {
+        imageUrl = await uploadImageClient(file, (progress) => setUploadProgress(progress));
+      }
+      setAboutForm((prev) => ({ ...prev, image: imageUrl || "" }));
+      setUploadProgress(null);
+    } catch (err) {
+      setUploadProgress(null);
+      alert("Failed to upload image.");
+    }
+  };
+
+  const handleProcessIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadProgress(0);
+    try {
+      let iconUrl: string | null;
+      if (isEditing && selectedProcessStep?.icon) {
+        iconUrl = await replaceImageClient(file, selectedProcessStep.icon);
+      } else {
+        iconUrl = await uploadImageClient(file, (progress) => setUploadProgress(progress));
+      }
+      setProcessForm((prev) => ({ ...prev, icon: iconUrl || "" }));
+      setUploadProgress(null);
+    } catch (err) {
+      setUploadProgress(null);
+      alert("Failed to upload icon.");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (activeTab === "aboutContent") {
+      if (!aboutForm.image) {
+        alert("Please upload an image for About Content.");
+        return;
+      }
       if (isEditing && selectedAboutContent) {
         await dispatch(updateAboutContentById(aboutForm, selectedAboutContent.id));
       } else {
         await dispatch(createAboutContent(aboutForm));
       }
     } else {
+      if (!processForm.icon) {
+        alert("Please upload an icon for the Process Step.");
+        return;
+      }
       if (isEditing && selectedProcessStep) {
         await dispatch(updateProcessStepById(processForm, selectedProcessStep.id));
       } else {
         await dispatch(createProcessStep(processForm));
       }
     }
-    
+
     closeModal();
   };
 
@@ -414,14 +472,28 @@ export default function AdminAboutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                      <input
-                        type="url"
-                        value={aboutForm.image}
-                        onChange={(e) => setAboutForm({ ...aboutForm, image: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={aboutImageFileRef}
+                          onChange={handleAboutImageChange}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        {aboutForm.image && (
+                          <img
+                            src={aboutForm.image}
+                            alt="Preview"
+                            className="h-12 w-12 object-cover rounded border"
+                          />
+                        )}
+                      </div>
+                      {uploadProgress !== null && (
+                        <div className="mt-2 text-xs text-blue-600">
+                          Uploading: {Math.round(uploadProgress)}%
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
@@ -459,14 +531,28 @@ export default function AdminAboutPage() {
                   // Process Step Form
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Icon URL</label>
-                      <input
-                        type="url"
-                        value={processForm.icon}
-                        onChange={(e) => setProcessForm({ ...processForm, icon: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          ref={processIconFileRef}
+                          onChange={handleProcessIconChange}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        {processForm.icon && (
+                          <img
+                            src={processForm.icon}
+                            alt="Preview"
+                            className="h-12 w-12 object-cover rounded border"
+                          />
+                        )}
+                      </div>
+                      {uploadProgress !== null && (
+                        <div className="mt-2 text-xs text-blue-600">
+                          Uploading: {Math.round(uploadProgress)}%
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
