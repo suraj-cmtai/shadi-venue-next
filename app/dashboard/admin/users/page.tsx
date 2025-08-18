@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { uploadImageClient, replaceImageClient } from "@/lib/firebase-client";
-import { AppDispatch, RootState } from "@/lib/redux/store";
+import { AppDispatch } from "@/lib/redux/store";
 import {
   selectUsers,
   selectUserLoading,
@@ -15,8 +15,6 @@ import {
   updateInvite,
   toggleInviteStatus,
   updateInviteTheme,
-  updateWeddingEvent,
-  deleteWeddingEvent,
 } from "@/lib/redux/features/userSlice";
 import {
   selectRSVPResponses,
@@ -50,22 +48,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-// Import types from userSlice - define them properly
+// --- Types ---
 interface User {
   id: string;
   name: string;
@@ -157,7 +148,6 @@ type UserRole = User['role'];
 type WeddingEvent = NonNullable<User['invite']>['weddingEvents'][0];
 type Theme = NonNullable<User['invite']>['theme'];
 
-// Form state interfaces
 interface UserFormState {
   name: string;
   email: string;
@@ -183,7 +173,7 @@ interface InviteFormState {
   planning: NonNullable<User['invite']>['planning'];
 }
 
-// Initial states
+// --- Initial States ---
 const initialUserFormState: UserFormState = {
   name: "",
   email: "",
@@ -247,7 +237,7 @@ export default function UsersPage() {
   const users = useSelector(selectUsers);
   const isLoading = useSelector(selectUserLoading);
   const error = useSelector(selectUserError);
-  
+
   // RSVP state
   const rsvpResponses = useSelector(selectRSVPResponses);
   const rsvpLoading = useSelector(selectRSVPLoading);
@@ -258,13 +248,13 @@ export default function UsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQueryLocal] = useState("");
   const [activeTab, setActiveTab] = useState("user");
-  
+
   // Form states
   const [userForm, setUserForm] = useState<UserFormState>(initialUserFormState);
   const [inviteForm, setInviteForm] = useState<InviteFormState>(initialInviteFormState);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  
+
   // Loading states for different forms
   const [isUserSubmitting, setIsUserSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
@@ -304,7 +294,7 @@ export default function UsersPage() {
   const openEditDialog = (user: User) => {
     setSelectedUserId(user.id);
     setSelectedUser(user);
-    
+
     // Set user form
     setUserForm({
       name: user.name,
@@ -411,9 +401,9 @@ export default function UsersPage() {
     try {
       // First toggle invite status if needed
       if (selectedUser?.invite?.isEnabled !== inviteForm.isEnabled) {
-        await dispatch(toggleInviteStatus({ 
-          roleId: selectedUserId, 
-          isEnabled: inviteForm.isEnabled 
+        await dispatch(toggleInviteStatus({
+          roleId: selectedUserId,
+          isEnabled: inviteForm.isEnabled
         })).unwrap();
       }
 
@@ -531,13 +521,13 @@ export default function UsersPage() {
   const updateWeddingEventLocal = async (index: number, updatedEvent: WeddingEvent, newImage?: File) => {
     try {
       const updatedEvents = [...inviteForm.weddingEvents];
-      
+
       // Handle image upload if there's a new image
       if (newImage) {
         const newImageUrl = await uploadImageClient(newImage);
         updatedEvent.image = newImageUrl;
       }
-      
+
       updatedEvents[index] = updatedEvent;
       setInviteForm({
         ...inviteForm,
@@ -556,6 +546,13 @@ export default function UsersPage() {
       weddingEvents: updatedEvents,
     });
   };
+
+  // --- Table Columns (shadcn style, similar to contact table) ---
+  // See: https://ui.shadcn.com/docs/components/table
+  // Table columns: Avatar, Name, Email, Role, Phone, Location, Notifications, Invite Status, Actions
+
+  // --- Forms (same as before, for dialog tabs) ---
+  // ... (renderUserForm, renderInviteForm, renderRSVPForm) -- unchanged, see below
 
   // Form 1: User Details
   const renderUserForm = () => (
@@ -688,8 +685,8 @@ export default function UsersPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button 
-          onClick={handleUserSubmit} 
+        <Button
+          onClick={handleUserSubmit}
           disabled={isUserSubmitting}
           className="w-full sm:w-auto"
         >
@@ -704,12 +701,10 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Invite Status */}
       <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
+        <Switch
           id="isEnabled"
           checked={inviteForm.isEnabled}
-          onChange={(e) => setInviteForm({ ...inviteForm, isEnabled: e.target.checked })}
-          className="h-4 w-4 rounded border-gray-300"
+          onCheckedChange={(checked) => setInviteForm({ ...inviteForm, isEnabled: checked })}
         />
         <Label htmlFor="isEnabled">Enable Wedding Invite</Label>
       </div>
@@ -939,9 +934,9 @@ export default function UsersPage() {
               />
             </div>
             <div className="flex justify-end mt-4">
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={() => removeWeddingEvent(index)}
               >
                 Remove Event
@@ -950,10 +945,9 @@ export default function UsersPage() {
           </div>
         ))}
       </div>
-
       <div className="flex justify-end">
-        <Button 
-          onClick={handleInviteSubmit} 
+        <Button
+          onClick={handleInviteSubmit}
           disabled={isInviteSubmitting}
           className="w-full sm:w-auto"
         >
@@ -968,7 +962,7 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h4 className="font-semibold">RSVP Responses</h4>
-        <Button 
+        <Button
           onClick={() => selectedUserId && dispatch(fetchRSVPResponses(selectedUserId))}
           size="sm"
           disabled={rsvpLoading}
@@ -976,13 +970,11 @@ export default function UsersPage() {
           {rsvpLoading ? "Loading..." : "Refresh"}
         </Button>
       </div>
-
       {rsvpError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           {rsvpError}
         </div>
       )}
-
       {rsvpResponses.length === 0 ? (
         <p className="text-gray-500 text-center py-8">No RSVP responses yet</p>
       ) : (
@@ -1008,24 +1000,24 @@ export default function UsersPage() {
                 </div>
               )}
               <div className="flex gap-2 mt-4">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant={rsvp.status === 'confirmed' ? 'default' : 'outline'}
                   onClick={() => handleRSVPStatusUpdate(rsvp.id, 'confirmed')}
                   disabled={isRSVPSubmitting}
                 >
                   Confirm
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant={rsvp.status === 'pending' ? 'default' : 'outline'}
                   onClick={() => handleRSVPStatusUpdate(rsvp.id, 'pending')}
                   disabled={isRSVPSubmitting}
                 >
                   Pending
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant={rsvp.status === 'declined' ? 'destructive' : 'outline'}
                   onClick={() => handleRSVPStatusUpdate(rsvp.id, 'declined')}
                   disabled={isRSVPSubmitting}
@@ -1037,10 +1029,9 @@ export default function UsersPage() {
           ))}
         </div>
       )}
-
       <div className="flex justify-end">
-        <Button 
-          onClick={() => selectedUserId && dispatch(fetchRSVPResponses(selectedUserId))} 
+        <Button
+          onClick={() => selectedUserId && dispatch(fetchRSVPResponses(selectedUserId))}
           disabled={rsvpLoading}
           className="w-full sm:w-auto"
         >
@@ -1050,6 +1041,7 @@ export default function UsersPage() {
     </div>
   );
 
+  // --- Main Table UI ---
   return (
     <div className="container mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
@@ -1066,207 +1058,208 @@ export default function UsersPage() {
           />
         </div>
       </div>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          filteredUsers.map((user) => (
-            <Card key={user.id} className="flex flex-col">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  {user.avatar && (
-                    <img
-                      src={user.avatar}
-                      alt={`${user.name}'s avatar`}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-sm sm:text-base">{user.name}</CardTitle>
-                    <CardDescription className="truncate text-xs sm:text-sm">{user.email}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 pb-4">
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <strong>Role:</strong> {user.role}
-                  </p>
-                  {user.phoneNumber && (
-                    <p className="truncate">
-                      <strong>Phone:</strong> {user.phoneNumber}
-                    </p>
-                  )}
-                  {user.address && (
-                    <p className="truncate">
-                      <strong>Location:</strong> {user.address.city}, {user.address.country}
-                    </p>
-                  )}
-                  <p>
-                    <strong>Notifications:</strong>{" "}
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold">Avatar</th>
+              <th className="px-4 py-3 text-left font-semibold">Name</th>
+              <th className="px-4 py-3 text-left font-semibold">Email</th>
+              <th className="px-4 py-3 text-left font-semibold">Role</th>
+              <th className="px-4 py-3 text-left font-semibold">Phone</th>
+              <th className="px-4 py-3 text-left font-semibold">Location</th>
+              <th className="px-4 py-3 text-left font-semibold">Notifications</th>
+              <th className="px-4 py-3 text-left font-semibold">Invite Status</th>
+              <th className="px-4 py-3 text-left font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 bg-white">
+            {isLoading ? (
+              <tr>
+                <td colSpan={9} className="text-center py-8">Loading...</td>
+              </tr>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="text-center py-8 text-gray-500">No users found</td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={`${user.name}'s avatar`}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                        <span className="text-lg font-bold">{user.name[0]}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-medium">{user.name}</td>
+                  <td className="px-4 py-3">{user.email}</td>
+                  <td className="px-4 py-3 capitalize">{user.role}</td>
+                  <td className="px-4 py-3">{user.phoneNumber || "-"}</td>
+                  <td className="px-4 py-3">
+                    {user.address
+                      ? `${user.address.city || ""}${user.address.city && user.address.country ? ", " : ""}${user.address.country || ""}`
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-3">
                     {user.notifications.filter((n) => !n.read).length} unread
-                  </p>
-
-                  {user.role === "user" && (
-                    <div className="mt-3 pt-3 border-t">
-                      <h4 className="font-semibold mb-2 text-sm">Wedding Invite</h4>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center justify-between">
-                          <strong>Status:</strong>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.role === "user" ? (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={!!user.invite?.isEnabled}
+                          onCheckedChange={async (checked) => {
+                            try {
+                              await dispatch(toggleInviteStatus({
+                                roleId: user.id,
+                                isEnabled: checked
+                              })).unwrap();
+                              toast.success("Invite status updated successfully");
+                            } catch (err: any) {
+                              toast.error(err?.message || "Failed to update invite status");
+                            }
+                          }}
+                          aria-label="Enable Wedding Invite"
+                        />
+                        <span className="text-xs">
+                          {user.invite?.isEnabled ? "Enabled" : "Disabled"}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">N/A</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <Dialog open={isEditDialogOpen && selectedUserId === user.id} onOpenChange={setIsEditDialogOpen}>
+                        <DialogTrigger asChild>
                           <Button
-                            variant={user.invite?.isEnabled ? "default" : "outline"}
+                            variant="outline"
+                            onClick={() => openEditDialog(user)}
                             size="sm"
-                            onClick={async () => {
-                              try {
-                                await dispatch(toggleInviteStatus({
-                                  roleId: user.id,
-                                  isEnabled: !user.invite?.isEnabled
-                                })).unwrap();
-                                toast.success("Invite status updated successfully");
-                              } catch (err: any) {
-                                toast.error(err?.message || "Failed to update invite status");
-                              }
-                            }}
                           >
-                            {user.invite?.isEnabled ? "Enabled" : "Disabled"}
+                            Edit
                           </Button>
-                        </div>
-                        {user.invite && (
-                          <>
-                            <p>
-                              <strong>Events:</strong> {user.invite.weddingEvents?.length || 0}
-                            </p>
-                            <p>
-                              <strong>Love Story:</strong> {user.invite.loveStory?.length || 0} items
-                            </p>
-                          </>
-                        )}
-                      </div>
+                        </DialogTrigger>
+                        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
+                          <DialogHeader>
+                            <DialogTitle>Edit User - {selectedUser?.name}</DialogTitle>
+                            <DialogDescription>
+                              Manage user details, wedding invite, and RSVP responses.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                              <TabsTrigger value="user">User Details</TabsTrigger>
+                              <TabsTrigger
+                                value="invite"
+                                disabled={selectedUser?.role !== "user"}
+                              >
+                                Wedding Invite
+                              </TabsTrigger>
+                              <TabsTrigger
+                                value="rsvp"
+                                disabled={selectedUser?.role !== "user" || !selectedUser?.invite?.isEnabled}
+                              >
+                                RSVP Responses
+                              </TabsTrigger>
+                            </TabsList>
+                            <div className="max-h-[60vh] overflow-y-auto px-1 mt-4">
+                              <TabsContent value="user" className="mt-0">
+                                {renderUserForm()}
+                              </TabsContent>
+                              <TabsContent value="invite" className="mt-0">
+                                {selectedUser?.role === "user" ? renderInviteForm() : (
+                                  <p className="text-center py-8 text-gray-500">
+                                    Wedding invites are only available for users with role "user"
+                                  </p>
+                                )}
+                              </TabsContent>
+                              <TabsContent value="rsvp" className="mt-0">
+                                {selectedUser?.role === "user" && selectedUser?.invite?.isEnabled ? renderRSVPForm() : (
+                                  <p className="text-center py-8 text-gray-500">
+                                    RSVP management is only available for users with enabled wedding invites
+                                  </p>
+                                )}
+                              </TabsContent>
+                            </div>
+                          </Tabs>
+                          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setIsEditDialogOpen(false);
+                                resetForms();
+                              }}
+                              className="w-full sm:w-auto"
+                            >
+                              Close
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      <AlertDialog open={isDeleteDialogOpen && selectedUserId === user.id} onOpenChange={setIsDeleteDialogOpen}>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              setSelectedUserId(user.id);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            size="sm"
+                          >
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[95vw] max-w-md">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the
+                              user's account and remove their data from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+                            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDelete}
+                              disabled={isUserSubmitting}
+                              className="w-full sm:w-auto"
+                            >
+                              {isUserSubmitting ? "Deleting..." : "Delete"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => openEditDialog(user)}
-                      className="w-full sm:w-auto"
-                      size="sm"
-                    >
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden">
-                    <DialogHeader>
-                      <DialogTitle>Edit User - {selectedUser?.name}</DialogTitle>
-                      <DialogDescription>
-                        Manage user details, wedding invite, and RSVP responses.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="user">User Details</TabsTrigger>
-                        <TabsTrigger 
-                          value="invite" 
-                          disabled={selectedUser?.role !== "user"}
-                        >
-                          Wedding Invite
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="rsvp" 
-                          disabled={selectedUser?.role !== "user" || !selectedUser?.invite?.isEnabled}
-                        >
-                          RSVP Responses
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <div className="max-h-[60vh] overflow-y-auto px-1 mt-4">
-                        <TabsContent value="user" className="mt-0">
-                          {renderUserForm()}
-                        </TabsContent>
-                        
-                        <TabsContent value="invite" className="mt-0">
-                          {selectedUser?.role === "user" ? renderInviteForm() : (
-                            <p className="text-center py-8 text-gray-500">
-                              Wedding invites are only available for users with role "user"
-                            </p>
-                          )}
-                        </TabsContent>
-                        
-                        <TabsContent value="rsvp" className="mt-0">
-                          {selectedUser?.role === "user" && selectedUser?.invite?.isEnabled ? renderRSVPForm() : (
-                            <p className="text-center py-8 text-gray-500">
-                              RSVP management is only available for users with enabled wedding invites
-                            </p>
-                          )}
-                        </TabsContent>
-                      </div>
-                    </Tabs>
-
-                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsEditDialogOpen(false);
-                          resetForms();
-                        }}
-                        className="w-full sm:w-auto"
-                      >
-                        Close
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        setSelectedUserId(user.id);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                      className="w-full sm:w-auto"
-                      size="sm"
-                    >
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="w-[95vw] max-w-md">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the
-                        user's account and remove their data from our servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
-                      <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleDelete} 
-                        disabled={isUserSubmitting}
-                        className="w-full sm:w-auto"
-                      >
-                        {isUserSubmitting ? "Deleting..." : "Delete"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          ))
-        )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
+      {/* 
+        Why is there no need for a weddingEvent thunk?
+        ------------------------------------------------
+        Because all wedding event CRUD (add, update, remove) is handled as part of the invite object
+        and is updated via the updateInvite thunk/action. There is no separate API endpoint or slice
+        for wedding events; they are always part of the invite data structure. So, updating the invite
+        (with new/changed weddingEvents) is sufficient and no separate thunk is needed.
+      */}
     </div>
   );
 }

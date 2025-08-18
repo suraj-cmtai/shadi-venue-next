@@ -2,6 +2,7 @@ import { db } from "../config/firebase";
 import consoleManager from "../utils/consoleManager";
 import admin from "firebase-admin";
 
+// Interfaces for user data, matching userSlice structure
 export interface Theme {
   primaryColor: string;
   secondaryColor: string;
@@ -80,15 +81,15 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  avatar?: string;
-  phoneNumber?: string;
+  avatar?: string | null;
+  phoneNumber?: string | null;
   address?: {
     street: string;
     city: string;
     state: string;
     country: string;
     zipCode: string;
-  };
+  } | null;
   bookings?: string[];
   favorites?: {
     hotels?: string[];
@@ -100,149 +101,112 @@ export interface User {
     read: boolean;
     createdAt: string;
   }[];
-  invite?: Invite;
-  createdAt: Date;
-  updatedAt: Date;
+  invite?: Invite | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 class UserService {
   static users: User[] = [];
   static isInitialized = false;
 
-  // Helper method to convert Firestore timestamp to Date
-  private static convertTimestamp(timestamp: any): Date {
-    if (timestamp && timestamp._seconds) {
-      return new Date(timestamp._seconds * 1000);
-    }
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate();
-    }
-    if (timestamp instanceof Date) {
-      return timestamp;
-    }
-    if (typeof timestamp === 'string') {
-      const date = new Date(timestamp);
-      return isNaN(date.getTime()) ? new Date() : date;
-    }
-    if (typeof timestamp === 'number') {
-      return new Date(timestamp);
-    }
-    return new Date();
+  // Helper: convert Firestore timestamp to ISO string
+  private static convertTimestampToString(timestamp: any): string {
+    if (!timestamp) return new Date().toISOString();
+    if (timestamp instanceof Date) return timestamp.toISOString();
+    if (typeof timestamp === "string") return new Date(timestamp).toISOString();
+    if (timestamp._seconds) return new Date(timestamp._seconds * 1000).toISOString();
+    if (typeof timestamp.toDate === "function") return timestamp.toDate().toISOString();
+    if (typeof timestamp === "number") return new Date(timestamp).toISOString();
+    return new Date().toISOString();
   }
 
-  // Helper method to convert document data to User type
-  private static convertToType(id: string, data: any): User {
+  // Convert Firestore doc to User (matching userSlice)
+  private static convertToUser(id: string, data: any): User {
     return {
       id,
       name: data.name || "",
       email: data.email || "",
       role: data.role || "user",
-      avatar: data.avatar || null,
-      phoneNumber: data.phoneNumber || "",
-      address: data.address || null,
-      bookings: data.bookings || [],
-      favorites: data.favorites || { hotels: [], vendors: [] },
-      notifications: data.notifications || [],
-      invite: data.invite || null,
-      createdAt: this.convertTimestamp(data.createdAt),
-      updatedAt: this.convertTimestamp(data.updatedAt),
+      avatar: data.avatar ?? null,
+      phoneNumber: data.phoneNumber ?? null,
+      address: data.address ?? null,
+      bookings: data.bookings ?? [],
+      favorites: data.favorites ?? { hotels: [], vendors: [] },
+      notifications: Array.isArray(data.notifications) ? data.notifications : [],
+      invite: data.invite ?? null,
+      createdAt: this.convertTimestampToString(data.createdAt),
+      updatedAt: this.convertTimestampToString(data.updatedAt),
     };
   }
 
-  // Initialize Firestore real-time listener
+  // Real-time Firestore listener
   static initUsers() {
     if (this.isInitialized) return;
-
     consoleManager.log("Initializing Firestore listener for users...");
-    const usersCollection = db.collection("users");
-
-    usersCollection.onSnapshot((snapshot: any) => {
-      this.users = snapshot.docs.map((doc: any) => {
-        return this.convertToType(doc.id, doc.data());
-      });
+    db.collection("users").onSnapshot((snapshot: any) => {
+      this.users = snapshot.docs.map((doc: any) => this.convertToUser(doc.id, doc.data()));
       consoleManager.log("Firestore Read: Users updated, count:", this.users.length);
     });
-
     this.isInitialized = true;
   }
 
-  // Get all users
-  static async getAllUsers(forceRefresh = true) {
+  // Get all users (returns array of User matching userSlice)
+  static async getAllUsers(forceRefresh = true): Promise<User[]> {
     if (forceRefresh || !this.isInitialized) {
       const snapshot = await db.collection("users").orderBy("createdAt", "desc").get();
-      this.users = snapshot.docs.map((doc: any) => {
-        return this.convertToType(doc.id, doc.data());
-      });
+      this.users = snapshot.docs.map((doc: any) => this.convertToUser(doc.id, doc.data()));
       this.isInitialized = true;
     }
     return this.users;
   }
 
-  // Add a new user
-  static async addUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) {
+  // Add a new user (expects userData from userSlice, omits id/createdAt/updatedAt)
+  static async addUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     try {
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
-      const now = new Date();
+      const now = new Date().toISOString();
 
       const newUserRef = await db.collection("users").add({
         ...userData,
         notifications: [],
         createdAt: timestamp,
         updatedAt: timestamp,
-        createdAtStr: now.toISOString(),
-        updatedAtStr: now.toISOString(),
+        createdAtStr: now,
+        updatedAtStr: now,
       });
 
+      // Wait for Firestore to update
       await new Promise(resolve => setTimeout(resolve, 100));
-      
       const newUserDoc = await db.collection("users").doc(newUserRef.id).get();
-      const newUser = this.convertToType(newUserDoc.id, newUserDoc.data());
-      
+      const newUser = this.convertToUser(newUserDoc.id, newUserDoc.data());
+
       await this.getAllUsers(true);
-      
-      return {
-        ...newUser,
-        createdAt: newUser.createdAt.toISOString(),
-        updatedAt: newUser.updatedAt.toISOString()
-      };
+      return newUser;
     } catch (error: any) {
       consoleManager.error("Error adding new user:", error);
       throw error;
     }
   }
 
-  // Get a user by ID
-  static async getUserById(id: string) {
+  // Get a user by ID (returns User matching userSlice)
+  static async getUserById(id: string): Promise<User> {
     try {
       const cachedUser = this.users.find((user) => user.id === id);
-      if (cachedUser) {
-        return {
-          ...cachedUser,
-          createdAt: cachedUser.createdAt.toISOString(),
-          updatedAt: cachedUser.updatedAt.toISOString()
-        };
-      }
+      if (cachedUser) return cachedUser;
 
       const userDoc = await db.collection("users").doc(id).get();
-      
-      if (!userDoc.exists) {
-        throw new Error("User not found");
-      }
-
-      const fetchedUser = this.convertToType(userDoc.id, userDoc.data());
-      return {
-        ...fetchedUser,
-        createdAt: fetchedUser.createdAt.toISOString(),
-        updatedAt: fetchedUser.updatedAt.toISOString()
-      };
+      if (!userDoc.exists) throw new Error("User not found");
+      const fetchedUser = this.convertToUser(userDoc.id, userDoc.data());
+      return fetchedUser;
     } catch (error) {
       consoleManager.error(`Error fetching user ${id}:`, error);
       throw error;
     }
   }
 
-  // Update a user by ID
-  static async updateUser(id: string, updateData: Partial<User>) {
+  // Update a user by ID (updateData matches userSlice)
+  static async updateUser(id: string, updateData: Partial<User>): Promise<User> {
     try {
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
       const userRef = db.collection("users").doc(id);
@@ -253,7 +217,6 @@ class UserService {
 
       await new Promise(resolve => setTimeout(resolve, 100));
       await this.getAllUsers(true);
-      
       return await this.getUserById(id);
     } catch (error: any) {
       consoleManager.error("Error updating user:", error);
@@ -273,7 +236,7 @@ class UserService {
     }
   }
 
-  // Add notification
+  // Add notification (userSlice expects notifications as array of objects)
   static async addNotification(userId: string, message: string) {
     try {
       const notification = {
@@ -300,9 +263,10 @@ class UserService {
   static async markNotificationAsRead(userId: string, notificationId: string) {
     try {
       const user = await this.getUserById(userId);
-      const notifications = user.notifications.map((n: { id: string; message: string; read: boolean; createdAt: string }) =>
+      const notifications = user.notifications.map((n) =>
         n.id === notificationId ? { ...n, read: true } : n
-      );      await db.collection("users").doc(userId).update({
+      );
+      await db.collection("users").doc(userId).update({
         notifications,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
@@ -314,12 +278,12 @@ class UserService {
     }
   }
 
-  // Update user favorites
+  // Update user favorites (userSlice expects favorites as {hotels:[], vendors:[]})
   static async updateFavorites(userId: string, type: 'hotels' | 'vendors', itemId: string, add: boolean) {
     try {
       const user = await this.getUserById(userId);
       const favorites = user.favorites || { hotels: [], vendors: [] };
-      
+
       if (add) {
         favorites[type] = [...(favorites[type] || []), itemId];
       } else {
@@ -339,22 +303,22 @@ class UserService {
   }
 
   // Get users by role
-  static async getUsersByRole(role: UserRole) {
+  static async getUsersByRole(role: UserRole): Promise<User[]> {
     return this.users.filter(user => user.role === role);
   }
 
-  // Search users
-  static async searchUsers(query: string) {
+  // Search users (userSlice expects User[])
+  static async searchUsers(query: string): Promise<User[]> {
     const searchTerm = query.toLowerCase();
-    return this.users.filter(user => 
+    return this.users.filter(user =>
       user.name.toLowerCase().includes(searchTerm) ||
       user.email.toLowerCase().includes(searchTerm) ||
-      (user.phoneNumber && user.phoneNumber.includes(searchTerm)) ||
+      (user.phoneNumber && user.phoneNumber.toLowerCase().includes(searchTerm)) ||
       (user.address?.city && user.address.city.toLowerCase().includes(searchTerm))
     );
   }
 
-  // Update user's invite data
+  // Update user's invite data (inviteData matches Invite from userSlice)
   static async updateInvite(userId: string, inviteData: Partial<Invite>) {
     try {
       const user = await this.getUserById(userId);
@@ -391,7 +355,9 @@ class UserService {
         invitation: {
           heading: "",
           subheading: "",
-          message: ""
+          message: "",
+          rsvpLink: null,
+          backgroundImage: null
         }
       };
 

@@ -183,7 +183,7 @@ export const deleteUser = createAsyncThunk<string, string>(
   }
 );
 
-// Add the new thunks for invite management
+//
 export const updateInvite = createAsyncThunk<User, { roleId: string; inviteData: Partial<Invite> }>(
   "user/updateInvite",
   async ({ roleId, inviteData }, { rejectWithValue }) => {
@@ -198,7 +198,7 @@ export const updateInvite = createAsyncThunk<User, { roleId: string; inviteData:
     }
   }
 );
-
+//
 export const toggleInviteStatus = createAsyncThunk<User, { roleId: string; isEnabled: boolean }>(
   "user/toggleInviteStatus",
   async ({ roleId, isEnabled }, { rejectWithValue }) => {
@@ -213,7 +213,7 @@ export const toggleInviteStatus = createAsyncThunk<User, { roleId: string; isEna
     }
   }
 );
-
+// 
 export const updateInviteTheme = createAsyncThunk<User, { roleId: string; theme: Theme }>(
   "user/updateInviteTheme",
   async ({ roleId, theme }, { rejectWithValue }) => {
@@ -228,11 +228,8 @@ export const updateInviteTheme = createAsyncThunk<User, { roleId: string; theme:
     }
   }
 );
-
-export const updateWeddingEvent = createAsyncThunk<
-  User,
-  { id: string; eventData: WeddingEvent; eventIndex?: number }
->(
+//
+export const updateWeddingEvent = createAsyncThunk<User,{ id: string; eventData: WeddingEvent; eventIndex?: number }>(
   "user/updateWeddingEvent",
   async ({ id, eventData, eventIndex }, { rejectWithValue }) => {
     try {
@@ -249,7 +246,7 @@ export const updateWeddingEvent = createAsyncThunk<
     }
   }
 );
-
+//
 export const deleteWeddingEvent = createAsyncThunk<User, { id: string; eventIndex: number }>(
   "user/deleteWeddingEvent",
   async ({ id, eventIndex }, { rejectWithValue }) => {
