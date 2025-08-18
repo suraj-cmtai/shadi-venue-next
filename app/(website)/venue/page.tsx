@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,17 +35,6 @@ import {
 
 const THEME_COLOR = '#212D47';
 
-const cities = [
-  { id: 'delhi', name: 'Delhi NCR', image: '/api/placeholder/64/64' },
-  { id: 'mumbai', name: 'Mumbai', image: '/api/placeholder/64/64' },
-  { id: 'bangalore', name: 'Bangalore', image: '/api/placeholder/64/64' },
-  { id: 'hyderabad', name: 'Hyderabad', image: '/api/placeholder/64/64' },
-  { id: 'chennai', name: 'Chennai', image: '/api/placeholder/64/64' },
-  { id: 'goa', name: 'Goa', image: '/api/placeholder/64/64' },
-  { id: 'jaipur', name: 'Jaipur', image: '/api/placeholder/64/64' },
-  { id: 'pune', name: 'Pune', image: '/api/placeholder/64/64' }
-];
-
 type ViewMode = 'list' | 'grid';
 
 interface VenueCardProps {
@@ -75,45 +65,93 @@ const DynamicVenuePage: React.FC = () => {
     }
   }, [dispatch, hasFetched]);
 
-  // Dynamic filter options derived from active hotels
+  // Dynamic filter options derived from active hotels only
   const filterOptions = useMemo(() => {
-    const categories = [...new Set(activeHotels.map(hotel => hotel.category).filter(Boolean))];
-    const locations = [...new Set(activeHotels.map(hotel => hotel.location?.city).filter(Boolean))];
-    const venueTypes = [...new Set(activeHotels.map(hotel => hotel.venueType).filter(Boolean))];
-    const capacities = [...new Set(activeHotels.map(hotel => hotel.maxGuestCapacity).filter(Boolean))];
+    const categories = Array.from(
+      new Set(activeHotels.map(hotel => hotel.category).filter(cat => cat && cat.trim() !== ''))
+    );
+    
+    const cities = Array.from(
+      new Set(activeHotels.map(hotel => hotel.location?.city).filter(city => city && city.trim() !== ''))
+    );
+    
+    const countries = Array.from(
+      new Set(activeHotels.map(hotel => hotel.location?.country).filter(country => country && country.trim() !== ''))
+    );
+    
+    const states = Array.from(
+      new Set(activeHotels.map(hotel => hotel.location?.state).filter(state => state && state.trim() !== ''))
+    );
+
+    // Dynamic price ranges based on actual venue prices (exclude 0 prices)
+    const prices = activeHotels
+      .map(hotel => hotel.priceRange?.startingPrice)
+      .filter(price => price !== undefined && price !== null && price > 0)
+      .sort((a, b) => a - b);
+    
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
+    const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 50000;
+    
+    const priceRanges = prices.length > 0 ? [
+      `₹ ${minPrice} - ₹ ${midPrice}`,
+      `₹ ${midPrice + 1} - ₹ ${maxPrice}`,
+      `> ₹ ${maxPrice}`
+    ] : [];
+
+    // Dynamic ratings based on actual venue ratings
+    const ratings = Array.from(
+      new Set(activeHotels.map(hotel => hotel.rating).filter(rating => rating > 0))
+    ).sort((a, b) => b - a);
 
     return {
       categories,
-      locations,
-      venueTypes,
-      capacities,
-      priceRanges: ['< ₹ 1,500', '₹ 1,500 - ₹ 2,500', '₹ 2,500 - ₹ 4,000', '> ₹ 4,000'],
-      ratings: ['All Ratings', '4+', '4.5+', '4.8+']
+      cities,
+      countries,
+      states,
+      priceRanges,
+      ratings: ['All Ratings', ...ratings.map(rating => `${rating}+`)],
+      minPrice,
+      maxPrice,
+      midPrice
     };
   }, [activeHotels]);
 
   // Filter active hotels based on current filters and search
   const filteredVenues = useMemo(() => {
     return activeHotels.filter(hotel => {
-      // Text search
-      const matchesSearch = !searchQuery || 
+      // Text search across multiple fields
+      const matchesSearch = !searchQuery ||
         hotel.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hotel.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hotel.location?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        hotel.location?.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hotel.location?.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hotel.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        hotel.amenities?.some(amenity => 
+          amenity.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
-      // Category filter
-      const matchesCategory = !filters.category || hotel.category === filters.category;
+      // Category filter - show all venues if no filter is applied
+      const matchesCategory = !filters.category || 
+        (hotel.category && hotel.category.trim() !== '' && hotel.category === filters.category);
 
-      // City filter
-      const matchesCity = !filters.city || hotel.location?.city === filters.city;
+      // City filter - show all venues if no filter is applied
+      const matchesCity = !filters.city || 
+        (hotel.location?.city && hotel.location.city.trim() !== '' && hotel.location.city === filters.city);
 
-      // Price range filter - using the exact filter structure from hotelSlice
-      const matchesPrice = hotel.priceRange?.startingPrice >= filters.priceRange[0] && 
-                          hotel.priceRange?.startingPrice <= filters.priceRange[1];
+      // Price range filter - show all venues if default range (0, 100000) or venue has no price data
+      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 100000;
+      const matchesPrice = isDefaultPriceRange || 
+        !hotel.priceRange?.startingPrice || 
+        hotel.priceRange.startingPrice === 0 ||
+        (hotel.priceRange.startingPrice >= filters.priceRange[0] &&
+         hotel.priceRange.startingPrice <= filters.priceRange[1]);
 
-      // Rating filter
-      const matchesRating = !filters.rating || hotel.rating >= filters.rating;
+      // Rating filter - show all venues if no rating filter is applied
+      const matchesRating = !filters.rating || filters.rating === 0 || 
+        hotel.rating === 0 || 
+        hotel.rating >= filters.rating;
 
       return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating;
     });
@@ -124,12 +162,13 @@ const DynamicVenuePage: React.FC = () => {
     dispatch(setSearchQuery(query));
   };
 
-  // Handle filter changes with proper typing
+  // Handle filter changes
   const handleFilterChange = (category: string, value: string, checked: boolean) => {
     if (!checked) {
+      // Reset to default values that show all venues
       const resetFilter: any = {};
       if (category === 'priceRange') {
-        resetFilter[category] = [0, 10000] as [number, number];
+        resetFilter[category] = [0, 100000] as [number, number];
       } else if (category === 'rating') {
         resetFilter[category] = 0;
       } else {
@@ -142,13 +181,19 @@ const DynamicVenuePage: React.FC = () => {
     const updatedFilter: any = {};
 
     if (category === 'priceRange') {
-      if (value.startsWith('<')) updatedFilter[category] = [0, 1500] as [number, number];
-      else if (value.includes('1,500 - ₹ 2,500')) updatedFilter[category] = [1500, 2500] as [number, number];
-      else if (value.includes('2,500 - ₹ 4,000')) updatedFilter[category] = [2500, 4000] as [number, number];
-      else updatedFilter[category] = [4000, 100000] as [number, number];
+      if (value.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`)) {
+        updatedFilter[category] = [filterOptions.minPrice, filterOptions.midPrice] as [number, number];
+      } else if (value.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`)) {
+        updatedFilter[category] = [filterOptions.midPrice + 1, filterOptions.maxPrice] as [number, number];
+      } else {
+        updatedFilter[category] = [filterOptions.maxPrice + 1, 999999] as [number, number];
+      }
     } else if (category === 'rating') {
-      if (value === 'All Ratings') updatedFilter[category] = 0;
-      else updatedFilter[category] = parseFloat(value) || 0;
+      if (value === 'All Ratings') {
+        updatedFilter[category] = 0;
+      } else {
+        updatedFilter[category] = parseFloat(value.replace('+', '')) || 0;
+      }
     } else {
       updatedFilter[category] = value;
     }
@@ -178,7 +223,7 @@ const DynamicVenuePage: React.FC = () => {
     if (filters.category) count++;
     if (filters.city) count++;
     if (filters.rating > 0) count++;
-    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 10000) count++;
+    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 100000) count++;
     return count;
   }, [filters]);
 
@@ -207,39 +252,37 @@ const DynamicVenuePage: React.FC = () => {
     </div>
   );
 
-  // City Selector Component
+  // Dynamic City Selector Component
   const CitySelector: React.FC = () => (
     <div className="py-8 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-2xl font-bold text-center mb-8">Popular Cities</h2>
         <div className="flex flex-wrap items-center justify-center gap-6">
-          {cities.map((city) => (
+          {filterOptions.cities.slice(0, 8).map((city) => (
             <button
-              key={city.id}
-              onClick={() => dispatch(setFilters({ city: city.name.replace(' NCR', '') }))}
+              key={city}
+              onClick={() => dispatch(setFilters({ city }))}
               className={`group relative flex flex-col items-center transition-all duration-300 ${
-                filters.city === city.name.replace(' NCR', '') ? 'scale-110' : 'hover:scale-105'
+                filters.city === city ? 'scale-110' : 'hover:scale-105'
               }`}
             >
               <div
-                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 ${
-                  filters.city === city.name.replace(' NCR', '') 
-                    ? 'shadow-lg border-[#212D47]' 
-                    : 'border-gray-300 hover:border-[#212D47]/50'
+                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 flex items-center justify-center ${
+                  filters.city === city 
+                    ? 'shadow-lg border-[#212D47] bg-[#212D47]' 
+                    : 'border-gray-300 hover:border-[#212D47]/50 bg-gray-100'
                 }`}
               >
-                <img
-                  src={city.image}
-                  alt={city.name}
-                  className="w-full h-full object-cover"
-                />
+                <MapPin className={`w-8 h-8 ${
+                  filters.city === city ? 'text-white' : 'text-gray-600'
+                }`} />
               </div>
-              <span className={`mt-2 text-sm font-medium transition-colors ${
-                filters.city === city.name.replace(' NCR', '') 
+              <span className={`mt-2 text-sm font-medium transition-colors text-center ${
+                filters.city === city 
                   ? 'text-[#212D47]' 
                   : 'text-gray-600 group-hover:text-gray-900'
               }`}>
-                {city.name}
+                {city}
               </span>
             </button>
           ))}
@@ -252,7 +295,7 @@ const DynamicVenuePage: React.FC = () => {
   const VenueFilters: React.FC = () => {
     const filterCategories = {
       category: { title: 'Category', options: filterOptions.categories },
-      city: { title: 'Location', options: filterOptions.locations },
+      city: { title: 'City', options: filterOptions.cities },
       priceRange: { title: 'Price Range', options: filterOptions.priceRanges },
       rating: { title: 'Rating', options: filterOptions.ratings }
     };
@@ -261,46 +304,51 @@ const DynamicVenuePage: React.FC = () => {
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Object.entries(filterCategories).map(([key, category]) => (
-            <Collapsible key={key} open={openSections.includes(key)}>
-              <CollapsibleTrigger
-                onClick={() =>
-                  setOpenSections(prev =>
-                    prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
-                  )
-                }
-                className="flex items-center justify-between w-full text-left"
-              >
-                <span className="font-medium text-sm text-[#212D47]">{category.title}</span>
-                <ChevronDown
-                  className={`h-4 w-4 text-[#212D47] transition-transform ${
-                    openSections.includes(key) ? 'rotate-180' : ''
-                  }`}
-                />
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-2">
-                {category.options.map((option) => (
-                  <div key={option} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`${key}-${option}`}
-                      checked={
-                        key === 'rating'
-                          ? filters.rating === parseFloat(option) || (option === 'All Ratings' && filters.rating === 0)
-                          : key === 'priceRange'
-                            ? (option.startsWith('<') && filters.priceRange[0] === 0 && filters.priceRange[1] === 1500) ||
-                              (option.includes('1,500 - ₹ 2,500') && filters.priceRange[0] === 1500 && filters.priceRange[1] === 2500) ||
-                              (option.includes('2,500 - ₹ 4,000') && filters.priceRange[0] === 2500 && filters.priceRange[1] === 4000) ||
-                              (option.startsWith('>') && filters.priceRange[0] === 4000)
-                            : (filters as any)[key] === option
-                      }
-                      onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
-                    />
-                    <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
-                      {option}
-                    </Label>
-                  </div>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
+            category.options.length > 0 && (
+              <Collapsible key={key} open={openSections.includes(key)}>
+                <CollapsibleTrigger
+                  onClick={() =>
+                    setOpenSections(prev =>
+                      prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
+                    )
+                  }
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <span className="font-medium text-sm text-[#212D47]">{category.title}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-[#212D47] transition-transform ${
+                      openSections.includes(key) ? 'rotate-180' : ''
+                    }`}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-2">
+                  {category.options.map((option: string) => (
+                    <div key={option} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`${key}-${option}`}
+                        checked={
+                          key === 'rating'
+                            ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
+                            : key === 'priceRange'
+                              ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
+                                 filters.priceRange[0] === filterOptions.minPrice && 
+                                 filters.priceRange[1] === filterOptions.midPrice) ||
+                                (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
+                                 filters.priceRange[0] === filterOptions.midPrice + 1 && 
+                                 filters.priceRange[1] === filterOptions.maxPrice) ||
+                                (option.startsWith('>') && filters.priceRange[0] > filterOptions.maxPrice)
+                              : (filters as any)[key] === option
+                        }
+                        onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
+                      />
+                      <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )
           ))}
         </div>
 
@@ -391,6 +439,13 @@ const DynamicVenuePage: React.FC = () => {
             {venue.images?.length || 1}
           </Badge>
         </div>
+        {venue.status && venue.status !== 'active' && (
+          <div className="absolute top-3 left-3">
+            <Badge variant="secondary" className="bg-yellow-500/90 text-white">
+              {venue.status.toUpperCase()}
+            </Badge>
+          </div>
+        )}
       </div>
 
       <CardContent className="p-4">
@@ -402,44 +457,63 @@ const DynamicVenuePage: React.FC = () => {
             <div className="flex items-center text-sm text-gray-600 mt-1">
               <MapPin className="w-4 h-4 mr-1" />
               <span className="line-clamp-1">
-                {venue.location?.city}, {venue.location?.state}
+                {venue.location?.city && venue.location.city.trim() !== '' ? venue.location.city : 'Location not specified'}
+                {venue.location?.state && venue.location.state.trim() !== '' && `, ${venue.location.state}`}
               </span>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                <span className="font-semibold ml-1">{venue.rating?.toFixed(1)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {venue.amenities?.slice(0, 2).map((amenity, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {amenity}
-              </Badge>
-            ))}
-            {venue.amenities && venue.amenities.length > 2 && (
-              <Badge variant="outline" className="text-xs">
-                +{venue.amenities.length - 2} more
+            {venue.category && venue.category.trim() !== '' && (
+              <Badge variant="outline" className="mt-1 text-xs">
+                {venue.category}
               </Badge>
             )}
           </div>
 
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {venue.rating > 0 && (
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                  <span className="font-semibold ml-1">{venue.rating?.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {venue.amenities && venue.amenities.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {venue.amenities.slice(0, 2).map((amenity, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {amenity}
+                </Badge>
+              ))}
+              {venue.amenities.length > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{venue.amenities.length - 2} more
+                </Badge>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center justify-between pt-2 border-t">
             <div className="flex items-center text-sm text-gray-600">
               <Users className="w-4 h-4 mr-1" />
-              <span>{venue.maxGuestCapacity || 'N/A'} guests</span>
+              <span>
+                {venue.numberOfRooms && venue.numberOfRooms.trim() !== '' 
+                  ? `${venue.numberOfRooms} rooms` 
+                  : venue.rooms && venue.rooms.length > 0 
+                    ? `${venue.rooms.length} rooms`
+                    : 'Rooms: N/A'
+                }
+              </span>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-600">Starting from</div>
-              <div className="font-semibold text-[#212D47]">
-                {venue.priceRange?.startingPrice} {venue.priceRange?.currency}
+            {venue.priceRange && venue.priceRange.startingPrice > 0 && (
+              <div className="text-right">
+                <div className="text-sm text-gray-600">Starting from</div>
+                <div className="font-semibold text-[#212D47]">
+                  ₹{venue.priceRange.startingPrice.toLocaleString()}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -499,15 +573,17 @@ const DynamicVenuePage: React.FC = () => {
       {/* Hero Section */}
       <Hero />
 
-      {/* City Selector */}
-      <CitySelector />
+      {/* City Selector - Only show if there are cities */}
+      {filterOptions.cities.length > 0 && <CitySelector />}
 
-      {/* Filters Section */}
-      <section className="bg-gray-50 py-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <VenueFilters />
-        </div>
-      </section>
+      {/* Filters Section - Only show if there are filter options */}
+      {(filterOptions.categories.length > 0 || filterOptions.cities.length > 0 || filterOptions.ratings.length > 1) && (
+        <section className="bg-gray-50 py-6">
+          <div className="max-w-7xl mx-auto px-4">
+            <VenueFilters />
+          </div>
+        </section>
+      )}
 
       {/* Search and Controls */}
       <VenueSearch />

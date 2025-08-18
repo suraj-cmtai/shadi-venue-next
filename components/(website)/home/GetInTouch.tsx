@@ -171,7 +171,7 @@ export default function GetInTouch() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:border-[#212d47] focus:ring-0"
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="Your name"
                   />
                 </div>
@@ -185,7 +185,7 @@ export default function GetInTouch() {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:border-[#212d47] focus:ring-0"
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="your.email@example.com"
                   />
                 </div>
@@ -202,7 +202,7 @@ export default function GetInTouch() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:border-[#212d47] focus:ring-0"
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="Your phone number"
                   />
                 </div>
@@ -215,7 +215,7 @@ export default function GetInTouch() {
                     name="weddingDate"
                     value={formData.weddingDate}
                     onChange={handleChange}
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:border-[#212d47] focus:ring-0"
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                   />
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function GetInTouch() {
                   value={formData.message}
                   onChange={handleChange}
                   required
-                  className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:border-[#212d47] focus:ring-0 min-h-[120px] resize-none"
+                  className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0 min-h-[120px] resize-none"
                   placeholder="Tell us about your wedding plans..."
                 />
               </div>

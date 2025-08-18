@@ -4,6 +4,7 @@ import AboutHero from './aboutHero';
 import About from './about';
 import TeamSection from './team';
 import ContactUs from './contact-us';
+import GetInTouch from '@/components/(website)/home/GetInTouch';
 
 const AboutPage = () => {
     return (
@@ -13,7 +14,7 @@ const AboutPage = () => {
                 <About />
             </div>
             <TeamSection />
-            <ContactUs />
+            <GetInTouch />
         </section>
     );
 };
