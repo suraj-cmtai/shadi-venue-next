@@ -7,12 +7,12 @@ const TEAM_MEMBERS = [
     {
         name: "Sarah Johnson",
         position: "Wedding Coordinator",
-        image: "/images/wedding/team.png",
+        image: "/images/wedding/team1.png",
     },
     {
         name: "Michael Chen",
         position: "Creative Director",
-        image: "/images/team/team.jpg",
+        image: "/images/team/team2.png",
     },
 ];
 const SUB_MEMBERS = [

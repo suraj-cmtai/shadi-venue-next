@@ -229,27 +229,66 @@ const DynamicVenuePage: React.FC = () => {
 
   // Hero Component
   const Hero: React.FC = () => (
-    <div className="relative bg-gradient-to-r from-[#212D47] to-[#2A3759] text-white py-20">
-      <div className="max-w-7xl mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+    <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#212D47] to-[#2A3759]">
+      {/* Hero Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+          alt="Beautiful Wedding Mandap"
+          className="w-full h-full object-cover object-center"
+          style={{ opacity: 0.35 }}
+          draggable={false}
+        />
+        {/* Overlay for darkening */}
+        <div className="absolute inset-0 bg-[#212D47] opacity-60" />
+      </div>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center justify-center px-4 py-16 md:py-24 text-center">
+        {/* Breadcrumb */}
+        <nav
+          className="flex items-center justify-center gap-2 mb-4 text-sm md:text-base"
+          aria-label="Breadcrumb"
+        >
+          <a
+            href="/"
+            className="text-white hover:text-gray-200 transition-colors font-medium"
+            aria-label="Home"
+          >
+            Home
+          </a>
+          <span className="text-gray-300">/</span>
+          <a
+            href="/venue"
+            className="text-white hover:text-gray-200 transition-colors font-medium"
+            aria-label="Venue"
+          >
+            Venue
+          </a>
+        </nav>
+        {/* Heading */}
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-wide uppercase mb-3">
           Find Your Perfect Wedding Venue
         </h1>
-        <p className="text-xl md:text-2xl mb-8 opacity-90">
+        {/* Decorative Black Line */}
+        <div className="mx-auto w-10 h-1 bg-black/80 rounded mb-4" />
+        <p className="text-lg sm:text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
           Discover amazing venues for your special day
         </p>
-        <div className="max-w-2xl mx-auto">
+        {/* Search Input */}
+        <div className="w-full max-w-2xl mx-auto">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5 pointer-events-none" />
             <Input
               placeholder="Search for wedding venues..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-12 py-4 text-lg bg-white/10 border-white/20 text-white placeholder:text-white/60"
+              className="pl-12 py-4 text-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg focus:ring-2 focus:ring-white/40 transition"
+              aria-label="Search for wedding venues"
             />
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 
   // Dynamic City Selector Component
