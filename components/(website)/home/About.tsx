@@ -79,11 +79,11 @@ export default function About() {
           className="w-full h-auto"
         />
       </div>
-      {/* Decorative Bottom Right */}
-      <div className="hidden md:block absolute right-0 bottom-0 z-0 w-1/4 max-w-xs pointer-events-none">
+      {/* Decorative Bottom Right (use VECTOR_IMG as per instruction) */}
+      <div className="hidden md:block absolute right-0 bottom-0 z-0 w-1/4 max-w-xs pointer-events-none opacity-20">
         <img
-          src={VECTOR01_IMG}
-          alt="Decorative element"
+          src={VECTOR_IMG}
+          alt="Decorative element bottom right"
           className="w-full h-auto"
         />
       </div>
@@ -134,25 +134,68 @@ export default function About() {
               transition={{ duration: 0.6, delay: 0.5 }}
             >
               <Link href="/about">
-              <GradientButton>
-                More
-              </GradientButton>
+                <GradientButton>
+                  More
+                </GradientButton>
               </Link>
             </motion.div>
           </motion.div>
 
-          {/* Right: Image with overlays */}
-          <div className="w-full lg:w-1/2 flex justify-center relative">
-            <div className="relative w-full max-w-md">
-              <div className="relative overflow-hidden  shadow-lg">
+          {/* Right: Framed Image with very light gray bg, flower vector, and translucent bottom left vector */}
+          <motion.div
+            className="w-full lg:w-1/2 flex items-center justify-end relative z-10 mt-12 lg:mt-10"
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+          >
+            {/* Outer Frame with very light gray background */}
+            <div className="relative w-full h-full pt-8 pr-12 pb-8 pl-8 bg-gray-100 shadow-xl flex items-center justify-center rounded-lg">
+              {/* Decorative flower vector (already present) */}
+              <div className="hidden md:block absolute right-0 top-0 z-10 w-1/3 max-w-xs pointer-events-none">
                 <img
-                  src="/images/about-shadi-venue-image.png"
-                  alt="Shadi Venue"
-                  className="w-full h-full object-cover"
+                  src={VECTOR01_IMG}
+                  alt="Decorative flower"
+                  className="w-full h-auto"
                 />
               </div>
+              {/* Decorative PNG bottom-left corner inside the gray frame, translucent */}
+              <div className="absolute -left-4 -bottom-4 w-32 h-32 md:w-60 md:h-64 z-64 opacity-90">
+                <div className="relative w-full h-full rotate-[-10deg]">
+                  <img
+                    src="/images/wedding/shadi-venue.png"
+                    alt="venue-card"
+                    className="object-contain w-full h-full"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="text-white font-cinzel text-sm font-bold text-center pointer-events-none rotate-[42deg]">
+                      SHADI VENUE
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Decorative SVG bottom-right inside the gray frame, similar to bottom-left but using VECTOR_IMG */}
+              <div className="absolute -right-4 -bottom-6 w-32 h-32 md:w-60 md:h-64 z-64 opacity-90">
+                <div className="relative w-full h-full rotate-[10deg]">
+                  <img
+                    src={VECTOR_IMG}
+                    alt="Decorative flower bottom right"
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+              </div>
+              {/* White inner frame */}
+              <div className="bg-white p-1 md:p-2 rounded-md relative z-10 w-full">
+                <div className="relative w-full aspect-[4/5] overflow-hidden rounded-md">
+                  <img
+                    src="/images/about-new/Bride & Groom_- @kashtag90 & @jhalakshah_ Wedding….jpg"
+                    alt="Shadi Venue"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
 import {
   fetchActiveHeroSlides,
@@ -10,12 +10,14 @@ import {
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
 import Image from "next/image";
+import Link from "next/link";
 
 /**
  * Hero Section
  * Dynamically displays active hero slides from Redux store.
  * Uses Framer Motion for transitions and shadcn button for CTA.
  * Fully responsive, accessible, and Figma-fidelity.
+ * Slides move left (prev) every 3 seconds automatically.
  */
 const ARROW_IMG = "/images/arrow.svg";
 const ARROW1_IMG = "/images/arrow1.svg";
@@ -26,6 +28,7 @@ export default function Hero() {
   const isLoading = useAppSelector(selectIsLoading);
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch active hero slides on mount
   useEffect(() => {
@@ -37,6 +40,20 @@ export default function Hero() {
     if (heroSlides.length > 0 && currentIndex >= heroSlides.length) {
       setCurrentIndex(0);
     }
+  }, [heroSlides, currentIndex]);
+
+  // Move slider left (prev) every 3 seconds
+  useEffect(() => {
+    if (heroSlides.length === 0) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    }, 3000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [heroSlides, currentIndex]);
 
   const nextImage = () => {
@@ -155,9 +172,11 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex justify-center items-center"
         >
+          <Link href="/contact" className="w-full max-w-xs">
           <GradientButton>
             {cta}
           </GradientButton>
+          </Link>
         </motion.div>
       </div>
     </section>
