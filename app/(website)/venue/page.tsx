@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,13 @@ interface VenueCardProps {
   onVenueClick: (venueId: string) => void;
 }
 
+const DEFAULT_FILTERS = {
+  category: '',
+  city: '',
+  priceRange: [0, 10000] as [number, number],
+  rating: 0,
+};
+
 const DynamicVenuePage: React.FC = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -57,13 +64,26 @@ const DynamicVenuePage: React.FC = () => {
   // Local state
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [openSections, setOpenSections] = useState<string[]>([]);
+  const [localSearch, setLocalSearch] = useState<string>('');
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch active hotels on component mount
+  // On mount, fetch hotels and reset filters
   useEffect(() => {
     if (!hasFetched) {
       dispatch(fetchActiveHotels());
     }
+    // Always clear filters on mount
+    dispatch(clearFilters());
+    // Always clear search on mount
+    dispatch(setSearchQuery(''));
+    setLocalSearch('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, hasFetched]);
+
+  // Keep localSearch in sync with redux searchQuery (for reset)
+  useEffect(() => {
+    setLocalSearch(searchQuery || '');
+  }, [searchQuery]);
 
   // Dynamic filter options derived from active hotels only
   const filterOptions = useMemo(() => {
@@ -157,9 +177,16 @@ const DynamicVenuePage: React.FC = () => {
     });
   }, [activeHotels, searchQuery, filters]);
 
-  // Handle search changes
-  const handleSearchChange = (query: string) => {
-    dispatch(setSearchQuery(query));
+  // Debounced search handler
+  const handleLocalSearchChange = (query: string) => {
+    setLocalSearch(query);
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+    // Debounce: only dispatch after 400ms of inactivity
+    searchTimeout.current = setTimeout(() => {
+      dispatch(setSearchQuery(query));
+    }, 400);
   };
 
   // Handle filter changes
@@ -204,6 +231,9 @@ const DynamicVenuePage: React.FC = () => {
   // Clear all filters
   const handleClearFilters = () => {
     dispatch(clearFilters());
+    // Also reset search
+    dispatch(setSearchQuery(''));
+    setLocalSearch('');
   };
 
   // Handle retry on error
@@ -280,8 +310,8 @@ const DynamicVenuePage: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5 pointer-events-none" />
             <Input
               placeholder="Search for wedding venues..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
+              value={localSearch}
+              onChange={(e) => handleLocalSearchChange(e.target.value)}
               className="pl-12 py-4 text-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg focus:ring-2 focus:ring-white/40 transition"
               aria-label="Search for wedding venues"
             />
@@ -413,8 +443,8 @@ const DynamicVenuePage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <Input
                 placeholder="Search Wedding Venues..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                value={localSearch}
+                onChange={(e) => handleLocalSearchChange(e.target.value)}
                 className="pl-10"
               />
             </div>
