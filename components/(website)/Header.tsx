@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MenuIcon, LogIn, UserPlus, User2, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, selectIsAuthenticated } from "@/lib/redux/features/authSlice";
@@ -25,6 +25,15 @@ const NAV_ITEMS = [
   { label: "Contact", href: "/contact" },
 ];
 
+// Role to Dashboard Mapping
+const ROLE_DASHBOARDS: Record<string, string> = {
+  "super-admin": "/dashboard/super-admin",
+  "admin": "/dashboard/admin",
+  "hotel": "/dashboard/hotel",
+  "vendor": "/dashboard/vendor",
+  "user": "/dashboard/user",
+};
+
 export default function Header() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -36,6 +45,14 @@ export default function Header() {
     dispatch(logout() as any);
     setSheetOpen(false);
   };
+
+  // Memoize dashboard link for the current role
+  const dashboardHref = useMemo(() => {
+    if (auth?.role && ROLE_DASHBOARDS[auth.role]) {
+      return ROLE_DASHBOARDS[auth.role];
+    }
+    return "/dashboard/user";
+  }, [auth?.role]);
 
   return (
     <header className="w-full bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-200 px-4 sm:px-6 md:px-8">
@@ -96,15 +113,16 @@ export default function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 rounded-xs uppercase text-[#212d47] text-sm font-medium font-cormorant min-w-[7rem] cursor-default"
-                aria-label="User"
-                tabIndex={-1}
-              >
-                <User2 className="h-4 w-4" />
-                <span className="truncate max-w-[6rem]">{auth?.name || "User"}</span>
-              </Button>
+              <Link href={dashboardHref} tabIndex={0} aria-label="Go to dashboard" className="min-w-[7rem]">
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 rounded-xs uppercase text-[#212d47] text-sm font-medium font-cormorant min-w-[7rem]"
+                  aria-label="User Dashboard"
+                >
+                  <User2 className="h-4 w-4" />
+                  <span className="truncate max-w-[6rem]">{auth?.name || "User"}</span>
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 className="flex items-center gap-2 border border-[#212d47] rounded-xs bg-white/80 uppercase text-[#212d47] text-sm font-medium font-cormorant min-w-[7rem]"
@@ -174,15 +192,18 @@ export default function Header() {
                     </>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      <Button
-                        variant="ghost"
-                        className="flex items-center gap-2 rounded-xs uppercase text-[#212d47] text-base font-medium font-cormorant w-full cursor-default"
-                        aria-label="User"
-                        tabIndex={-1}
-                      >
-                        <User2 className="h-4 w-4" />
-                        <span className="truncate max-w-[10rem]">{auth?.name || "User"}</span>
-                      </Button>
+                      <Link href={dashboardHref} tabIndex={0} aria-label="Go to dashboard" className="w-full">
+                        <Button
+                          variant="ghost"
+                          className="flex items-center gap-2 rounded-xs uppercase text-[#212d47] text-base font-medium font-cormorant w-full"
+                          aria-label="User Dashboard"
+                          tabIndex={-1}
+                          onClick={() => setSheetOpen(false)}
+                        >
+                          <User2 className="h-4 w-4" />
+                          <span className="truncate max-w-[10rem]">{auth?.name || "User"}</span>
+                        </Button>
+                      </Link>
                       <Button
                         variant="outline"
                         className="flex items-center gap-2 border border-[#212d47] rounded-xs bg-white/80 uppercase text-[#212d47] text-base font-medium font-cormorant w-full"

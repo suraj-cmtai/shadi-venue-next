@@ -46,6 +46,10 @@ const links = [
   { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
   { name: "Hero Extension", href: "/dashboard/admin/hero-extension", icon: ContactRound, badge: null },
   { name: "Testimonials", href: "/dashboard/admin/testimonials", icon: Users2, badge: null },
+  { name: "About", href: "/dashboard/admin/about", icon: FileText, badge: null },
+  // { name: "Vendors", href: "/dashboard/admin/vendors", icon: Package, badge: null },
+  // { name: "Map", href: "/dashboard/admin/map", icon: MapPin, badge: null },
+  // { name: "Settings", href: "/dashboard/admin/settings", icon: Menu, badge: null },
 
 ];
 

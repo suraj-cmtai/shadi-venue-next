@@ -65,6 +65,8 @@ const searchSuggestions = [
   { label: "Hero", value: "hero", href: "/dashboard/admin/hero" },
   { label: "Hero Extension", value: "hero-extension", href: "/dashboard/admin/hero-extension" },
   { label: "Testimonials", value: "testimonials", href: "/dashboard/admin/testimonials" },
+  { label: "About", value: "about", href: "/dashboard/admin/about" },
+  { label: "Logout", value: "logout", href: "/logout" },
 ];
 
 const notifications = [
