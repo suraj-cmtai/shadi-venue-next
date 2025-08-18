@@ -60,121 +60,20 @@ export default function AdminDashboard() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="p-6 space-y-6"
-    >
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Pending Approvals</h3>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-2xl font-bold">{stats.hotelsPending}</p>
-              <p className="text-sm text-gray-500">Hotels</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.vendorsPending}</p>
-              <p className="text-sm text-gray-500">Vendors</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.usersPending}</p>
-              <p className="text-sm text-gray-500">Users</p>
-            </div>
-          </div>
-        </Card>
 
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Total Requests</h3>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-2xl font-bold">{stats.totalPending}</p>
-              <p className="text-sm text-gray-500">Pending</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.totalApproved}</p>
-              <p className="text-sm text-gray-500">Approved</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.totalRejected}</p>
-              <p className="text-sm text-gray-500">Rejected</p>
-            </div>
-          </div>
-        </Card>
 
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
-          <div className="space-y-2">
-            <Button
-              className="w-full"
-              variant="outline"
-              onClick={() => {
-                dispatch(fetchApprovalRequests())
-                dispatch(fetchAdminStats())
-              }}
-            >
-              Refresh Data
-            </Button>
-          </div>
-        </Card>
-      </div>
+    <div className="w-full min-h-[60vh] flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="text-center"
+      >
+        <span className="text-lg md:text-2xl font-cormorant text-muted-foreground">
+          Use sidebar or <kbd className="px-2 py-1 rounded bg-muted text-sm font-mono">Ctrl + K</kbd>
+        </span>
+      </motion.div>
+    </div>
 
-      {/* Approval Requests Table */}
-      <Card className="p-4">
-        <h2 className="text-xl font-semibold mb-4">Pending Approval Requests</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="px-4 py-2 text-left">Business Name</th>
-                <th className="px-4 py-2 text-left">Type</th>
-                <th className="px-4 py-2 text-left">Email</th>
-                <th className="px-4 py-2 text-left">Submitted</th>
-                <th className="px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {approvalRequests
-                .filter(request => request.status === 'pending')
-                .map(request => (
-                  <tr key={request.id} className="border-b">
-                    <td className="px-4 py-2">
-                      {request.metadata.businessName || 'N/A'}
-                    </td>
-                    <td className="px-4 py-2 capitalize">
-                      {request.entityType}
-                    </td>
-                    <td className="px-4 py-2">
-                      {request.metadata.email}
-                    </td>
-                    <td className="px-4 py-2">
-                      {new Date(request.submittedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => handleApproval(request.id, true)}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleApproval(request.id, false)}
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </motion.div>
   )
 }
