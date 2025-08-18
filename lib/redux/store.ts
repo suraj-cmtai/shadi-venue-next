@@ -35,6 +35,7 @@ import weddingManagementReducer from "./features/weddingSlice"
 import heroReducer from "./features/heroSlice";
 import testimonialReducer from "./features/testimonialSlice";
 import heroExtensionReducer from "./features/heroExtensionSlice";
+import aboutReducer from "./features/aboutSlice";
 
 
 // Configuration for redux-persist
@@ -63,6 +64,7 @@ const rootReducer = combineReducers({
   hero: heroReducer,
   testimonial: testimonialReducer,
   heroExtension: heroExtensionReducer,
+  about: aboutReducer,
 
 });
 

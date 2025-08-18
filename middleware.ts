@@ -140,7 +140,7 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
-
+  
   // ===== ROLE-BASED API ROUTES =====
   
   // Super Admin Only Routes
@@ -172,6 +172,7 @@ const API_ROUTES: RouteConfig[] = [
     roles: ["vendor", "admin", "super-admin"],
   },
 
+  // hero hero-extension about blog contact gallery venue wedding
   // ===== CUSTOM LOGIC ROUTES =====
   
   // Users route with special logic

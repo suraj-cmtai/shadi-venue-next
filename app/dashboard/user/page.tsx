@@ -862,7 +862,7 @@ export default function UserDashboard() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <Switch
               checked={inviteEnabled}
               onCheckedChange={handleToggleInviteStatus}
@@ -870,7 +870,7 @@ export default function UserDashboard() {
             <Label className="text-sm font-medium">
               {inviteEnabled ? "Live" : "Draft Mode"}
             </Label>
-          </div>
+          </div> */}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
