@@ -1,18 +1,17 @@
 import AboutService from "@/app/api/services/aboutServices";
 import { NextRequest, NextResponse } from "next/server";
 
-
 // Initialize the service
 AboutService.init();
 
 // GET: Fetch about content by ID
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
-    
+    const { id } = await params;
+
     if (!id) {
       return NextResponse.json(
         {
@@ -25,7 +24,7 @@ export async function GET(
     }
 
     const aboutContent = await AboutService.getAboutContentById(id);
-    
+
     if (!aboutContent) {
       return NextResponse.json(
         {
@@ -57,13 +56,13 @@ export async function GET(
 
 // PUT: Update about content by ID
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
-    const body = await request.json();
-    
+    const { id } = await params;
+    const body = await req.json();
+
     if (!id) {
       return NextResponse.json(
         {
@@ -110,12 +109,12 @@ export async function PUT(
 
 // DELETE: Delete about content by ID
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
-    
+    const { id } = await params;
+
     if (!id) {
       return NextResponse.json(
         {
