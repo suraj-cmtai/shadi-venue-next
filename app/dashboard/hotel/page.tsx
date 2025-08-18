@@ -520,7 +520,7 @@ export default function HotelDashboard() {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Select 
+              {/* <Select 
                 value={selectedHotel.status} 
                 onValueChange={handleStatusChange}
                 disabled={isSubmitting}
@@ -533,7 +533,7 @@ export default function HotelDashboard() {
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="archived">Archived</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
               
               <Button 
                 onClick={() => setIsEditDialogOpen(true)} 
