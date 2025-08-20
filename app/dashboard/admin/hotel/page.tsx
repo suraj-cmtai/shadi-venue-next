@@ -214,7 +214,7 @@ const initialFormState: HotelFormState = {
   numberOfRooms: "50",
   venueAvailability: "Year Round",
   allInclusivePackages: "Yes",
-  staffAccommodation: "Available",
+  staffAccommodation: "Yes",
   diningOptions: "Multi-cuisine Restaurant, Bar, Room Service",
   otherAmenities: "Spa, Gym, Conference Hall",
   bookingLeadTime: "30 days",
@@ -1089,6 +1089,61 @@ const createRequestData = async (form: HotelFormState) => {
 
         {/* Services and Amenities */}
         <div className="space-y-4">
+  <h3 className="text-lg font-medium">Package & Accommodation Options</h3>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-2">
+      <Label>All-Inclusive Packages</Label>
+      <Select
+        value={form.allInclusivePackages}
+        onValueChange={(value) => setForm((prev) => ({ ...prev, allInclusivePackages: value }))}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select option" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Yes">Yes</SelectItem>
+          <SelectItem value="No">No</SelectItem>
+          <SelectItem value="Partially">Partially</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+    
+    <div className="space-y-2">
+      <Label>Staff Accommodation</Label>
+      <Select
+        value={form.staffAccommodation}
+        onValueChange={(value) => setForm((prev) => ({ ...prev, staffAccommodation: value }))}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select option" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Yes">Yes</SelectItem>
+          <SelectItem value="No">No</SelectItem>
+          <SelectItem value="Limited">Limited</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+    
+    <div className="space-y-2">
+      <Label>Preferred Contact Method</Label>
+      <Select
+        value={form.preferredContactMethod}
+        onValueChange={(value) => setForm((prev) => ({ ...prev, preferredContactMethod: value }))}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select method" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Email">Email</SelectItem>
+          <SelectItem value="Phone">Phone</SelectItem>
+          <SelectItem value="Direct Message (Website)">Direct Message (Website)</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+</div>
+        <div className="space-y-4">
           <h3 className="text-lg font-medium">Services and Amenities</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -1467,23 +1522,23 @@ const createRequestData = async (form: HotelFormState) => {
                                 otherAmenities: Array.isArray(hotel.otherAmenities) 
                                   ? hotel.otherAmenities.join(", ") 
                                   : (hotel.otherAmenities || ""),
-                                allInclusivePackages: Array.isArray(hotel.allInclusivePackages)
-                                  ? hotel.allInclusivePackages.join(", ")
-                                  : (typeof hotel.allInclusivePackages === 'string'
-                                    ? hotel.allInclusivePackages
-                                    : (typeof hotel.allInclusivePackages === 'boolean'
-                                      ? (hotel.allInclusivePackages ? "Yes" : "No")
-                                      : "")),
-                                staffAccommodation: Array.isArray(hotel.staffAccommodation)
-                                  ? hotel.staffAccommodation.join(", ")
-                                  : (typeof hotel.staffAccommodation === 'string'
-                                    ? hotel.staffAccommodation
-                                    : (typeof hotel.staffAccommodation === 'boolean'
-                                      ? (hotel.staffAccommodation ? "Yes" : "No")
-                                      : "")),
-                                preferredContactMethod: Array.isArray(hotel.preferredContactMethod) 
-                                  ? hotel.preferredContactMethod.join(", ") 
-                                  : (hotel.preferredContactMethod || ""),
+                                  allInclusivePackages: typeof hotel.allInclusivePackages === 'string' 
+                                  ? hotel.allInclusivePackages 
+                                  : (Array.isArray(hotel.allInclusivePackages) 
+                                    ? hotel.allInclusivePackages[0] || "Yes"
+                                    : "Yes"),
+                                    
+                                staffAccommodation: typeof hotel.staffAccommodation === 'string'
+                                  ? hotel.staffAccommodation
+                                  : (Array.isArray(hotel.staffAccommodation) 
+                                    ? hotel.staffAccommodation[0] || "Yes"
+                                    : "Yes"),
+                                    
+                                preferredContactMethod: typeof hotel.preferredContactMethod === 'string'
+                                  ? hotel.preferredContactMethod
+                                  : (Array.isArray(hotel.preferredContactMethod) 
+                                    ? hotel.preferredContactMethod[0] || "Email"
+                                    : "Email"),
                                 rooms: hotel.rooms || [],
                                 images: hotel.images || [],
                                 imageFiles: [],

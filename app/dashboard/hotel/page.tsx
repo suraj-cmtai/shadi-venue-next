@@ -215,26 +215,20 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
     venueAvailability: hotel.venueAvailability || '',
     
     // Fix these boolean/array field conversions:
-    allInclusivePackages: Array.isArray(hotel.allInclusivePackages)
-      ? hotel.allInclusivePackages.join(", ")
-      : (typeof hotel.allInclusivePackages === 'string'
-        ? hotel.allInclusivePackages
-        : (typeof hotel.allInclusivePackages === 'boolean'
-          ? (hotel.allInclusivePackages ? "Yes" : "No")
-          : "")),
-    staffAccommodation: Array.isArray(hotel.staffAccommodation)
-      ? hotel.staffAccommodation.join(", ")
-      : (typeof hotel.staffAccommodation === 'string'
-        ? hotel.staffAccommodation
-        : (typeof hotel.staffAccommodation === 'boolean'
-          ? (hotel.staffAccommodation ? "Yes" : "No")
-          : "")),
+    allInclusivePackages: typeof hotel.allInclusivePackages === 'string' 
+  ? hotel.allInclusivePackages 
+  : (Array.isArray(hotel.allInclusivePackages) ? hotel.allInclusivePackages[0] : ''),
+staffAccommodation: typeof hotel.staffAccommodation === 'string'
+  ? hotel.staffAccommodation
+  : (Array.isArray(hotel.staffAccommodation) ? hotel.staffAccommodation[0] : ''),
+preferredContactMethod: typeof hotel.preferredContactMethod === 'string'
+  ? hotel.preferredContactMethod
+  : (Array.isArray(hotel.preferredContactMethod) ? hotel.preferredContactMethod[0] : ''),
     diningOptions: arrayToString(hotel.diningOptions),
     otherAmenities: arrayToString(hotel.otherAmenities),
     
     // Business information
     bookingLeadTime: hotel.bookingLeadTime || '',
-    preferredContactMethod: arrayToString(hotel.preferredContactMethod),
     weddingDepositRequired: hotel.weddingDepositRequired || '',
     refundPolicy: hotel.refundPolicy || '',
     referralSource: hotel.referralSource || '',
@@ -407,9 +401,9 @@ export default function HotelDashboard() {
       formData.append('servicesOffered', JSON.stringify(stringToArray(editHotelForm.servicesOffered)));
       formData.append('diningOptions', JSON.stringify(stringToArray(editHotelForm.diningOptions)));
       formData.append('otherAmenities', JSON.stringify(stringToArray(editHotelForm.otherAmenities)));
-      formData.append('allInclusivePackages', JSON.stringify(stringToArray(editHotelForm.allInclusivePackages)));
-      formData.append('staffAccommodation', JSON.stringify(stringToArray(editHotelForm.staffAccommodation)));
-      formData.append('preferredContactMethod', JSON.stringify(stringToArray(editHotelForm.preferredContactMethod)));
+      formData.append('allInclusivePackages', editHotelForm.allInclusivePackages);
+formData.append('staffAccommodation', editHotelForm.staffAccommodation);
+formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
       
       // Rooms
       formData.append('rooms', JSON.stringify(editHotelForm.rooms));
@@ -1316,27 +1310,23 @@ export default function HotelDashboard() {
 
                   <Separator />
                   <h3 className="text-lg font-semibold">Preferred Contact Method *</h3>
-                  <div className="space-y-2">
-                    {['Email', 'Phone', 'Direct Message (Website)'].map((method) => (
-                      <div key={method} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={method}
-                          checked={stringToArray(editHotelForm.preferredContactMethod).includes(method)}
-                          onCheckedChange={(checked) => {
-                            const currentMethods = stringToArray(editHotelForm.preferredContactMethod);
-                            const newMethods = checked 
-                              ? [...currentMethods, method]
-                              : currentMethods.filter(m => m !== method);
-                            setEditHotelForm(prev => prev ? { 
-                              ...prev, 
-                              preferredContactMethod: newMethods.join(', ')
-                            } : null);
-                          }}
-                        />
-                        <Label htmlFor={method}>{method}</Label>
-                      </div>
-                    ))}
-                  </div>
+<div className="space-y-2">
+  {['Email', 'Phone', 'Direct Message (Website)'].map((method) => (
+    <div key={method} className="flex items-center space-x-2">
+      <input
+        type="radio"
+        id={method}
+        name="preferredContactMethod"
+        checked={editHotelForm.preferredContactMethod === method}
+        onChange={() => setEditHotelForm(prev => prev ? { 
+          ...prev, 
+          preferredContactMethod: method
+        } : null)}
+      />
+      <Label htmlFor={method}>{method}</Label>
+    </div>
+  ))}
+</div>
 
                   <Separator />
                   <div className="grid md:grid-cols-2 gap-4">
@@ -1512,51 +1502,43 @@ export default function HotelDashboard() {
 
                   <Separator />
                   <h3 className="text-lg font-semibold">Do you offer all-inclusive wedding packages? *</h3>
-                  <div className="space-y-2">
-                    {['Yes', 'No', 'Partially'].map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={option}
-                          checked={stringToArray(editHotelForm.allInclusivePackages).includes(option)}
-                          onCheckedChange={(checked) => {
-                            const currentOptions = stringToArray(editHotelForm.allInclusivePackages);
-                            const newOptions = checked 
-                              ? [...currentOptions, option]
-                              : currentOptions.filter(o => o !== option);
-                            setEditHotelForm(prev => prev ? { 
-                              ...prev, 
-                              allInclusivePackages: newOptions.join(', ')
-                            } : null);
-                          }}
-                        />
-                        <Label htmlFor={option}>{option}</Label>
-                      </div>
-                    ))}
-                  </div>
+<div className="space-y-2">
+  {['Yes', 'No', 'Partially'].map((option) => (
+    <div key={option} className="flex items-center space-x-2">
+      <input
+        type="radio"
+        id={`inclusive-${option}`}
+        name="allInclusivePackages"
+        checked={editHotelForm.allInclusivePackages === option}
+        onChange={() => setEditHotelForm(prev => prev ? { 
+          ...prev, 
+          allInclusivePackages: option
+        } : null)}
+      />
+      <Label htmlFor={`inclusive-${option}`}>{option}</Label>
+    </div>
+  ))}
+</div>
 
                   <Separator />
                   <h3 className="text-lg font-semibold">On-Site Accommodation of Drivers & Help *</h3>
-                  <div className="space-y-2">
-                    {['Yes', 'No', 'Limited'].map((option) => (
-                      <div key={option} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`staff-${option}`}
-                          checked={stringToArray(editHotelForm.staffAccommodation).includes(option)}
-                          onCheckedChange={(checked) => {
-                            const currentOptions = stringToArray(editHotelForm.staffAccommodation);
-                            const newOptions = checked 
-                              ? [...currentOptions, option]
-                              : currentOptions.filter(o => o !== option);
-                            setEditHotelForm(prev => prev ? { 
-                              ...prev, 
-                              staffAccommodation: newOptions.join(', ')
-                            } : null);
-                          }}
-                        />
-                        <Label htmlFor={`staff-${option}`}>{option}</Label>
-                      </div>
-                    ))}
-                  </div>
+<div className="space-y-2">
+  {['Yes', 'No', 'Limited'].map((option) => (
+    <div key={option} className="flex items-center space-x-2">
+      <input
+        type="radio"
+        id={`staff-${option}`}
+        name="staffAccommodation"
+        checked={editHotelForm.staffAccommodation === option}
+        onChange={() => setEditHotelForm(prev => prev ? { 
+          ...prev, 
+          staffAccommodation: option
+        } : null)}
+      />
+      <Label htmlFor={`staff-${option}`}>{option}</Label>
+    </div>
+  ))}
+</div>
 
                   <Separator />
                   <h3 className="text-lg font-semibold">Available Dining Options *</h3>
