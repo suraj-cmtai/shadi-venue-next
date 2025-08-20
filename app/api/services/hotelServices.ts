@@ -167,7 +167,7 @@ class HotelService {
             rating: Number(data.rating || 0),
             status: data.status || "draft",
             description: data.description || "",
-            amenities: this.normalizeArrayOrString(data.amenities),
+            amenities: data.amenities || [],
             rooms: Array.isArray(data.rooms) ? data.rooms : [],
             images: Array.isArray(data.images) ? data.images : [],
             contactInfo: {
@@ -204,11 +204,11 @@ class HotelService {
             servicesOffered: this.normalizeArrayOrString(data.servicesOffered),
             diningOptions: this.normalizeArrayOrString(data.diningOptions),
             otherAmenities: this.normalizeArrayOrString(data.otherAmenities),
-            preferredContactMethod: this.normalizeArrayOrString(data.preferredContactMethod),
+            preferredContactMethod: data.preferredContactMethod,
 
             // Strings for boolean-like fields
-            allInclusivePackages: this.normalizeStringOrBoolean(data.allInclusivePackages),
-            staffAccommodation: this.normalizeStringOrBoolean(data.staffAccommodation),
+            allInclusivePackages:data.allInclusivePackages,
+            staffAccommodation: data.staffAccommodation,
 
             // Business and Booking Information
             bookingLeadTime: data.bookingLeadTime || "",
