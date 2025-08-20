@@ -205,7 +205,7 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
     position: hotel.position || '',
     websiteLink: hotel.websiteLink || '',
     
-    // Wedding services
+    // Wedding services - FIX THESE PROBLEMATIC FIELDS
     offerWeddingPackages: hotel.offerWeddingPackages || 'No',
     resortCategory: hotel.resortCategory || '',
     weddingPackagePrice: hotel.weddingPackagePrice || '',
@@ -213,8 +213,22 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
     maxGuestCapacity: hotel.maxGuestCapacity || '',
     numberOfRooms: hotel.numberOfRooms || '',
     venueAvailability: hotel.venueAvailability || '',
-    allInclusivePackages: arrayToString(hotel.allInclusivePackages),
-    staffAccommodation: arrayToString(hotel.staffAccommodation),
+    
+    // Fix these boolean/array field conversions:
+    allInclusivePackages: Array.isArray(hotel.allInclusivePackages)
+      ? hotel.allInclusivePackages.join(", ")
+      : (typeof hotel.allInclusivePackages === 'string'
+        ? hotel.allInclusivePackages
+        : (typeof hotel.allInclusivePackages === 'boolean'
+          ? (hotel.allInclusivePackages ? "Yes" : "No")
+          : "")),
+    staffAccommodation: Array.isArray(hotel.staffAccommodation)
+      ? hotel.staffAccommodation.join(", ")
+      : (typeof hotel.staffAccommodation === 'string'
+        ? hotel.staffAccommodation
+        : (typeof hotel.staffAccommodation === 'boolean'
+          ? (hotel.staffAccommodation ? "Yes" : "No")
+          : "")),
     diningOptions: arrayToString(hotel.diningOptions),
     otherAmenities: arrayToString(hotel.otherAmenities),
     

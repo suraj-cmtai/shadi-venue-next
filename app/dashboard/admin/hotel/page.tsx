@@ -402,7 +402,13 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('rating', form.rating.toString());
     formData.append('status', form.status);
     formData.append('amenities', form.amenities);
-    
+    formData.append('servicesOffered', form.servicesOffered);
+    formData.append('allInclusivePackages', form.allInclusivePackages);
+    formData.append('staffAccommodation', form.staffAccommodation);
+    formData.append('diningOptions', form.diningOptions);
+    formData.append('otherAmenities', form.otherAmenities);
+    formData.append('preferredContactMethod', form.preferredContactMethod);
+        
     // Location - use nested field names to match API expectation
     formData.append('location[address]', form.location.address);
     formData.append('location[city]', form.location.city);
@@ -441,15 +447,15 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('venueAvailability', form.venueAvailability);
     
     // Services and Amenities
-    formData.append('servicesOffered', form.servicesOffered);
-    formData.append('allInclusivePackages', form.allInclusivePackages);
-    formData.append('staffAccommodation', form.staffAccommodation);
-    formData.append('diningOptions', form.diningOptions);
-    formData.append('otherAmenities', form.otherAmenities);
+    // formData.append('servicesOffered', form.servicesOffered);
+    // formData.append('allInclusivePackages', form.allInclusivePackages);
+    // formData.append('staffAccommodation', form.staffAccommodation);
+    // formData.append('diningOptions', form.diningOptions);
+    // formData.append('otherAmenities', form.otherAmenities);
     
     // Business and Booking Information
     formData.append('bookingLeadTime', form.bookingLeadTime);
-    formData.append('preferredContactMethod', form.preferredContactMethod);
+    // formData.append('preferredContactMethod', form.preferredContactMethod);
     formData.append('weddingDepositRequired', form.weddingDepositRequired);
     formData.append('refundPolicy', form.refundPolicy);
     formData.append('referralSource', form.referralSource);
@@ -628,34 +634,40 @@ const createRequestData = async (form: HotelFormState) => {
         return null;
     }
   };
-
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     formState: HotelFormState,
     setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
   ) => {
     const files = Array.from(e.target.files || []);
+    
+    // Clean up existing blob URLs
     formState.images.forEach((image) => {
       if (image.startsWith("blob:")) {
         URL.revokeObjectURL(image);
       }
     });
+    
     if (files.length > 0) {
       const invalidFiles = files.filter((file) => !file.type.startsWith("image/"));
       if (invalidFiles.length > 0) {
         toast.error("Only image files are allowed");
         return;
       }
+      
       const oversizedFiles = files.filter((file) => file.size > 5 * 1024 * 1024);
       if (oversizedFiles.length > 0) {
         toast.error("Images must be under 5MB each");
         return;
       }
-      const objectUrls = files.map((file) => URL.createObjectURL(file));
+      
+      // Create new blob URLs for preview
+      const newObjectUrls = files.map((file) => URL.createObjectURL(file));
+      
       setFormState((prev: HotelFormState) => ({
         ...prev,
         imageFiles: files,
-        images: objectUrls,
+        images: newObjectUrls,
       }));
     } else {
       setFormState((prev: HotelFormState) => ({
@@ -664,6 +676,25 @@ const createRequestData = async (form: HotelFormState) => {
         images: [],
       }));
     }
+  };
+
+  const removeImage = (
+    index: number,
+    formState: HotelFormState,
+    setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
+  ) => {
+    const imageUrl = formState.images[index];
+    
+    // Revoke blob URL if it exists
+    if (imageUrl && imageUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(imageUrl);
+    }
+    
+    setFormState((prev: HotelFormState) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+      imageFiles: prev.imageFiles.filter((_, i) => i !== index),
+    }));
   };
 
   // Render all form fields
@@ -964,30 +995,42 @@ const createRequestData = async (form: HotelFormState) => {
 
         {/* Images */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Images</h3>
-          <div className="space-y-2">
-            <Label>Hotel Images</Label>
-            <Input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => handleImageChange(e, form, setForm)}
-            />
-            <div className="grid grid-cols-3 gap-2 mt-2">
-              {form.images.map((url, index) => (
-                <div key={index} className="relative">
-                  <Image
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    width={100}
-                    height={100}
-                    className="rounded-md object-cover"
-                  />
+            <h3 className="text-lg font-medium">Images</h3>
+            <div className="space-y-2">
+              <Label>Hotel Images</Label>
+              <Input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, form, setForm)}
+              />
+              {form.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {form.images.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <Image
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        width={100}
+                        height={100}
+                        className="rounded-md object-cover w-full h-24"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
+                        onClick={() => removeImage(index, form, setForm)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
         </div>
+
 
         {/* Additional File Uploads */}
         <div className="space-y-4">
@@ -1414,7 +1457,33 @@ const createRequestData = async (form: HotelFormState) => {
                                 rating: hotel.rating || 0,
                                 status: hotel.status || "draft",
                                 description: hotel.description || "",
-                                amenities: Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : "",
+                                amenities: Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : (hotel.amenities || ""),
+                                servicesOffered: Array.isArray(hotel.servicesOffered) 
+                                  ? hotel.servicesOffered.join(", ") 
+                                  : (hotel.servicesOffered || ""),
+                                diningOptions: Array.isArray(hotel.diningOptions) 
+                                  ? hotel.diningOptions.join(", ") 
+                                  : (hotel.diningOptions || ""),
+                                otherAmenities: Array.isArray(hotel.otherAmenities) 
+                                  ? hotel.otherAmenities.join(", ") 
+                                  : (hotel.otherAmenities || ""),
+                                allInclusivePackages: Array.isArray(hotel.allInclusivePackages)
+                                  ? hotel.allInclusivePackages.join(", ")
+                                  : (typeof hotel.allInclusivePackages === 'string'
+                                    ? hotel.allInclusivePackages
+                                    : (typeof hotel.allInclusivePackages === 'boolean'
+                                      ? (hotel.allInclusivePackages ? "Yes" : "No")
+                                      : "")),
+                                staffAccommodation: Array.isArray(hotel.staffAccommodation)
+                                  ? hotel.staffAccommodation.join(", ")
+                                  : (typeof hotel.staffAccommodation === 'string'
+                                    ? hotel.staffAccommodation
+                                    : (typeof hotel.staffAccommodation === 'boolean'
+                                      ? (hotel.staffAccommodation ? "Yes" : "No")
+                                      : "")),
+                                preferredContactMethod: Array.isArray(hotel.preferredContactMethod) 
+                                  ? hotel.preferredContactMethod.join(", ") 
+                                  : (hotel.preferredContactMethod || ""),
                                 rooms: hotel.rooms || [],
                                 images: hotel.images || [],
                                 imageFiles: [],
@@ -1429,24 +1498,24 @@ const createRequestData = async (form: HotelFormState) => {
                                 offerWeddingPackages: hotel.offerWeddingPackages || "No",
                                 resortCategory: hotel.resortCategory || "",
                                 weddingPackagePrice: hotel.weddingPackagePrice || "",
-                                servicesOffered: Array.isArray(hotel.servicesOffered) 
-                                  ? hotel.servicesOffered.join(", ") 
-                                  : hotel.servicesOffered || "",
+                                // servicesOffered: Array.isArray(hotel.servicesOffered) 
+                                //   ? hotel.servicesOffered.join(", ") 
+                                //   : hotel.servicesOffered || "",
                                 maxGuestCapacity: hotel.maxGuestCapacity || "",
                                 numberOfRooms: hotel.numberOfRooms || "",
                                 venueAvailability: hotel.venueAvailability || "",
-                                allInclusivePackages: hotel.allInclusivePackages?.toString() || "",
-                                staffAccommodation: hotel.staffAccommodation?.toString() || "",
-                                diningOptions: Array.isArray(hotel.diningOptions) 
-                                  ? hotel.diningOptions.join(", ") 
-                                  : hotel.diningOptions || "",
-                                otherAmenities: Array.isArray(hotel.otherAmenities) 
-                                  ? hotel.otherAmenities.join(", ") 
-                                  : hotel.otherAmenities || "",
+                                // allInclusivePackages: hotel.allInclusivePackages?.toString() || "",
+                                // staffAccommodation: hotel.staffAccommodation?.toString() || "",
+                                 // diningOptions: Array.isArray(hotel.diningOptions) 
+                                //   ? hotel.diningOptions.join(", ") 
+                                //   : hotel.diningOptions || "",
+                                // otherAmenities: Array.isArray(hotel.otherAmenities) 
+                                //   ? hotel.otherAmenities.join(", ") 
+                                //   : hotel.otherAmenities || "",
                                 bookingLeadTime: hotel.bookingLeadTime || "",
-                                preferredContactMethod: Array.isArray(hotel.preferredContactMethod) 
-                                  ? hotel.preferredContactMethod.join(", ") 
-                                  : hotel.preferredContactMethod || "",
+                                // preferredContactMethod: Array.isArray(hotel.preferredContactMethod) 
+                                //   ? hotel.preferredContactMethod.join(", ") 
+                                //   : hotel.preferredContactMethod || "",
                                 weddingDepositRequired: hotel.weddingDepositRequired || "",
                                 refundPolicy: hotel.refundPolicy || "",
                                 referralSource: hotel.referralSource || "",

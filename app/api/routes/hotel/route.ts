@@ -26,7 +26,6 @@ async function uploadFiles(files: FormDataEntryValue[], width: number, height: n
 // Helper function to safely parse string values as arrays or return as strings
 function parseStringOrArray(value: string | undefined, fallback: any = []): any {
     if (!value) return fallback;
-    
     try {
         // Try to parse as JSON array
         const parsed = JSON.parse(value);
@@ -47,6 +46,24 @@ function safeParseNumber(value: string | undefined, fallback: number = 0): numbe
 // Helper function to safely convert string to boolean
 function safeParseBoolean(value: string | undefined): boolean {
     return value === "true";
+}
+
+// Helper function to parse string or array for preferredContactMethod
+function parsePreferredContactMethod(value: string | undefined): string[] | undefined {
+    if (!value) return undefined;
+    try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed;
+    } catch {
+        // If not JSON, treat as comma-separated string
+        if (value.includes(",")) {
+            return value.split(",").map((v) => v.trim()).filter(Boolean);
+        }
+        if (value.trim().length > 0) {
+            return [value.trim()];
+        }
+    }
+    return undefined;
 }
 
 // Get all hotels (GET)
@@ -244,35 +261,35 @@ export async function POST(req: Request) {
             },
 
             // Personal/Business information
-            firstName,
-            lastName,
-            companyName,
-            venueType,
-            position,
-            websiteLink,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            companyName: companyName || "",
+            venueType: venueType || "",
+            position: position || "",
+            websiteLink: websiteLink || "",
 
             // Wedding package information
             offerWeddingPackages: offerWeddingPackages as 'Yes' | 'No' | undefined,
-            resortCategory,
-            weddingPackagePrice,
-            maxGuestCapacity,
-            numberOfRooms,
-            venueAvailability,
+            resortCategory: resortCategory || "",
+            weddingPackagePrice: weddingPackagePrice || "",
+            maxGuestCapacity: maxGuestCapacity || "",
+            numberOfRooms: numberOfRooms || "",
+            venueAvailability: venueAvailability || "",
 
             // Services and amenities (handle as flexible string or array)
             servicesOffered: parseStringOrArray(servicesOffered, []),
-            allInclusivePackages,
-            staffAccommodation,
+            allInclusivePackages: allInclusivePackages || "",
+            staffAccommodation: staffAccommodation || "",
             diningOptions: parseStringOrArray(diningOptions, []),
             otherAmenities: parseStringOrArray(otherAmenities, []),
 
             // Business and booking information
-            bookingLeadTime,
-            preferredContactMethod,
-            weddingDepositRequired,
-            refundPolicy,
-            referralSource,
-            partnershipInterest,
+            bookingLeadTime: bookingLeadTime || "",
+            preferredContactMethod: parsePreferredContactMethod(preferredContactMethod),
+            weddingDepositRequired: weddingDepositRequired || "",
+            refundPolicy: refundPolicy || "",
+            referralSource: referralSource || "",
+            partnershipInterest: partnershipInterest || "",
 
             // File uploads
             uploadResortPhotos: resortPhotoUrls,
@@ -283,7 +300,7 @@ export async function POST(req: Request) {
             // Legal information
             agreeToTerms: safeParseBoolean(agreeToTerms?.toString()),
             agreeToPrivacy: safeParseBoolean(agreeToPrivacy?.toString()),
-            signature,
+            signature: signature || "",
         };
 
         const newHotel = await HotelService.createHotel(hotelData);

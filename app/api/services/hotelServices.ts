@@ -13,47 +13,54 @@ export interface Room {
 }
 
 export interface Hotel {
+    // Existing fields
     id: string;
     name: string;
     category: string;
     location: {
-        address: string;
-        city: string;
-        state: string;
-        country: string;
-        zipCode: string;
+      address: string;
+      city: string;
+      state: string;
+      country: string;
+      zipCode: string;
     };
     priceRange: {
-        startingPrice: number;
-        currency: Currency;
+      startingPrice: number;
+      currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
     };
     rating: number;
-    status: HotelStatus;
+    status: 'active' | 'draft' | 'archived';
     description: string;
     amenities: string[];
-    rooms: Room[];
+    rooms: {
+      type: string;
+      capacity: number;
+      pricePerNight: number;
+      available: number;
+    }[];
     images: string[];
     contactInfo: {
-        phone: string;
-        email: string;
-        website?: string;
+      phone: string;
+      email: string;
+      website?: string;
     };
     policies: {
-        checkIn: string;
-        checkOut: string;
-        cancellation: string;
+      checkIn: string;
+      checkOut: string;
+      cancellation: string;
     };
     createdAt: string;
     updatedAt: string;
-
-    // Personal/Business Information
+    googleLocation?: string;
+  
+    // Personal Information
     firstName?: string;
     lastName?: string;
     companyName?: string;
     venueType?: string;
     position?: string;
     websiteLink?: string;
-
+  
     // Wedding Package Information
     offerWeddingPackages?: 'Yes' | 'No';
     resortCategory?: string;
@@ -61,33 +68,35 @@ export interface Hotel {
     maxGuestCapacity?: string;
     numberOfRooms?: string;
     venueAvailability?: string;
-
-    // Services and Amenities
-    servicesOffered?: string | string[];
-    allInclusivePackages?: string;
-    staffAccommodation?: string;
-    diningOptions?: string | string[];
-    otherAmenities?: string | string[];
-
-    // Business and Booking Information
+  
+    // Services and Amenities - Arrays for multi-select fields
+    servicesOffered?: string[];
+    diningOptions?: string[];
+    otherAmenities?: string[];
+    preferredContactMethod?: string[];
+  
+    // String fields for single/boolean-like values (normalized by backend)
+    allInclusivePackages?: string; // "Yes", "No", "Partially" or combinations
+    staffAccommodation?: string;   // "Yes", "No", "Limited" or combinations
+  
+    // Business Information
     bookingLeadTime?: string;
-    preferredContactMethod?: string;
     weddingDepositRequired?: string;
     refundPolicy?: string;
     referralSource?: string;
     partnershipInterest?: string;
-
-    // File uploads (URLs)
+  
+    // File uploads
     uploadResortPhotos?: string[];
     uploadMarriagePhotos?: string[];
     uploadWeddingBrochure?: string[];
     uploadCancelledCheque?: string[];
-
-    // Legal and Agreement Fields
+  
+    // Agreement fields
     agreeToTerms?: boolean;
     agreeToPrivacy?: boolean;
     signature?: string;
-}
+  }
 
 class HotelService {
     private static collection = "hotels";
@@ -125,18 +134,7 @@ class HotelService {
         return new Date().toISOString();
     }
 
-    // Helper method to safely handle array or string fields
-    private static normalizeArrayOrString(value: any): string | string[] {
-        if (Array.isArray(value)) {
-            return value;
-        }
-        if (typeof value === 'string') {
-            // If it contains commas, treat as comma-separated list
-            return value.includes(',') ? value.split(',').map(item => item.trim()) : value;
-        }
-        return value || [];
-    }
-
+   
     // Helper method to ensure arrays are properly stored
     private static ensureArray(value: any): string[] {
         if (Array.isArray(value)) {
@@ -149,6 +147,7 @@ class HotelService {
     }
 
     // Helper method to convert document data to Hotel type
+   // Updated backend convertToType method to match:
     private static convertToType(id: string, data: any): Hotel {
         return {
             id,
@@ -168,19 +167,20 @@ class HotelService {
             rating: Number(data.rating || 0),
             status: data.status || "draft",
             description: data.description || "",
-            amenities: Array.isArray(data.amenities) ? data.amenities : [],
+            amenities: this.normalizeArrayOrString(data.amenities),
             rooms: Array.isArray(data.rooms) ? data.rooms : [],
             images: Array.isArray(data.images) ? data.images : [],
             contactInfo: {
                 phone: data.contactInfo?.phone || "",
                 email: data.contactInfo?.email || "",
-                website: data.contactInfo?.website,
+                website: data.contactInfo?.website || "",
             },
             policies: {
                 checkIn: data.policies?.checkIn || "14:00",
                 checkOut: data.policies?.checkOut || "11:00",
                 cancellation: data.policies?.cancellation || "",
             },
+            googleLocation: data.googleLocation || "",
             createdAt: this.convertTimestamp(data.createdAt),
             updatedAt: this.convertTimestamp(data.updatedAt),
 
@@ -200,33 +200,65 @@ class HotelService {
             numberOfRooms: data.numberOfRooms || "",
             venueAvailability: data.venueAvailability || "",
 
-            // Services and Amenities (handle both string and array formats)
+            // Arrays for multi-select fields
             servicesOffered: this.normalizeArrayOrString(data.servicesOffered),
-            allInclusivePackages: data.allInclusivePackages || "",
-            staffAccommodation: data.staffAccommodation || "",
             diningOptions: this.normalizeArrayOrString(data.diningOptions),
             otherAmenities: this.normalizeArrayOrString(data.otherAmenities),
+            preferredContactMethod: this.normalizeArrayOrString(data.preferredContactMethod),
+
+            // Strings for boolean-like fields
+            allInclusivePackages: this.normalizeStringOrBoolean(data.allInclusivePackages),
+            staffAccommodation: this.normalizeStringOrBoolean(data.staffAccommodation),
 
             // Business and Booking Information
             bookingLeadTime: data.bookingLeadTime || "",
-            preferredContactMethod: data.preferredContactMethod || "",
             weddingDepositRequired: data.weddingDepositRequired || "",
             refundPolicy: data.refundPolicy || "",
             referralSource: data.referralSource || "",
             partnershipInterest: data.partnershipInterest || "",
 
-            // File uploads (URLs)
+            // File uploads
             uploadResortPhotos: Array.isArray(data.uploadResortPhotos) ? data.uploadResortPhotos : [],
             uploadMarriagePhotos: Array.isArray(data.uploadMarriagePhotos) ? data.uploadMarriagePhotos : [],
             uploadWeddingBrochure: Array.isArray(data.uploadWeddingBrochure) ? data.uploadWeddingBrochure : [],
             uploadCancelledCheque: Array.isArray(data.uploadCancelledCheque) ? data.uploadCancelledCheque : [],
 
-            // Legal and Agreement Fields
-            agreeToTerms: data.agreeToTerms || false,
-            agreeToPrivacy: data.agreeToPrivacy || false,
+            // Agreement fields
+            agreeToTerms: Boolean(data.agreeToTerms),
+            agreeToPrivacy: Boolean(data.agreeToPrivacy),
             signature: data.signature || "",
         };
     }
+
+// Add these helper methods to handle the problematic field conversions:
+
+// USE THIS VERSION (First one - returns string[])
+private static normalizeArrayOrString(value: any): string[] {
+    if (Array.isArray(value)) {
+        return value.filter(item => item && typeof item === 'string');
+    }
+    if (typeof value === 'string' && value.trim()) {
+        // Handle comma-separated strings or single values
+        return value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    }
+    return [];
+}
+
+
+
+private static normalizeStringOrBoolean(value: any): string {
+    if (typeof value === 'boolean') {
+        return value ? "Yes" : "No";
+    }
+    if (Array.isArray(value)) {
+        return value.filter(item => item && typeof item === 'string')
+                   .join(', ');
+    }
+    if (typeof value === 'string') {
+        return value.trim();
+    }
+    return "";
+}
 
     // Initialize Firestore real-time listener
     static initHotels() {
