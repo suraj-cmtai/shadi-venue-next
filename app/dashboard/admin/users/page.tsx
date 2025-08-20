@@ -167,7 +167,9 @@ interface InviteFormState {
   isEnabled: boolean;
   theme: Theme;
   about: NonNullable<User['invite']>['about'];
-  invitation: NonNullable<User['invite']>['invitation'];
+  invitation: NonNullable<User['invite']>['invitation'] & {
+    backgroundImageFile?: File | null;
+  };
   weddingEvents: WeddingEvent[];
   loveStory: NonNullable<User['invite']>['loveStory'];
   planning: NonNullable<User['invite']>['planning'];
@@ -226,6 +228,8 @@ const initialInviteFormState: InviteFormState = {
     heading: 'You are invited',
     subheading: 'To our wedding',
     message: 'Join us for our special day',
+    backgroundImage: '',
+    backgroundImageFile: null,
   },
   weddingEvents: [],
   loveStory: [],
@@ -270,8 +274,12 @@ export default function UsersPage() {
       if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
         URL.revokeObjectURL(userForm.avatar);
       }
+      if (inviteForm.invitation.backgroundImageFile && inviteForm.invitation.backgroundImage?.startsWith("blob:")) {
+        URL.revokeObjectURL(inviteForm.invitation.backgroundImage);
+      }
     };
-  }, [userForm.avatarFile]);
+    // eslint-disable-next-line
+  }, [userForm.avatarFile, inviteForm.invitation.backgroundImageFile]);
 
   const filteredUsers = users.filter((user) =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -283,6 +291,9 @@ export default function UsersPage() {
   const resetForms = () => {
     if (userForm.avatarFile && userForm.avatar?.startsWith("blob:")) {
       URL.revokeObjectURL(userForm.avatar);
+    }
+    if (inviteForm.invitation.backgroundImageFile && inviteForm.invitation.backgroundImage?.startsWith("blob:")) {
+      URL.revokeObjectURL(inviteForm.invitation.backgroundImage);
     }
     setUserForm(initialUserFormState);
     setInviteForm(initialInviteFormState);
@@ -317,7 +328,10 @@ export default function UsersPage() {
         isEnabled: user.invite.isEnabled,
         theme: user.invite.theme,
         about: user.invite.about,
-        invitation: user.invite.invitation,
+        invitation: {
+          ...user.invite.invitation,
+          backgroundImageFile: null,
+        },
         weddingEvents: user.invite.weddingEvents || [],
         loveStory: user.invite.loveStory || [],
         planning: user.invite.planning || [],
@@ -356,32 +370,50 @@ export default function UsersPage() {
       formData.append("role", userForm.role);
       formData.append("phoneNumber", userForm.phoneNumber);
 
-      // Add address fields
-      if (
-        userForm.street ||
-        userForm.city ||
-        userForm.state ||
-        userForm.country ||
-        userForm.zipCode
-      ) {
-        formData.append("street", userForm.street);
-        formData.append("city", userForm.city);
-        formData.append("state", userForm.state);
-        formData.append("country", userForm.country);
-        formData.append("zipCode", userForm.zipCode);
+      // --- Address: send as a single object ---
+      // Backend expects:
+      // address: {
+      //   street: string,
+      //   city: string,
+      //   state: string,
+      //   country: string,
+      //   zipCode: string
+      // }
+      const address = {
+        street: userForm.street,
+        city: userForm.city,
+        state: userForm.state,
+        country: userForm.country,
+        zipCode: userForm.zipCode,
+      };
+      // Only send address if at least one field is filled
+      if (Object.values(address).some((v) => v && v.trim() !== "")) {
+        formData.append("address", JSON.stringify(address));
       }
 
-      // Handle avatar upload/replace with Firebase
+      // --- Avatar: upload and send URL like other images ---
       if (userForm.avatarFile) {
-        const newAvatarUrl = await replaceImageClient(userForm.avatarFile, userForm.avatar || undefined);
+        // Upload avatar image and get URL
+        const newAvatarUrl = await uploadImageClient(userForm.avatarFile);
         if (newAvatarUrl) {
           formData.append("avatar", newAvatarUrl);
         }
       } else if (userForm.removeAvatar) {
-        // Handle avatar removal
+        // Remove avatar
         await replaceImageClient(null, userForm.avatar || undefined);
         formData.append("avatar", "");
       }
+      // else: do not send avatar field if unchanged
+
+      // Backend expects:
+      // {
+      //   name: string,
+      //   email: string,
+      //   role: string,
+      //   phoneNumber: string,
+      //   address: { ... },
+      //   avatar: string (URL) | "" (to remove) | undefined (no change)
+      // }
 
       await dispatch(updateUser({ id: selectedUserId, data: formData })).unwrap();
       toast.success("User details updated successfully");
@@ -413,10 +445,33 @@ export default function UsersPage() {
         theme: inviteForm.theme
       })).unwrap();
 
-      // Update full invite data
+      // --- Handle backgroundImage upload for invitation ---
+      let backgroundImageUrl = inviteForm.invitation.backgroundImage || "";
+      if (inviteForm.invitation.backgroundImageFile) {
+        backgroundImageUrl = await uploadImageClient(inviteForm.invitation.backgroundImageFile);
+      }
+
+      // --- Backend expects inviteData: ---
+      // {
+      //   about: { ... },
+      //   invitation: {
+      //     heading: string,
+      //     subheading: string,
+      //     message: string,
+      //     rsvpLink?: string,
+      //     backgroundImage?: string (URL)
+      //   },
+      //   weddingEvents: [...],
+      //   loveStory: [...],
+      //   planning: [...]
+      // }
+
       const inviteData = {
         about: inviteForm.about,
-        invitation: inviteForm.invitation,
+        invitation: {
+          ...inviteForm.invitation,
+          backgroundImage: backgroundImageUrl,
+        },
         weddingEvents: inviteForm.weddingEvents,
         loveStory: inviteForm.loveStory,
         planning: inviteForm.planning,
@@ -498,6 +553,38 @@ export default function UsersPage() {
       avatar: null,
       avatarFile: null,
       removeAvatar: true,
+    });
+  };
+
+  // Handle backgroundImage file change for invitation
+  const handleBackgroundImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (inviteForm.invitation.backgroundImageFile && inviteForm.invitation.backgroundImage?.startsWith("blob:")) {
+        URL.revokeObjectURL(inviteForm.invitation.backgroundImage);
+      }
+      setInviteForm({
+        ...inviteForm,
+        invitation: {
+          ...inviteForm.invitation,
+          backgroundImage: URL.createObjectURL(file),
+          backgroundImageFile: file,
+        },
+      });
+    }
+  };
+
+  const handleRemoveBackgroundImage = () => {
+    if (inviteForm.invitation.backgroundImageFile && inviteForm.invitation.backgroundImage?.startsWith("blob:")) {
+      URL.revokeObjectURL(inviteForm.invitation.backgroundImage);
+    }
+    setInviteForm({
+      ...inviteForm,
+      invitation: {
+        ...inviteForm.invitation,
+        backgroundImage: "",
+        backgroundImageFile: null,
+      },
     });
   };
 
@@ -881,6 +968,33 @@ export default function UsersPage() {
         </div>
       </div>
 
+      {/* Invitation Background Image */}
+      <div className="space-y-2">
+        <Label htmlFor="backgroundImage">Invitation Background Image</Label>
+        <Input
+          id="backgroundImage"
+          type="file"
+          accept="image/*"
+          onChange={handleBackgroundImageChange}
+        />
+        {inviteForm.invitation.backgroundImage && (
+          <div className="flex items-center gap-4 mt-2">
+            <img
+              src={inviteForm.invitation.backgroundImage}
+              alt="Background preview"
+              className="w-32 h-20 object-cover rounded"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRemoveBackgroundImage}
+            >
+              Remove Background
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Wedding Events */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -1110,7 +1224,15 @@ export default function UsersPage() {
                   <td className="px-4 py-3">{user.phoneNumber || "-"}</td>
                   <td className="px-4 py-3">
                     {user.address
-                      ? `${user.address.city || ""}${user.address.city && user.address.country ? ", " : ""}${user.address.country || ""}`
+                      ? [
+                          user.address.street,
+                          user.address.city,
+                          user.address.state,
+                          user.address.country,
+                          user.address.zipCode,
+                        ]
+                          .filter(Boolean)
+                          .join(", ") || "-"
                       : "-"}
                   </td>
                   <td className="px-4 py-3">

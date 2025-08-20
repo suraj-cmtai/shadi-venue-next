@@ -44,7 +44,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
-        
+
         // Extract basic info
         const name = formData.get("name");
         const email = formData.get("email");
@@ -52,17 +52,44 @@ export async function POST(req: Request) {
         const phoneNumber = formData.get("phoneNumber");
         const file = formData.get("avatar");
 
-        // Extract address info
-        const street = formData.get("street");
-        const city = formData.get("city");
-        const state = formData.get("state");
-        const country = formData.get("country");
-        const zipCode = formData.get("zipCode");
+        // Extract address info (as a single JSON string, if present)
+        let address: {
+            street: string;
+            city: string;
+            state: string;
+            country: string;
+            zipCode: string;
+        } | undefined = undefined;
+
+        const addressRaw = formData.get("address");
+        if (addressRaw) {
+            try {
+                const parsed = JSON.parse(addressRaw.toString());
+                // Only set address if at least one field is non-empty
+                if (
+                    typeof parsed === "object" &&
+                    parsed !== null &&
+                    Object.values(parsed).some(
+                        (v) => typeof v === "string" && v.trim() !== ""
+                    )
+                ) {
+                    address = {
+                        street: parsed.street || "",
+                        city: parsed.city || "",
+                        state: parsed.state || "",
+                        country: parsed.country || "",
+                        zipCode: parsed.zipCode || "",
+                    };
+                }
+            } catch (err) {
+                consoleManager.error("Error parsing address data:", err);
+            }
+        }
 
         // Extract invite data if provided
         const inviteData = formData.get("invite");
         let invite: Invite | undefined;
-        
+
         if (inviteData) {
             try {
                 invite = JSON.parse(inviteData.toString());
@@ -95,13 +122,7 @@ export async function POST(req: Request) {
             role: role,
             phoneNumber: phoneNumber?.toString() || "",
             avatar: avatarUrl ? String(avatarUrl) : undefined,
-            address: street ? {
-                street: street.toString(),
-                city: city?.toString() || "",
-                state: state?.toString() || "",
-                country: country?.toString() || "",
-                zipCode: zipCode?.toString() || "",
-            } : undefined,
+            address: address,
             bookings: [],
             favorites: {
                 hotels: [],
@@ -132,7 +153,6 @@ export async function POST(req: Request) {
         }, { status: 500 });
     }
 }
-
 // Update user's notifications (PATCH)
 export async function PATCH(req: Request) {
     try {
