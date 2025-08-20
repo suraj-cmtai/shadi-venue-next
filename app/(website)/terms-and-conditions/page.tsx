@@ -17,9 +17,11 @@ import {
     Sparkles,
     Gavel,
     CheckCircle,
+    Hotel
 } from "lucide-react"
 
 const termsData = [
+    // Existing T&C for event clients...
     {
         id: "definitions",
         title: "Definitions",
@@ -49,6 +51,52 @@ const termsData = [
             </div>
         ),
     },
+    // ... (other existing terms unchanged)
+    // Inserted T&C for Hotels/Resorts
+    {
+        id: "hotel-tnc",
+        title: "Terms & Conditions for Hotels/Resorts",
+        icon: <Hotel className="w-5 h-5" />,
+        content: (
+            <div className="space-y-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                    Registering your resort on this platform, you agree to the following terms and conditions:
+                </p>
+                <div className="space-y-3">
+                    <div>
+                        <strong>1. Accuracy of Information:</strong> You confirm that all information provided is accurate, up-to-date, and complete. You are responsible for maintaining the accuracy of your resort profile.
+                    </div>
+                    <div>
+                        <strong>2. Service Agreement:</strong> You agree to offer services as described in your registration. Any changes to the services or pricing must be updated promptly.
+                    </div>
+                    <div>
+                        <strong>3. Communication:</strong> You consent to receive communication from wedding planners, customers, and the platform regarding your resort listing and related inquiries.
+                    </div>
+                    <div>
+                        <strong>4. Intellectual Property:</strong> You retain ownership of any images, logos, and content you upload. By submitting them, you grant the platform permission to use this content for promotional purposes.
+                    </div>
+                    <div>
+                        <strong>5. Liability:</strong> The platform is not liable for any disputes, cancellations, or damages related to bookings or services between resort owners and clients.
+                    </div>
+                    <div>
+                        <strong>6. Privacy:</strong> Your personal and resort information will be handled in accordance with our Privacy Policy. We do not share your details with third parties without your consent.
+                    </div>
+                    <div>
+                        <strong>7. Modification or Termination:</strong> The platform reserves the right to modify or terminate your listing if it is deemed to violate any terms or for any operational reasons.
+                    </div>
+                    <div>
+                        <strong>8. Governing Law:</strong> These terms are governed by the laws of [Country/Region].
+                    </div>
+                </div>
+                <div className="bg-pink-50 p-4 rounded-lg border-l-4 border-pink-300 mt-4">
+                    <p className="text-sm font-medium text-[#212D47]">
+                        By checking this box, you confirm that you have read, understood, and agree to the terms and conditions outlined above.
+                    </p>
+                </div>
+            </div>
+        ),
+    },
+    // Continue with the rest of the original terms...
     {
         id: "booking",
         title: "Booking Procedure",
@@ -179,7 +227,6 @@ const termsData = [
             </div>
         ),
     },
-
     {
         id: "catering",
         title: "Catering & Beverages",
@@ -424,7 +471,7 @@ export default function TermsAndConditions() {
                     <FileText className="w-8 h-8 text-pink-300" />
                     Terms & Conditions
                 </CardTitle>
-                <p className="text-pink-100 text-center mt-2">Please review all sections carefully before booking your event</p>
+                <p className="text-pink-100 text-center mt-2">Please review all sections carefully before booking your event or registering your resort</p>
             </CardHeader>
             <CardContent className="p-0">
                 <Accordion type="single" collapsible className="w-full">

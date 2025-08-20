@@ -51,6 +51,46 @@ const privacySections = [
             </div>
         ),
     },
+    // --- Hotel/Resort Privacy Policy Agreement Section ---
+    {
+        id: "hotel-privacy-policy-agreement",
+        title: "Privacy Policy Agreement for Hotels & Resorts",
+        icon: <Shield className="w-5 h-5" />,
+        content: (
+            <div className="space-y-4">
+                <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-[#212D47] mb-2">Privacy Policy Agreement</h4>
+                    <p className="text-[#212D47]/80 mb-2">
+                        By registering your resort on this platform, you acknowledge and agree to the following:
+                    </p>
+                    <ul className="list-decimal list-inside text-[#212D47]/80 space-y-2 pl-4">
+                        <li>
+                            <span className="font-semibold">Data Collection:</span> We collect personal information, including your name, contact details, and resort information, to facilitate your registration and communicate with wedding planners and clients.
+                        </li>
+                        <li>
+                            <span className="font-semibold">Use of Information:</span> Your information will be used to display your resort profile, respond to inquiries, and improve our services. We may also send updates about platform features or promotions.
+                        </li>
+                        <li>
+                            <span className="font-semibold">Third-Party Sharing:</span> We do not share your personal information with third parties without your consent, except as required by law or to process transactions necessary for the platform's operation.
+                        </li>
+                        <li>
+                            <span className="font-semibold">Data Security:</span> We employ industry-standard security measures to protect your data. However, we cannot guarantee complete security due to the nature of online communication.
+                        </li>
+                        <li>
+                            <span className="font-semibold">Your Rights:</span> You can request access to, update, or delete your information at any time. For any questions regarding your data, please contact us at <span className="underline">privacy@shadivenue.com</span>.
+                        </li>
+                    </ul>
+                    <div className="bg-pink-100 border border-pink-200 rounded-lg p-4 mt-4 flex items-start space-x-3">
+                        <input type="checkbox" disabled className="mt-1 accent-pink-500" />
+                        <span className="text-[#212D47]/80">
+                            By checking this box, you confirm that you have read, understood, and agree to our Privacy Policy.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        ),
+    },
+    // --- End Hotel/Resort Section ---
     {
         id: "how-we-collect",
         title: "How We Collect Information",

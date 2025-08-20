@@ -44,6 +44,9 @@ export interface Hotel {
   createdAt: string;
   updatedAt: string;
 
+  // New field
+  googleLocation?: string;
+
   // New form fields
   firstName?: string;
   lastName?: string;

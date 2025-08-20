@@ -64,6 +64,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
+import Link from 'next/link';
 
 
 
@@ -128,7 +129,7 @@ interface HotelFormState {
     checkOut: string;
     cancellation: string;
   };
-
+  googleLocation: string; 
   // Additional form fields
   firstName: string;
   lastName: string;
@@ -197,7 +198,7 @@ const initialFormState: HotelFormState = {
     checkOut: "11:00",
     cancellation: "Free cancellation up to 24 hours before check-in",
   },
-
+  googleLocation: "",
   // Additional fields with defaults
   firstName: "",
   lastName: "",
@@ -458,6 +459,7 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('agreeToTerms', form.agreeToTerms.toString());
     formData.append('agreeToPrivacy', form.agreeToPrivacy.toString());
     formData.append('signature', form.signature);
+    formData.append('googleLocation', form.googleLocation);
     
     // Rooms as JSON string
     formData.append('rooms', JSON.stringify(form.rooms));
@@ -1139,6 +1141,25 @@ const createRequestData = async (form: HotelFormState) => {
                 placeholder="Website"
               />
             </div>
+            <div className="space-y-2 md:col-span-2"> {/* ADD THIS ENTIRE DIV */}
+              <Label>Google Maps Location</Label>
+              <Textarea
+                value={form.googleLocation}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  // Extract URL from iframe embed code if present
+                  const regex = /src="([^"]*google\.com\/maps\/embed[^"]*)"/;
+                  const match = input.match(regex);
+                  const extractedUrl = match ? match[1] : input;
+                  setForm((prev) => ({ ...prev, googleLocation: extractedUrl }));
+                }}
+                placeholder="Paste Google Maps embed code or URL here"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                You can paste the full iframe embed code or just the URL
+              </p>
+            </div>
             <div className="space-y-2">
               <Label>Preferred Contact Method</Label>
               <Input
@@ -1254,7 +1275,7 @@ const createRequestData = async (form: HotelFormState) => {
                 onChange={(e) => setForm((prev) => ({ ...prev, agreeToTerms: e.target.checked }))}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              <Label>I agree to the terms and conditions</Label>
+              <Label>I agree to the <Link href="/terms-and-conditions">terms and conditions</Link></Label>
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -1263,7 +1284,7 @@ const createRequestData = async (form: HotelFormState) => {
                 onChange={(e) => setForm((prev) => ({ ...prev, agreeToPrivacy: e.target.checked }))}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              <Label>I agree to the privacy policy</Label>
+              <Label>I agree to the <Link href="/privacy-policy">Privacy Policy *</Link></Label>
             </div>
             <div className="space-y-2">
               <Label>Digital Signature</Label>
@@ -1437,6 +1458,7 @@ const createRequestData = async (form: HotelFormState) => {
                                 agreeToTerms: hotel.agreeToTerms || false,
                                 agreeToPrivacy: hotel.agreeToPrivacy || false,
                                 signature: hotel.signature || "",
+                                googleLocation: hotel.googleLocation || "", 
                               };
                               setEditHotelForm(hotelForEdit);
                               setSelectedHotelId(hotel.id);

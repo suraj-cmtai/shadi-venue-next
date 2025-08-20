@@ -78,6 +78,7 @@ import {
 } from "lucide-react";
 
 import { Hotel } from "@/lib/redux/features/hotelSlice";
+import Link from "next/link";
 
 // Helper function to safely convert array or string to comma-separated string
 const arrayToString = (value: any): string => {
@@ -112,6 +113,7 @@ interface HotelFormState {
   removeImages: boolean;
   contactInfo: { phone: string; email: string; website: string; };
   policies: { checkIn: string; checkOut: string; cancellation: string; };
+  googleLocation: string;
   
   // New fields
   firstName: string;
@@ -193,6 +195,7 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
       website: hotel.contactInfo?.website || '' 
     },
     policies: hotel.policies || { checkIn: '', checkOut: '', cancellation: '' },
+    googleLocation: hotel.googleLocation || '',
     
     // Personal information
     firstName: hotel.firstName || '',
@@ -383,6 +386,7 @@ export default function HotelDashboard() {
       formData.append('agreeToTerms', editHotelForm.agreeToTerms.toString());
       formData.append('agreeToPrivacy', editHotelForm.agreeToPrivacy.toString());
       formData.append('signature', editHotelForm.signature);
+      formData.append('googleLocation', editHotelForm.googleLocation);
       
       // Convert comma-separated strings to arrays for API
       formData.append('amenities', JSON.stringify(stringToArray(editHotelForm.amenities)));
@@ -1276,6 +1280,24 @@ export default function HotelDashboard() {
                         placeholder="https://..."
                       />
                     </div>
+                      <div>
+                        <Label htmlFor="googleLocation">Google Maps Location</Label>
+                        <Textarea
+                          id="googleLocation"
+                          value={editHotelForm.googleLocation}
+                          onChange={(e) => {
+                            const input = e.target.value;
+                            // Extract URL from iframe using regex
+                            const regex = /src="([^"]*google\.com\/maps\/embed[^"]*)"/;
+                            const match = input.match(regex);
+                            const extractedUrl = match ? match[1] : input;
+                            setEditHotelForm(prev => prev ? { ...prev, googleLocation: extractedUrl } : null);
+                          }}
+                          placeholder="Paste Google Maps embed code or URL here"
+                          rows={2}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">You can paste the full iframe embed code or just the URL</p>
+                      </div>
                   </div>
 
                   <Separator />
@@ -1719,7 +1741,7 @@ export default function HotelDashboard() {
                         onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToTerms: !!checked } : null)}
                         required
                       />
-                      <Label htmlFor="agreeTerms">I agree to the Terms and Conditions *</Label>
+                      <Label htmlFor="agreeTerms">I agree to the <Link href="/terms-and-conditions">terms and conditions *</Link></Label>
                     </div>
                     
                     <div className="flex items-center space-x-2">
@@ -1729,7 +1751,7 @@ export default function HotelDashboard() {
                         onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToPrivacy: !!checked } : null)}
                         required
                       />
-                      <Label htmlFor="agreePrivacy">I agree to the Privacy Policy *</Label>
+                      <Label htmlFor="agreePrivacy">I agree to the <Link href="/privacy-policy">Privacy Policy *</Link></Label>
                     </div>
 
                     <div>
