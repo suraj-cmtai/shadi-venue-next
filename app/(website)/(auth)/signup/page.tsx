@@ -10,7 +10,7 @@ import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle } from
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import  GradientButton  from "@/components/GradientButton";
+import GradientButton from "@/components/GradientButton";
 import { Button } from "@/components/ui/button";
 
 const ROLES = [
@@ -39,16 +39,21 @@ const SignupPage = () => {
     try {
       const result = await dispatch(signup({ name, email, password, role })).unwrap();
       toast.success("Account created successfully!");
-      if (result.data.role === "admin") {
-        router.push("/dashboard/admin");
-      } else if (result.data.role === "hotel") {
-        router.push("/dashboard/hotel");
+
+      // Send details to /api/routes/welcome after successful signup
+      try {
+        await fetch("/api/routes/welcome", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, role, password }),
+        });
+      } catch (welcomeError) {
+        // Optionally handle error, but don't block user
+        // toast.error("Welcome API call failed.");
       }
-      else if (result.data.role === "vendor") {
-        router.push("/dashboard/vendor");
-      } else {
-        router.push("/dashboard/user");
-      }
+      
     } catch (error: unknown) {
       let errorMessage = "Signup failed. Please try again.";
       if (error && typeof error === "object" && "message" in error) {
