@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, FormEvent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/lib/redux/store';
 import { notFound } from 'next/navigation';
@@ -11,6 +11,26 @@ import Image from 'next/image';
 import { Instagram, Facebook, Twitter, MapPin, Calendar, Clock, Phone, Heart, Star } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Helper to check if a string is a valid absolute or root-relative URL for Next.js Image
+function getSafeImageUrl(url: string | undefined, fallback: string): string {
+  if (!url || typeof url !== 'string') return fallback;
+  // Accept root-relative, protocol-relative, or absolute URLs
+  if (
+    url.startsWith('/') ||
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:image')
+  ) {
+    return url;
+  }
+  // If it's a relative path (e.g. "images/foo.jpg"), prepend slash
+  if (!url.startsWith('/')) {
+    return '/' + url;
+  }
+  // Fallback
+  return fallback;
+}
 
 interface InvitePageProps {
   params: Promise<{
@@ -218,7 +238,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
     groom: {
       name: about.groom?.name || 'Groom',
       description: about.groom?.description || 'The amazing groom who brings joy and laughter to every moment.',
-      image: about.groom?.image || '/api/placeholder/280/360',
+      image: getSafeImageUrl(about.groom?.image, '/api/placeholder/280/360'),
       socials: {
         instagram: about.groom?.socials?.instagram || '',
         facebook: about.groom?.socials?.facebook || '',
@@ -228,14 +248,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
     bride: {
       name: about.bride?.name || 'Bride',
       description: about.bride?.description || 'The beautiful bride who lights up every room with her presence.',
-      image: about.bride?.image || '/api/placeholder/280/360',
+      image: getSafeImageUrl(about.bride?.image, '/api/placeholder/280/360'),
       socials: {
         instagram: about.bride?.socials?.instagram || '',
         facebook: about.bride?.socials?.facebook || '',
         twitter: about.bride?.socials?.twitter || ''
       }
     },
-    coupleImage: about.coupleImage || '/api/placeholder/320/240'
+    coupleImage: getSafeImageUrl(about.coupleImage, '/api/placeholder/320/240')
   } : null;
 
   const safeInvitation = invitation ? {
@@ -243,7 +263,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
     subheading: invitation.subheading || 'To Our Wedding',
     message: invitation.message || 'Join us as we begin our journey together in love and happiness',
     rsvpLink: invitation.rsvpLink || '',
-    backgroundImage: invitation.backgroundImage || '/api/placeholder/1920/800'
+    backgroundImage: getSafeImageUrl(invitation.backgroundImage, '/api/placeholder/1920/800')
   } : null;
 
   const safeLoveStory = (loveStory && loveStory.length > 0) ? loveStory.map((story, index) => ({
@@ -251,7 +271,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
     title: story.title || `Chapter ${index + 1}`,
     date: story.date || new Date().toLocaleDateString(),
     description: story.description || 'A beautiful moment in our love story.',
-    image: story.image || '/api/placeholder/400/300'
+    image: getSafeImageUrl(story.image, '/api/placeholder/400/300')
   })) : [];
 
   const safeWeddingEvents = (weddingEvents && weddingEvents.length > 0) ? weddingEvents.map(event => ({
@@ -260,14 +280,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
     time: event.time || '12:00 PM',
     venue: event.venue || 'Beautiful Venue',
     description: event.description || 'Join us for this special celebration',
-    image: event.image || '/api/placeholder/600/400'
+    image: getSafeImageUrl(event.image, '/api/placeholder/600/400')
   })) : [];
 
   const safePlanning = (planning && planning.length > 0) ? planning.map((item, index) => ({
     id: index + 1,
     title: item.title || 'Planning Item',
     description: item.description || 'Important wedding preparation detail',
-    icon: item.icon || '/api/placeholder/56/56',
+    icon: getSafeImageUrl(item.icon, '/api/placeholder/56/56'),
     completed: item.completed || false,
     type: item.title || 'Event',
     date: new Date().toLocaleDateString(),
@@ -283,12 +303,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
     { label: "Seconds", value: timeLeft.seconds },
   ];
 
-  // Get all images for gallery
-  const galleryImages = [
-    ...(safeAbout ? [safeAbout.groom.image, safeAbout.bride.image, safeAbout.coupleImage] : []),
-    ...safeLoveStory.map(story => story.image),
-    ...safeWeddingEvents.map(event => event.image).filter(Boolean),
-  ].filter(Boolean);
+  // For gallery modal, ensure the selected image is a safe URL
+  const safeSelectedGalleryImage = selectedGalleryImage
+    ? getSafeImageUrl(selectedGalleryImage, '/api/placeholder/400/300')
+    : null;
 
   return (
     <section style={{ backgroundColor: safeTheme.backgroundColor, color: safeTheme.textColor }}>
@@ -306,7 +324,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
               <motion.div
                 key={i}
                 className="absolute text-white/20"
-                initial={{ y: "100vh", x: Math.random() * window.innerWidth }}
+                initial={{ y: "100vh", x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920) }}
                 animate={{
                   y: "-10vh",
                   x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
@@ -999,7 +1017,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
           {/* Image Modal */}
           <AnimatePresence>
-            {selectedGalleryImage && (
+            {safeSelectedGalleryImage && (
               <motion.div
                 className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
                 initial={{ opacity: 0 }}
@@ -1015,7 +1033,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Image
-                    src={selectedGalleryImage}
+                    src={safeSelectedGalleryImage}
                     alt="Gallery image"
                     fill
                     className="object-contain"

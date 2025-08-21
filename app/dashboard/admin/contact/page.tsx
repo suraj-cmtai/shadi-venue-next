@@ -76,6 +76,12 @@ export default function ContactPage() {
     phone: string;
     subject: string;
     message: string;
+    preferredDate?: string;
+    locationPreference?: string;
+    venueServiceType?: string;
+    guests?: number | string;
+    budgetRange?: string;
+    contactTimePreference?: string;
     status: 'New' | 'In Progress' | 'Completed';
     priority: 'Low' | 'Medium' | 'High';
   }>({
@@ -84,6 +90,12 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
+    preferredDate: "",
+    locationPreference: "",
+    venueServiceType: "",
+    guests: "",
+    budgetRange: "",
+    contactTimePreference: "",
     status: "New",
     priority: "Medium"
   })
@@ -140,7 +152,13 @@ export default function ContactPage() {
     formData.append("email", newContact.email)
     formData.append("phone", newContact.phone)
     formData.append("subject", newContact.subject)
-    formData.append("message", newContact.message)
+    formData.append("additionalDetails", newContact.message)
+    if (newContact.preferredDate) formData.append("preferredDate", newContact.preferredDate)
+    if (newContact.locationPreference) formData.append("locationPreference", newContact.locationPreference)
+    if (newContact.venueServiceType) formData.append("venueServiceType", newContact.venueServiceType)
+    if (newContact.guests) formData.append("guests", String(newContact.guests))
+    if (newContact.budgetRange) formData.append("budgetRange", newContact.budgetRange)
+    if (newContact.contactTimePreference) formData.append("contactTimePreference", newContact.contactTimePreference)
     formData.append("status", newContact.status)
     formData.append("priority", newContact.priority)
 
@@ -153,6 +171,12 @@ export default function ContactPage() {
         phone: "",
         subject: "",
         message: "",
+        preferredDate: "",
+        locationPreference: "",
+        venueServiceType: "",
+        guests: "",
+        budgetRange: "",
+        contactTimePreference: "",
         status: "New",
         priority: "Medium"
       })
@@ -171,9 +195,15 @@ export default function ContactPage() {
     formData.append("email", selectedContact.email)
     formData.append("phone", selectedContact.phone)
     formData.append("subject", selectedContact.subject)
-    formData.append("message", selectedContact.message)
+    formData.append("additionalDetails", selectedContact.message)
     formData.append("status", selectedContact.status)
     formData.append("priority", selectedContact.priority)
+    if (selectedContact.preferredDate) formData.append("preferredDate", selectedContact.preferredDate)
+    if (selectedContact.locationPreference) formData.append("locationPreference", selectedContact.locationPreference)
+    if (selectedContact.venueServiceType) formData.append("venueServiceType", selectedContact.venueServiceType)
+    if (typeof selectedContact.guests !== 'undefined') formData.append("guests", String(selectedContact.guests))
+    if (selectedContact.budgetRange) formData.append("budgetRange", selectedContact.budgetRange)
+    if (selectedContact.contactTimePreference) formData.append("contactTimePreference", selectedContact.contactTimePreference)
 
     try {
       await dispatch(updateContact({ 
@@ -270,6 +300,12 @@ export default function ContactPage() {
               <TableHead>Message</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
+              <TableHead>Guests</TableHead>
+              <TableHead>When</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Budget</TableHead>
+              <TableHead>Contact Time</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -318,6 +354,12 @@ export default function ContactPage() {
                       {contact.message}
                     </div>
                   </TableCell>
+                  <TableCell>{typeof contact.guests !== 'undefined' ? contact.guests : '-'}</TableCell>
+                  <TableCell>{contact.preferredDate || '-'}</TableCell>
+                  <TableCell>{contact.locationPreference || '-'}</TableCell>
+                  <TableCell>{contact.venueServiceType || '-'}</TableCell>
+                  <TableCell>{contact.budgetRange || '-'}</TableCell>
+                  <TableCell>{contact.contactTimePreference || '-'}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(contact.status)}>
                       {contact.status}
@@ -417,6 +459,62 @@ export default function ContactPage() {
                 value={newContact.message}
                 onChange={(e) => setNewContact({ ...newContact, message: e.target.value })}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="preferredDate">Preferred Date</Label>
+                <Input
+                  id="preferredDate"
+                  type="date"
+                  value={newContact.preferredDate}
+                  onChange={(e) => setNewContact({ ...newContact, preferredDate: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="guests">Guests</Label>
+                <Input
+                  id="guests"
+                  type="number"
+                  value={newContact.guests as any}
+                  onChange={(e) => setNewContact({ ...newContact, guests: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="locationPreference">Location Preference</Label>
+                <Input
+                  id="locationPreference"
+                  value={newContact.locationPreference}
+                  onChange={(e) => setNewContact({ ...newContact, locationPreference: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="venueServiceType">Venue/Service Type</Label>
+                <Input
+                  id="venueServiceType"
+                  value={newContact.venueServiceType}
+                  onChange={(e) => setNewContact({ ...newContact, venueServiceType: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="budgetRange">Budget Range</Label>
+                <Input
+                  id="budgetRange"
+                  value={newContact.budgetRange}
+                  onChange={(e) => setNewContact({ ...newContact, budgetRange: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="contactTimePreference">Contact Time Preference</Label>
+                <Input
+                  id="contactTimePreference"
+                  value={newContact.contactTimePreference}
+                  onChange={(e) => setNewContact({ ...newContact, contactTimePreference: e.target.value })}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -544,6 +642,62 @@ export default function ContactPage() {
                     })
                   }
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-preferredDate">Preferred Date</Label>
+                  <Input
+                    id="edit-preferredDate"
+                    type="date"
+                    value={selectedContact.preferredDate || ''}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, preferredDate: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-guests">Guests</Label>
+                  <Input
+                    id="edit-guests"
+                    type="number"
+                    value={typeof selectedContact.guests === 'undefined' ? '' : String(selectedContact.guests)}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, guests: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-locationPreference">Location Preference</Label>
+                  <Input
+                    id="edit-locationPreference"
+                    value={selectedContact.locationPreference || ''}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, locationPreference: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-venueServiceType">Venue/Service Type</Label>
+                  <Input
+                    id="edit-venueServiceType"
+                    value={selectedContact.venueServiceType || ''}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, venueServiceType: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-budgetRange">Budget Range</Label>
+                  <Input
+                    id="edit-budgetRange"
+                    value={selectedContact.budgetRange || ''}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, budgetRange: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-contactTimePreference">Contact Time Preference</Label>
+                  <Input
+                    id="edit-contactTimePreference"
+                    value={selectedContact.contactTimePreference || ''}
+                    onChange={(e) => setSelectedContact({ ...selectedContact, contactTimePreference: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">

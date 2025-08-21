@@ -21,6 +21,13 @@ interface Contact {
   phone: string;
   subject: string;
   message: string;
+  // Optional wedding inquiry details
+  preferredDate?: string;
+  locationPreference?: string;
+  venueServiceType?: string;
+  guests?: number;
+  budgetRange?: string;
+  contactTimePreference?: string;
   status: ContactStatus;
   priority: ContactPriority;
   createdAt: Date;
@@ -49,6 +56,12 @@ class ContactService {
       phone: data.phone || "",
       subject: data.subject || "",
       message: data.message || "",
+      preferredDate: data.preferredDate || undefined,
+      locationPreference: data.locationPreference || undefined,
+      venueServiceType: data.venueServiceType || undefined,
+      guests: typeof data.guests === 'number' ? data.guests : (data.guests ? Number(data.guests) : undefined),
+      budgetRange: data.budgetRange || undefined,
+      contactTimePreference: data.contactTimePreference || undefined,
       status: data.status as ContactStatus || ContactStatus.NEW,
       priority: data.priority as ContactPriority || ContactPriority.LOW,
       createdAt: this.convertTimestamp(data.createdAt),

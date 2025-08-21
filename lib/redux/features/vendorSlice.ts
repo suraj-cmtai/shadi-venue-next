@@ -98,6 +98,9 @@ export interface Vendor {
   status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
+
+  // Premium field
+  isPremium: boolean;
 }
 
 interface VendorState {

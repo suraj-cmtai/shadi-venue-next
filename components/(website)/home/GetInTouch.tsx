@@ -20,11 +20,16 @@ export default function GetInTouch() {
     email: "",
     phone: "",
     subject: "Wedding Inquiry",
-    message: "",
-    weddingDate: ""
+    additionalDetails: "",
+    preferredDate: "",
+    locationPreference: "",
+    venueServiceType: "",
+    guests: "",
+    budgetRange: "",
+    contactTimePreference: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -37,7 +42,16 @@ export default function GetInTouch() {
     if (isSubmitting) return;
 
     // Validation
-    if (!formData.name || !formData.email || !formData.message) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.preferredDate ||
+      !formData.locationPreference ||
+      !formData.venueServiceType ||
+      !formData.guests ||
+      !formData.additionalDetails
+    ) {
       Alert({
         title: "Please fill all required fields",
         variant: "destructive"
@@ -51,9 +65,15 @@ export default function GetInTouch() {
       const data = new FormData();
       data.append("name", formData.name);
       data.append("email", formData.email);
-      data.append("phone", formData.phone || "");
+      data.append("phone", formData.phone);
       data.append("subject", formData.subject);
-      data.append("message", `Wedding Date: ${formData.weddingDate}\n\n${formData.message}`);
+      data.append("additionalDetails", formData.additionalDetails);
+      data.append("preferredDate", formData.preferredDate);
+      data.append("locationPreference", formData.locationPreference);
+      data.append("venueServiceType", formData.venueServiceType);
+      data.append("guests", String(formData.guests));
+      if (formData.budgetRange) data.append("budgetRange", formData.budgetRange);
+      if (formData.contactTimePreference) data.append("contactTimePreference", formData.contactTimePreference);
 
       await dispatch(createContact(data)).unwrap();
 
@@ -67,8 +87,13 @@ export default function GetInTouch() {
         email: "",
         phone: "",
         subject: "Wedding Inquiry",
-        message: "",
-        weddingDate: ""
+        additionalDetails: "",
+        preferredDate: "",
+        locationPreference: "",
+        venueServiceType: "",
+        guests: "",
+        budgetRange: "",
+        contactTimePreference: "",
       });
 
     } catch (error: any) {
@@ -191,43 +216,127 @@ export default function GetInTouch() {
                 </div>
               </div>
 
-              {/* Phone & Wedding Date Row */}
+              {/* Phone & Preferred Date Row */}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                    Phone
+                    Phone *
                   </label>
                   <Input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
+                    required
                     className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="Your phone number"
                   />
                 </div>
                 <div className="flex-1">
                   <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                    Wedding Date
+                    Preferred Date of Wedding *
                   </label>
                   <Input
                     type="date"
-                    name="weddingDate"
-                    value={formData.weddingDate}
+                    name="preferredDate"
+                    value={formData.preferredDate}
                     onChange={handleChange}
+                    required
                     className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                   />
                 </div>
               </div>
 
-              {/* Your Messages */}
+              {/* Location & Venue Type */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
+                    Location / Destination Preference *
+                  </label>
+                  <Input
+                    name="locationPreference"
+                    value={formData.locationPreference}
+                    onChange={handleChange}
+                    required
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
+                    placeholder="City or venue preference"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
+                    Type of Venue / Service Needed *
+                  </label>
+                  <Input
+                    name="venueServiceType"
+                    value={formData.venueServiceType}
+                    onChange={handleChange}
+                    required
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
+                    placeholder="e.g., Banquet Hall, Outdoor Venue"
+                  />
+                </div>
+              </div>
+
+              {/* Guests & Budget */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
+                    Number of Guests *
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    name="guests"
+                    value={formData.guests}
+                    onChange={handleChange}
+                    required
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
+                    placeholder="Approximate count"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
+                    Budget Range (Optional)
+                  </label>
+                  <Input
+                    name="budgetRange"
+                    value={formData.budgetRange}
+                    onChange={handleChange}
+                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
+                    placeholder="e.g., 10–15 Lakhs"
+                  />
+                </div>
+              </div>
+
+              {/* Contact Time Preference */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
+                    Contact Time Preference (Optional)
+                  </label>
+                  <select
+                    name="contactTimePreference"
+                    value={formData.contactTimePreference}
+                    onChange={handleChange}
+                    className="w-full border-0 border-b border-[#d9d9d9] bg-transparent py-2 text-[16px] font-cormorant focus:ring-0"
+                  >
+                    <option value="">Select…</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Afternoon">Afternoon</option>
+                    <option value="Evening">Evening</option>
+                  </select>
+                </div>
+                <div className="flex-1" />
+              </div>
+
+              {/* Additional Details / Message */}
               <div>
                 <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                  Your Messages *
+                  Additional Details / Message *
                 </label>
                 <Textarea
-                  name="message"
-                  value={formData.message}
+                  name="additionalDetails"
+                  value={formData.additionalDetails}
                   onChange={handleChange}
                   required
                   className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0 min-h-[120px] resize-none"

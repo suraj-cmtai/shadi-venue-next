@@ -71,12 +71,6 @@ const searchSuggestions = [
 
 ];
 
-const notifications = [
-  { id: 1, title: "New user registered", time: "2 min ago", type: "info" },
-  { id: 2, title: "Lead converted", time: "5 min ago", type: "success" },
-  { id: 3, title: "System maintenance", time: "1 hour ago", type: "warning" },
-];
-
 const headerVariants : Variants= {
   hidden: { y: -20, opacity: 0 },
   visible: { 
@@ -94,7 +88,6 @@ const searchVariants = {
 const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -289,8 +282,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                <span onClick={() => router.push('/logout')}>Log out</span>
+              <DropdownMenuItem  onClick={() => router.push('/logout')} className="text-red-600 focus:text-red-600 cursor-pointer">
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

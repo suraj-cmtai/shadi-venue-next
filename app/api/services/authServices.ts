@@ -183,12 +183,7 @@ class AuthService {
                     password: "superadmin123",
                     role: "super-admin",
                 },
-                {
-                    name: "Hotel Vendor",
-                    email: "vendor@example.com",
-                    password: "vendor123",
-                    role: "vendor",
-                },
+                
                 {
                     name: "Regular User",
                     email: "user@example.com",
