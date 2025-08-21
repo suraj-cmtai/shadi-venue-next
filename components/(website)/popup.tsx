@@ -37,19 +37,18 @@ const Popup: React.FC = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: "inherit",
+        fontFamily: "'Cinzel', serif",
       }}
     >
       <div
         style={{
-          background:
-            "linear-gradient(135deg, #f8fafc 60%, #fbbf24 100%)",
-          borderRadius: "1.5rem",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-          padding: "2.5rem 2rem",
-          minWidth: 340,
-          maxWidth: "90vw",
-          border: "2px solid #fbbf24",
+          background: "linear-gradient(135deg, #212d47, #e7c1c2)",
+          borderRadius: 10,
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+          color: "#fff",
+          maxWidth: 300,
+          width: "100%",
+          padding: 20,
           position: "relative",
           animation: "popup-fade-in 0.7s cubic-bezier(.4,2,.6,1)",
         }}
@@ -58,46 +57,26 @@ const Popup: React.FC = () => {
           onClick={() => setShow(false)}
           style={{
             position: "absolute",
-            top: 18,
-            right: 18,
+            top: 12,
+            right: 12,
             background: "none",
             border: "none",
             fontSize: 22,
-            color: "#fbbf24",
+            color: "#fff",
             cursor: "pointer",
             fontWeight: 700,
+            lineHeight: 1,
           }}
           aria-label="Close"
         >
           ×
         </button>
-        <div style={{ textAlign: "center", marginBottom: 18 }}>
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 800,
-              color: "#fbbf24",
-              letterSpacing: 1,
-              fontFamily: "inherit",
-              marginBottom: 6,
-              textShadow: "0 2px 8px #fbbf2433",
-            }}
-          >
-            Get Quick Booking
-          </div>
-          <div
-            style={{
-              fontSize: 16,
-              color: "#222",
-              marginBottom: 18,
-              fontWeight: 500,
-              opacity: 0.85,
-            }}
-          >
-            Book your dream stay in seconds!<br />
-            Enter your details and our team will contact you.
-          </div>
-        </div>
+        <h2 style={{ marginTop: 0, fontFamily: "'Cinzel', serif", fontWeight: 700, fontSize: 26, marginBottom: 8 }}>
+          Quick Booking
+        </h2>
+        <p style={{ marginBottom: 18, color: "#fff", fontWeight: 400 }}>
+          Experience your dream wedding with us. Fill the form and our team will reach out!
+        </p>
         {submitted ? (
           <div
             style={{
@@ -111,7 +90,7 @@ const Popup: React.FC = () => {
             Thank you!<br />We will contact you soon.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form onSubmit={handleSubmit}>
             <input
               type="text"
               placeholder="Your Name"
@@ -119,14 +98,17 @@ const Popup: React.FC = () => {
               required
               onChange={e => setName(e.target.value)}
               style={{
-                padding: "0.75rem 1rem",
-                borderRadius: 8,
-                border: "1.5px solid #fbbf24",
-                fontSize: 16,
-                outline: "none",
-                marginBottom: 4,
-                background: "#fffbe9",
+                width: "100%",
+                padding: "10px",
+                marginBottom: "10px",
+                border: "none",
+                borderRadius: "5px",
+                fontFamily: "'Cinzel', serif",
+                fontSize: 15,
                 fontWeight: 500,
+                background: "#fff",
+                color: "#212d47",
+                outline: "none",
               }}
             />
             <input
@@ -137,29 +119,32 @@ const Popup: React.FC = () => {
               pattern="[0-9+\s()-]{7,}"
               onChange={e => setPhone(e.target.value)}
               style={{
-                padding: "0.75rem 1rem",
-                borderRadius: 8,
-                border: "1.5px solid #fbbf24",
-                fontSize: 16,
-                outline: "none",
-                background: "#fffbe9",
+                width: "100%",
+                padding: "10px",
+                marginBottom: "10px",
+                border: "none",
+                borderRadius: "5px",
+                fontFamily: "'Cinzel', serif",
+                fontSize: 15,
                 fontWeight: 500,
+                background: "#fff",
+                color: "#212d47",
+                outline: "none",
               }}
             />
             <button
               type="submit"
               style={{
-                marginTop: 8,
-                background: "linear-gradient(90deg, #fbbf24 60%, #f59e42 100%)",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 18,
+                backgroundColor: "#e7c1c2",
+                color: "#212d47",
+                padding: "10px 20px",
                 border: "none",
-                borderRadius: 8,
-                padding: "0.75rem 0",
+                borderRadius: "5px",
                 cursor: "pointer",
-                boxShadow: "0 2px 8px #fbbf2433",
-                letterSpacing: 1,
+                width: "100%",
+                fontFamily: "'Cinzel', serif",
+                fontWeight: 700,
+                fontSize: 16,
                 transition: "background 0.2s",
               }}
             >
