@@ -140,7 +140,28 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
-  
+
+  // ===== VENDOR API ROUTES =====
+
+  // /api/routes/vendor/active - public, only GET
+  {
+    pattern: "/api/routes/vendor/active",
+    methods: ["GET"],
+    isPublic: true,
+  },
+
+  // /api/routes/vendor/[id] - admin and vendor, all methods
+  {
+    pattern: /^\/api\/routes\/vendor\/[^/]+$/,
+    roles: ["admin", "vendor"],
+  },
+
+  // /api/routes/vendor - admin and vendor, all methods
+  {
+    pattern: "/api/routes/vendor",
+    roles: ["admin", "vendor"],
+  },
+
   // ===== ROLE-BASED API ROUTES =====
   
   // Super Admin Only Routes
@@ -165,14 +186,7 @@ const API_ROUTES: RouteConfig[] = [
     pattern: "/api/routes/hotel",
     roles: ["hotel", "admin", "super-admin"],
   },
-  
-  // Vendor Routes  
-  {
-    pattern: "/api/routes/vendor",
-    roles: ["vendor", "admin", "super-admin"],
-  },
 
-  // hero hero-extension about blog contact gallery venue wedding
   // ===== CUSTOM LOGIC ROUTES =====
   
   // Users route with special logic
