@@ -61,12 +61,14 @@ const searchSuggestions = [
   { label: "Contact", value: "contact", href: "/dashboard/admin/contact" },
   {label: "Hotel", value: "hotel", href: "/dashboard/admin/hotel" },
   { label: "Users", value: "users", href: "/dashboard/admin/users" },
+  { label: "Vendors", value: "vendors", href: "/dashboard/admin/vendors" },
   { label: "Wedding Themes", value: "themes", href: "/dashboard/admin/wedding"},
   { label: "Hero", value: "hero", href: "/dashboard/admin/hero" },
   { label: "Hero Extension", value: "hero-extension", href: "/dashboard/admin/hero-extension" },
   { label: "Testimonials", value: "testimonials", href: "/dashboard/admin/testimonials" },
   { label: "About", value: "about", href: "/dashboard/admin/about" },
   { label: "Logout", value: "logout", href: "/logout" },
+
 ];
 
 const notifications = [
