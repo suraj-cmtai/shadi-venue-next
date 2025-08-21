@@ -184,7 +184,7 @@ export default function WeddingGallery() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredResults.map((wedding: WeddingGallery) => (
                         // Wrapped wedding card in Link component for navigation to detail page
-                        <Link key={wedding.id} href={`/wedding/${wedding.id}`}>
+                        <Link key={wedding.id} href={`/inspiration/${wedding.id}`}>
                             <div className="group cursor-pointer">
                                 {/* Image Grid */}
                                 <div className="relative mb-4">

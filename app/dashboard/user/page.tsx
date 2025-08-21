@@ -16,8 +16,6 @@ import {
   Plus,
   Trash2,
   Calendar,
-  MapPin,
-  Clock,
   Phone,
   Heart,
   User,
@@ -49,17 +47,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,10 +74,15 @@ import {
   toggleInviteStatus
 } from '@/lib/redux/features/userSlice';
 import {
+  fetchActiveHotels,
+  selectActiveHotels,
+} from '@/lib/redux/features/hotelSlice';
+import {
   fetchRSVPResponses,
   selectRSVPResponses,
   updateRSVPStatus
 } from '@/lib/redux/features/rsvpSlice';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types from the slices
 interface Theme {
@@ -152,20 +146,6 @@ interface InviteSectionForm {
   backgroundImage?: string | File;
 }
 
-interface RSVPResponse {
-  id: string;
-  inviteId: string;
-  userId: string;
-  name: string;
-  email: string;
-  phone?: string;
-  numberOfGuests: number;
-  message?: string;
-  attending: boolean;
-  createdAt: string;
-  status: 'pending' | 'confirmed' | 'declined';
-}
-
 // Theme presets for quick selection
 const THEME_PRESETS = [
   {
@@ -221,6 +201,7 @@ export default function UserDashboard() {
   const userLoading = useSelector(selectUserLoading);
   const userError = useSelector(selectUserError);
   const rsvpResponses = useSelector(selectRSVPResponses);
+  const hotels = useSelector(selectActiveHotels); 
   
   const [activeTab, setActiveTab] = useState('overview');
   const [unsavedChanges, setUnsavedChanges] = useState(false);
@@ -293,8 +274,11 @@ export default function UserDashboard() {
     if (auth?.data?.roleId) {
       dispatch(fetchUserById(auth.data.roleId));
       dispatch(fetchRSVPResponses(auth.data.roleId));
+      dispatch(fetchActiveHotels());
     }
   }, [dispatch, auth?.data?.roleId]);
+
+
 
   // Update form states when user data loads
   useEffect(() => {
@@ -2111,17 +2095,23 @@ export default function UserDashboard() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`eventVenue${index}`}>Venue</Label>
-                          <Input 
-                            id={`eventVenue${index}`}
-                            value={event.venue}
-                            onChange={(e) => {
-                              const newEvents = [...eventsForm];
-                              newEvents[index].venue = e.target.value;
-                              setEventsForm(newEvents);
-                              setUnsavedChanges(true);
-                            }}
-                            placeholder="Enter venue name and address"
-                          />
+                          <Select onValueChange={(value) => {
+                            const newEvents = [...eventsForm];
+                            newEvents[index].venue = value;
+                            setEventsForm(newEvents);
+                            setUnsavedChanges(true);
+                          }}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select venue" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {hotels.map((hotel) => (
+                                <SelectItem key={hotel.id} value={hotel.id} className="cursor-pointer">
+                                  {hotel.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select> 
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`eventDate${index}`}>Date</Label>

@@ -33,7 +33,6 @@ import {
   Hotel
 } from '@/lib/redux/features/hotelSlice';
 
-const THEME_COLOR = '#212D47';
 
 type ViewMode = 'list' | 'grid';
 
@@ -42,12 +41,6 @@ interface VenueCardProps {
   onVenueClick: (venueId: string) => void;
 }
 
-const DEFAULT_FILTERS = {
-  category: '',
-  city: '',
-  priceRange: [0, 10000] as [number, number],
-  rating: 0,
-};
 
 const DynamicVenuePage: React.FC = () => {
   const router = useRouter();

@@ -55,6 +55,8 @@ interface PlanningItem {
   description: string;
   icon?: string;
   completed: boolean;
+  time?: string;
+  phone?: string;
 }
 
 interface InviteSection {

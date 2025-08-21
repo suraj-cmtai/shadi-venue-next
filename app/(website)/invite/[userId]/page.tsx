@@ -8,9 +8,10 @@ import { fetchUserById } from '@/lib/redux/features/userSlice';
 import { submitRSVP } from '@/lib/redux/features/rsvpSlice';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { Instagram, Facebook, Twitter } from 'lucide-react';
+import { Instagram, Facebook } from 'lucide-react';
 import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { fetchActiveHotels, selectActiveHotels } from '@/lib/redux/features/hotelSlice';
 
 interface InvitePageProps {
   params: Promise<{
@@ -23,7 +24,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
   const user = useSelector((state: RootState) => state.user.selectedUser);
   const loading = useSelector((state: RootState) => state.user.loading);
   const error = useSelector((state: RootState) => state.user.error);
-
+  const hotels = useSelector(selectActiveHotels);
   const [userId, setUserId] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -39,7 +40,6 @@ const InvitePage = ({ params }: InvitePageProps) => {
   const [isSubmittingRSVP, setIsSubmittingRSVP] = useState(false);
 
   // Wedding Day State
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -63,6 +63,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
     getUserId();
   }, [dispatch, params]);
+
+  useEffect(() => {
+    dispatch(fetchActiveHotels());
+  }, [dispatch]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -228,8 +232,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
     type: item.title || 'Event',
     date: new Date().toLocaleDateString(),
     venue: item.description || '',
-    time: '12:00 PM',
-    phone: '+1 234 567 8900',
+    time: item.time || '02:00 PM',
+    phone: item.phone || '+1 234 567 8900',
     icon: item.icon || '/api/placeholder/56/56'
   })) : null;
 
@@ -239,6 +243,24 @@ const InvitePage = ({ params }: InvitePageProps) => {
     { label: "Minutes", value: timeLeft.minutes },
     { label: "Seconds", value: timeLeft.seconds },
   ];
+
+  // Ensure Image src is a valid path or absolute URL; otherwise, use placeholder
+  const getValidSrc = (src?: string, fallback: string = '/placeholder.svg') => {
+    if (typeof src !== 'string') return fallback;
+    const trimmed = src.trim();
+    if (!trimmed) return fallback;
+    if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return fallback;
+  };
+
+  const getVenueName = (venueId: string) => {
+    const venue = hotels.find((hotel) => hotel.id === venueId);
+    return venue?.name || '';
+  };
+
+  console.log(user);
 
   return (
     <section className="bg-black text-white">
@@ -281,7 +303,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
             {/* Groom Section */}
             <div className="flex flex-col items-center w-[280px]">
               <div className="w-[280px] h-[360px] relative shadow-md ml-80">
-                <Image src={safeAbout.groom.image} alt={safeAbout.groom.name} fill className="object-cover rounded" />
+                <Image src={getValidSrc(safeAbout.groom.image, '/placeholder.svg')} alt={safeAbout.groom.name} fill className="object-cover rounded" />
               </div>
               <div className="absolute left-[460px] top-[1px] text-left max-w-xs">
                 <h3 className="text-xl font-semibold italic mb-1" style={{ color: safeTheme.nameColor }}>
@@ -312,7 +334,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 transform: 'translate(-50%, -50%)',
               }}
             >
-              <Image src={safeAbout.coupleImage} alt="Couple" fill className="object-cover rounded" />
+              <Image src={getValidSrc(safeAbout.coupleImage, '/placeholder.svg')} alt="Couple" fill className="object-cover rounded" />
             </div>
           </div>
 
@@ -326,7 +348,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
             }}
           >
             <div className="w-[280px] h-[360px] relative shadow-md">
-              <Image src={safeAbout.bride.image} alt={safeAbout.bride.name} fill className="object-cover rounded" />
+              <Image src={getValidSrc(safeAbout.bride.image, '/placeholder.svg')} alt={safeAbout.bride.name} fill className="object-cover rounded" />
             </div>
             <div
               className="absolute text-left max-w-xs"
@@ -360,7 +382,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
             {/* Groom */}
             <div className="flex flex-col items-center w-full max-w-xs mx-auto">
               <div className="w-[280px] h-[360px] relative shadow-md mx-auto">
-                <Image src={safeAbout.groom.image} alt={safeAbout.groom.name} fill className="object-cover rounded" />
+                <Image src={getValidSrc(safeAbout.groom.image, '/placeholder.svg')} alt={safeAbout.groom.name} fill className="object-cover rounded" />
               </div>
               <div className="mt-6 text-center max-w-xs">
                 <h3 className="text-xl font-semibold italic mb-1" style={{ color: safeTheme.nameColor }}>
@@ -384,13 +406,13 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
             {/* Couple Image */}
             <div className="w-[280px] h-[200px] shadow-2xl border-4 border-white bg-white rounded mx-auto relative">
-              <Image src={safeAbout.coupleImage} alt="Couple" fill className="object-cover rounded" />
+              <Image src={getValidSrc(safeAbout.coupleImage, '/placeholder.svg')} alt="Couple" fill className="object-cover rounded" />
             </div>
 
             {/* Bride */}
             <div className="flex flex-col items-center w-full max-w-xs mx-auto">
               <div className="w-[280px] h-[360px] relative shadow-md mx-auto">
-                <Image src={safeAbout.bride.image} alt={safeAbout.bride.name} fill className="object-cover rounded" />
+                <Image src={getValidSrc(safeAbout.bride.image, '/placeholder.svg')} alt={safeAbout.bride.name} fill className="object-cover rounded" />
               </div>
               <div className="mt-6 text-center max-w-xs">
                 <h3 className="text-xl font-semibold italic mb-1" style={{ color: safeTheme.nameColor }}>
@@ -473,7 +495,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 >
                   <div className="relative w-full h-full overflow-hidden border-4 border-white shadow-lg -translate-y-10">
                     <Image
-                      src={event.image}
+                      src={getValidSrc(event.image, '/placeholder.svg')}
                       alt={event.title}
                       fill
                       className="object-cover"
@@ -486,7 +508,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
             {/* Event Details */}
             <div className="mt-8 text-center text-black">
               <p className="text-lg font-medium">{event.date} at {event.time}</p>
-              <p className="text-md">{event.venue}</p>
+              <p className="text-md">{getVenueName(event.venue)}</p>
               <p className="text-sm text-gray-600">{event.description}</p>
             </div>
           </div>
@@ -563,7 +585,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     transition={{ duration: 0.8 }}
                   >
                     <Image
-                      src={milestone.image}
+                      src={getValidSrc(milestone.image, '/placeholder.svg')}
                       alt={milestone.title}
                       fill
                       className="object-cover"
@@ -641,7 +663,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     >
                       <div className="h-14 w-14 relative rounded-full overflow-hidden bg-[#212d47]">
                         <Image
-                          src={event.icon}
+                          src={getValidSrc(event.icon, '/placeholder.svg')}
                           alt={event.type}
                           fill
                           className="object-contain bg-white"
@@ -653,7 +675,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </h3>
                       <p className="font-cormorant font-medium text-sm text-black">{event.date}</p>
                       <p className="font-cormorant font-semibold text-sm text-[#212d47] leading-relaxed">
-                        {event.venue}
+                        {getVenueName(event.venue)}
                       </p>
                       <p className="font-cormorant font-semibold text-sm text-[#212d47]">
                         {event.time}
@@ -784,7 +806,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
         <footer className="relative bg-white/60 backdrop-blur-md text-center text-[#212d47] py-12 px-4">
           <div className="absolute inset-0 -z-10 opacity-20">
             <Image
-              src={safeInvitation.backgroundImage}
+              src={getValidSrc(safeInvitation.backgroundImage, '/placeholder.svg')}
               alt="Footer background"
               fill
               className="object-cover"
