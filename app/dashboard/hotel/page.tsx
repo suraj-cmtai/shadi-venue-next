@@ -396,8 +396,10 @@ export default function HotelDashboard() {
       formData.append('signature', editHotelForm.signature);
       formData.append('googleLocation', editHotelForm.googleLocation);
       
-      // Convert comma-separated strings to arrays for API
-      formData.append('amenities', JSON.stringify(stringToArray(editHotelForm.amenities)));
+      // Convert comma-separated strings to individual fields for API (amenities as array)
+      stringToArray(editHotelForm.amenities).forEach((amenity) => {
+        formData.append('amenities', amenity);
+      });
       formData.append('servicesOffered', JSON.stringify(stringToArray(editHotelForm.servicesOffered)));
       formData.append('diningOptions', JSON.stringify(stringToArray(editHotelForm.diningOptions)));
       formData.append('otherAmenities', JSON.stringify(stringToArray(editHotelForm.otherAmenities)));

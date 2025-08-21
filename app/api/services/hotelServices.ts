@@ -51,6 +51,7 @@ export interface Hotel {
     };
     createdAt: string;
     updatedAt: string;
+    isPremium?: boolean;
     googleLocation?: string;
   
     // Personal Information
@@ -183,7 +184,7 @@ class HotelService {
             googleLocation: data.googleLocation || "",
             createdAt: this.convertTimestamp(data.createdAt),
             updatedAt: this.convertTimestamp(data.updatedAt),
-
+            isPremium: data.isPremium || false,
             // Personal/Business Information
             firstName: data.firstName || "",
             lastName: data.lastName || "",
@@ -245,21 +246,6 @@ private static normalizeArrayOrString(value: any): string[] {
 }
 
 
-
-private static normalizeStringOrBoolean(value: any): string {
-    if (typeof value === 'boolean') {
-        return value ? "Yes" : "No";
-    }
-    if (Array.isArray(value)) {
-        return value.filter(item => item && typeof item === 'string')
-                   .join(', ');
-    }
-    if (typeof value === 'string') {
-        return value.trim();
-    }
-    return "";
-}
-
     // Initialize Firestore real-time listener
     static initHotels() {
         if (this.isInitialized) return;
@@ -292,6 +278,7 @@ private static normalizeStringOrBoolean(value: any): string {
                 description: hotelData.description || "",
                 rating: Number(hotelData.rating || 0),
                 status: hotelData.status || "draft",
+                isPremium: Boolean((hotelData as any).isPremium),
                 
                 // Location
                 location: {
@@ -444,6 +431,22 @@ private static normalizeStringOrBoolean(value: any): string {
         return this.hotels;
     }
 
+    static async getPremiumHotels(forceRefresh = true, status: HotelStatus = 'active') {
+        if (forceRefresh || !this.isInitialized) {
+            consoleManager.log("Force refreshing premium hotels from Firestore...");
+            const snapshot = await db
+                .collection(this.collection)
+                .where("isPremium", "==", true)
+                .where("status", "==", status)
+                .orderBy("createdAt", "desc")
+                .get();
+            this.hotels = snapshot.docs.map((doc: any) => this.convertToType(doc.id, doc.data()));
+        } else {
+            consoleManager.log("Returning cached premium hotels. No Firestore read.");
+        }
+        return this.hotels;
+    }
+
     static async updateHotel(id: string, updateData: Partial<Hotel>): Promise<Hotel> {
         try {
             const timestamp = admin.firestore.FieldValue.serverTimestamp();
@@ -459,6 +462,7 @@ private static normalizeStringOrBoolean(value: any): string {
             if (updateData.description !== undefined) processedUpdateData.description = updateData.description;
             if (updateData.rating !== undefined) processedUpdateData.rating = Number(updateData.rating);
             if (updateData.status !== undefined) processedUpdateData.status = updateData.status;
+            if (updateData.isPremium !== undefined) processedUpdateData.isPremium = Boolean(updateData.isPremium);
 
             // Handle nested objects carefully
             if (updateData.location) {
@@ -722,6 +726,7 @@ private static normalizeStringOrBoolean(value: any): string {
         maxPrice?: number;
         currency?: Currency;
         status?: HotelStatus;
+        isPremium?: boolean;
     }): Promise<Hotel[]> {
         let filteredHotels = [...this.hotels];
 
@@ -771,6 +776,10 @@ private static normalizeStringOrBoolean(value: any): string {
             filteredHotels = filteredHotels.filter(hotel => 
                 hotel.status === 'active'
             );
+        }
+
+        if (typeof filters.isPremium !== 'undefined') {
+            filteredHotels = filteredHotels.filter(hotel => hotel.isPremium === filters.isPremium);
         }
 
         return filteredHotels;

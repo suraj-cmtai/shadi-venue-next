@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown } from 'lucide-react';
+import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // Redux imports
 import { useAppDispatch, useAppSelector } from '@/lib/redux/store';
@@ -44,6 +44,7 @@ interface VenueCardProps {
 
 const DynamicVenuePage: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
 
   // Redux state selectors
@@ -65,11 +66,18 @@ const DynamicVenuePage: React.FC = () => {
     if (!hasFetched) {
       dispatch(fetchActiveHotels());
     }
-    // Always clear filters on mount
+    // Clear filters and search by default
     dispatch(clearFilters());
-    // Always clear search on mount
     dispatch(setSearchQuery(''));
     setLocalSearch('');
+
+    // If deep link contains ?search=city, initialize filters accordingly
+    const qp = searchParams.get('search');
+    if (qp && qp.trim() !== '') {
+      dispatch(setFilters({ city: qp }));
+      dispatch(setSearchQuery(qp));
+      setLocalSearch(qp);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, hasFetched]);
 
@@ -543,14 +551,33 @@ const DynamicVenuePage: React.FC = () => {
 
           {venue.amenities && venue.amenities.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {venue.amenities.slice(0, 2).map((amenity, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {amenity}
-                </Badge>
-              ))}
-              {venue.amenities.length > 2 && (
+              {venue.amenities.slice(0, 3).map((amenity, index) => {
+                const key = amenity?.toLowerCase() || '';
+                const iconMap: Record<string, any> = {
+                  'wifi': Wifi,
+                  'free wifi': Wifi,
+                  'pool': Waves,
+                  'swimming pool': Waves,
+                  'spa': Waves,
+                  'fitness center': Dumbbell,
+                  'gym': Dumbbell,
+                  'restaurant': Utensils,
+                  'dining': Utensils,
+                  'parking': Car,
+                  'room service': Coffee,
+                };
+                const Icon = iconMap[key] || Object.keys(iconMap).find(k => key.includes(k)) ? iconMap[Object.keys(iconMap).find(k => key.includes(k)) as string] : Info;
+                const label = amenity.replace(/\w\S*/g, (t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+                return (
+                  <Badge key={index} variant="outline" className="text-xs flex items-center gap-1">
+                    <Icon className="w-3.5 h-3.5" />
+                    {label}
+                  </Badge>
+                );
+              })}
+              {venue.amenities.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{venue.amenities.length - 2} more
+                  +{venue.amenities.length - 3} more
                 </Badge>
               )}
             </div>

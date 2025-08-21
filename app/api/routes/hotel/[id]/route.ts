@@ -145,20 +145,25 @@ export async function PUT(
         const rating = formData.get("rating")?.toString();
         const status = formData.get("status")?.toString();
 
-        // Amenities: always expect as array, fallback to [] if not present
+        // Amenities: accept JSON array, comma-separated string, or repeated fields
         let amenities: string[] = [];
         if (formData.has("amenities")) {
-            // If amenities is sent as multiple fields (array)
-            const amenitiesRaw = formData.getAll("amenities");
-            if (amenitiesRaw.length > 1) {
-                amenities = amenitiesRaw.map(a => a.toString().trim()).filter(Boolean);
-            } else if (amenitiesRaw.length === 1) {
-                // If sent as a single comma-separated string
-                const val = amenitiesRaw[0]?.toString();
-                if (val && val.includes(",")) {
-                    amenities = val.split(",").map(a => a.trim()).filter(Boolean);
-                } else if (val) {
-                    amenities = [val.trim()];
+            const raw = formData.getAll("amenities").map(v => v?.toString() || "").filter(Boolean);
+            if (raw.length > 1) {
+                amenities = raw;
+            } else if (raw.length === 1) {
+                const single = raw[0];
+                try {
+                    const parsed = JSON.parse(single);
+                    if (Array.isArray(parsed)) {
+                        amenities = parsed.map(x => String(x)).filter(Boolean);
+                    } else if (typeof parsed === 'string') {
+                        amenities = parsed.split(',').map(s => s.trim()).filter(Boolean);
+                    } else {
+                        amenities = single.split(',').map(s => s.trim()).filter(Boolean);
+                    }
+                } catch {
+                    amenities = single.split(',').map(s => s.trim()).filter(Boolean);
                 }
             }
         }
@@ -246,6 +251,7 @@ export async function PUT(
         const venueType = formData.get("venueType")?.toString();
         const position = formData.get("position")?.toString();
         const websiteLink = formData.get("websiteLink")?.toString();
+        const isPremium = formData.get("isPremium")?.toString();
 
         if (firstName !== undefined) hotelData.firstName = firstName;
         if (lastName !== undefined) hotelData.lastName = lastName;
@@ -253,6 +259,7 @@ export async function PUT(
         if (venueType !== undefined) hotelData.venueType = venueType;
         if (position !== undefined) hotelData.position = position;
         if (websiteLink !== undefined) hotelData.websiteLink = websiteLink;
+        if (isPremium !== undefined) hotelData.isPremium = isPremium === 'true';
 
         // Wedding and Venue Information
         const offerWeddingPackages = formData.get("offerWeddingPackages")?.toString();

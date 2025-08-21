@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Star, MapPin, Phone, Mail, Globe, Clock, Users, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, ArrowLeft, Send } from "lucide-react"
+import { Star, MapPin, Phone, Mail, Globe, Clock, Users, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, ArrowLeft, Send, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -37,16 +37,40 @@ const DEFAULT_VENUE_IMAGES = [
     "/images/venue/5.jpg",
 ];
 
-const amenityIcons: Record<string, any> = {
-    "Free WiFi": Wifi,
-    "WiFi": Wifi,
-    "Swimming Pool": Waves,
-    "Fitness Center": Dumbbell,
-    "Restaurant": Utensils,
-    "Parking": Car,
-    "Room Service": Coffee,
-    "Air Conditioning": Coffee,
+// Amenity helpers (case-insensitive mapping + graceful fallback)
+const amenityIconMap: Record<string, any> = {
+  "wifi": Wifi,
+  "free wifi": Wifi,
+  "pool": Waves,
+  "swimming pool": Waves,
+  "spa": Waves,
+  "fitness center": Dumbbell,
+  "gym": Dumbbell,
+  "restaurant": Utensils,
+  "dining": Utensils,
+  "parking": Car,
+  "room service": Coffee,
+  "air conditioning": Info,
+  "airport shuttle": Car,
+  "concierge": Users,
+  "laundry": Info,
+  "conference": Info,
+  "business center": Info,
 }
+
+const getAmenityIcon = (amenity: string) => {
+  const key = amenity?.toLowerCase() || '';
+  // direct match
+  if (amenityIconMap[key]) return amenityIconMap[key];
+  // contains match
+  for (const k of Object.keys(amenityIconMap)) {
+    if (key.includes(k)) return amenityIconMap[k];
+  }
+  return Info;
+}
+
+const toTitleCase = (value: string) =>
+  value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
 
 interface ContactFormData {
   name: string
@@ -375,7 +399,7 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
                                 <h2 className="text-2xl font-bold text-[#212D47] mb-6">Amenities</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {hotel.amenities.map((amenity, index) => {
-                                        const IconComponent = amenityIcons[amenity] || Coffee
+                                        const IconComponent = getAmenityIcon(amenity)
                                         return (
                                             <motion.div
                                                 key={amenity}
@@ -386,7 +410,7 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
                                                 className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
                                             >
                                                 <IconComponent className="w-5 h-5 text-[#212D47]" />
-                                                <span className="text-gray-700 font-medium">{amenity}</span>
+                                                <span className="text-gray-700 font-medium">{toTitleCase(amenity)}</span>
                                             </motion.div>
                                         )
                                     })}

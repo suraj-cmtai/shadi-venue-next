@@ -165,6 +165,7 @@ interface HotelFormState {
   agreeToTerms: boolean;
   agreeToPrivacy: boolean;
   signature: string;
+  isPremium: boolean;
 }
 
 const initialFormState: HotelFormState = {
@@ -234,6 +235,7 @@ const initialFormState: HotelFormState = {
   agreeToTerms: false,
   agreeToPrivacy: false,
   signature: "",
+  isPremium: false,
 };
 
 const statusColors: Record<Hotel["status"], string> = {
@@ -401,7 +403,10 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('description', form.description);
     formData.append('rating', form.rating.toString());
     formData.append('status', form.status);
-    formData.append('amenities', form.amenities);
+    // Send amenities as array elements
+    form.amenities.split(',').map((s) => s.trim()).filter(Boolean).forEach((amenity) => {
+      formData.append('amenities', amenity);
+    });
     formData.append('servicesOffered', form.servicesOffered);
     formData.append('allInclusivePackages', form.allInclusivePackages);
     formData.append('staffAccommodation', form.staffAccommodation);
@@ -466,6 +471,7 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('agreeToPrivacy', form.agreeToPrivacy.toString());
     formData.append('signature', form.signature);
     formData.append('googleLocation', form.googleLocation);
+    formData.append('isPremium', form.isPremium.toString());
     
     // Rooms as JSON string
     formData.append('rooms', JSON.stringify(form.rooms));
@@ -940,6 +946,17 @@ const createRequestData = async (form: HotelFormState) => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Premium</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.isPremium}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isPremium: e.target.checked }))}
+                />
+                <span className="text-sm text-muted-foreground">Mark as premium</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1434,6 +1451,7 @@ const createRequestData = async (form: HotelFormState) => {
                 <TableHead className="min-w-[150px]">Location</TableHead>
                 <TableHead className="min-w-[120px]">Price</TableHead>
                 <TableHead className="min-w-[80px]">Rating</TableHead>
+                <TableHead className="min-w-[90px]">Premium</TableHead>
                 <TableHead className="min-w-[100px]">Status</TableHead>
                 <TableHead className="w-[80px] text-right">Actions</TableHead>
               </TableRow>
@@ -1483,6 +1501,7 @@ const createRequestData = async (form: HotelFormState) => {
                       }).format(hotel.priceRange.startingPrice || 0) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
+                    <TableCell className="text-muted-foreground">{(hotel as any).isPremium ? 'Yes' : 'No'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(hotel.status)}
@@ -1582,6 +1601,7 @@ const createRequestData = async (form: HotelFormState) => {
                                 agreeToTerms: hotel.agreeToTerms || false,
                                 agreeToPrivacy: hotel.agreeToPrivacy || false,
                                 signature: hotel.signature || "",
+                                isPremium: Boolean((hotel as any).isPremium),
                                 googleLocation: hotel.googleLocation || "", 
                               };
                               setEditHotelForm(hotelForEdit);

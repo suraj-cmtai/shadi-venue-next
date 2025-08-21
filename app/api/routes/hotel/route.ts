@@ -77,11 +77,12 @@ export async function GET(req: Request) {
         const minRating = searchParams.get('minRating');
         const maxPrice = searchParams.get('maxPrice');
         const currency = searchParams.get('currency');
+        const isPremium = searchParams.get('isPremium');
 
         let hotels;
 
         // If any filters are provided, use advanced search
-        if (status || city || category || weddingPackages || minRating || maxPrice) {
+        if (status || city || category || weddingPackages || minRating || maxPrice || isPremium) {
             const filters: any = {};
             
             if (status) filters.status = status as HotelStatus;
@@ -93,10 +94,14 @@ export async function GET(req: Request) {
                 filters.maxPrice = parseFloat(maxPrice);
                 filters.currency = (currency as Currency) || 'INR';
             }
-
+            if (isPremium) filters.isPremium = isPremium === 'true';    
             hotels = await HotelService.advancedSearch(filters);
         } else {
-            hotels = await HotelService.getAllHotels();
+            if (isPremium) {
+                hotels = await HotelService.getPremiumHotels();
+            } else {
+                hotels = await HotelService.getAllHotels();
+            }
         }
         
         consoleManager.log("Fetched hotels with filters:", { status, city, category, count: hotels.length });
@@ -129,7 +134,28 @@ export async function POST(req: Request) {
         const description = formData.get("description")?.toString();
         const rating = formData.get("rating")?.toString();
         const status = formData.get("status")?.toString();
-        const amenities = formData.get("amenities")?.toString();
+        // Amenities: accept JSON array, comma-separated string, or repeated fields
+        let amenities: string[] = [];
+        if (formData.has("amenities")) {
+            const all = formData.getAll("amenities").map(v => v?.toString() || "").filter(Boolean);
+            if (all.length > 1) {
+                amenities = all;
+            } else if (all.length === 1) {
+                const single = all[0];
+                try {
+                    const parsed = JSON.parse(single);
+                    if (Array.isArray(parsed)) {
+                        amenities = parsed.map(x => String(x)).filter(Boolean);
+                    } else if (typeof parsed === 'string') {
+                        amenities = parsed.split(',').map(s => s.trim()).filter(Boolean);
+                    } else {
+                        amenities = single.split(',').map(s => s.trim()).filter(Boolean);
+                    }
+                } catch {
+                    amenities = single.split(',').map(s => s.trim()).filter(Boolean);
+                }
+            }
+        }
         const rooms = formData.get("rooms")?.toString();
 
         // Extract location information
@@ -188,6 +214,8 @@ export async function POST(req: Request) {
         const agreeToTerms = formData.get("agreeToTerms");
         const agreeToPrivacy = formData.get("agreeToPrivacy");
         const signature = formData.get("signature")?.toString();
+        // Premium flag
+        const isPremium = formData.get("isPremium")?.toString();
 
         // Extract file uploads
         const imageFiles = formData.getAll("images");
@@ -220,7 +248,7 @@ export async function POST(req: Request) {
             description: description || "",
             rating: safeParseNumber(rating),
             status: (status as HotelStatus) || "draft",
-            amenities: amenities ? amenities.split(',').map(item => item.trim()) : [],
+            amenities,
             rooms: rooms ? (() => {
                 try {
                     return JSON.parse(rooms);
@@ -301,6 +329,7 @@ export async function POST(req: Request) {
             agreeToTerms: safeParseBoolean(agreeToTerms?.toString()),
             agreeToPrivacy: safeParseBoolean(agreeToPrivacy?.toString()),
             signature: signature || "",
+            isPremium: isPremium === 'true',
         };
 
         const newHotel = await HotelService.createHotel(hotelData);

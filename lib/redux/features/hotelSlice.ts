@@ -47,6 +47,9 @@ export interface Hotel {
   // New field
   googleLocation?: string;
 
+  // Premium field
+  isPremium?: boolean;
+
   // New form fields
   firstName?: string;
   lastName?: string;
@@ -80,11 +83,10 @@ export interface Hotel {
   signature?: string;
 }
 
-
-
 interface HotelState {
   hotels: Hotel[];
   activeHotels: Hotel[];
+  premiumHotels: Hotel[];
   loading: boolean;
   hasFetched: boolean;
   error: string | null;
@@ -94,6 +96,8 @@ interface HotelState {
     city: string;
     priceRange: [number, number];
     rating: number;
+    isPremium?: boolean;
+    status?: string;
   };
   searchQuery: string;
 }
@@ -101,6 +105,7 @@ interface HotelState {
 const initialState: HotelState = {
   hotels: [],
   activeHotels: [],
+  premiumHotels: [],
   loading: false,
   hasFetched: false,
   error: null,
@@ -110,6 +115,8 @@ const initialState: HotelState = {
     city: '',
     priceRange: [0, 10000],
     rating: 0,
+    isPremium: undefined,
+    status: undefined,
   },
   searchQuery: '',
 };
@@ -132,6 +139,19 @@ export const fetchHotels = createAsyncThunk<Hotel[]>(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get("/api/routes/hotel");
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+// Fetch all premium hotels (GET_PREMIUM)
+export const fetchPremiumHotels = createAsyncThunk<Hotel[]>(
+  "hotel/fetchPremiumHotels",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/routes/hotel/premium");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -212,6 +232,19 @@ export const fetchActiveHotels = createAsyncThunk<Hotel[]>(
   }
 );
 
+// Fetch all premium hotels and store in premiumHotels
+export const fetchPremiumHotel = createAsyncThunk<Hotel[]>(
+  "hotel/fetchPremiumHotel",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/routes/hotel/premium");
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 const hotelSlice = createSlice({
   name: "hotel",
   initialState,
@@ -252,6 +285,20 @@ const hotelSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.hasFetched = true;
+      })
+
+      // Fetch Premium Hotels
+      .addCase(fetchPremiumHotel.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPremiumHotel.fulfilled, (state, action: PayloadAction<Hotel[]>) => {
+        state.premiumHotels = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchPremiumHotel.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
 
       // Fetch Hotel by ID
@@ -351,6 +398,7 @@ export const {
 // Selectors
 export const selectHotels = (state: RootState) => state.hotel.hotels;
 export const selectActiveHotels = (state: RootState) => state.hotel.activeHotels;
+export const selectPremiumHotel = (state: RootState) => state.hotel.premiumHotels;
 export const selectHotelLoading = (state: RootState) => state.hotel.loading;
 export const selectHotelError = (state: RootState) => state.hotel.error;
 export const selectSelectedHotel = (state: RootState) => state.hotel.selectedHotel;
@@ -382,8 +430,14 @@ export const selectFilteredHotels = createSelector(
       
       // Rating filter
       const matchesRating = !filters.rating || hotel.rating >= filters.rating;
+
+      // isPremium filter
+      const matchesIsPremium = typeof filters.isPremium === "undefined" || hotel.isPremium === filters.isPremium;
+
+      // status filter
+      const matchesStatus = !filters.status || hotel.status === filters.status;
       
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating;
+      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating && matchesIsPremium && matchesStatus;
     });
   }
 );

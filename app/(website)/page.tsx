@@ -13,6 +13,7 @@ import Testimonials from '@/components/(website)/home/Testimonials'
 import Offer from '@/components/(website)/home/Offer'
 import Blog from '@/components/(website)/home/Blog'
 import GetInTouch from '@/components/(website)/home/GetInTouch'
+import HotelByCity from '@/components/(website)/home/HotelByCity'
 
 const HomePage = () => {
   return (
@@ -20,6 +21,7 @@ const HomePage = () => {
    <Hero />
    <HeroExtension />
    <AllLogos />
+   <HotelByCity />
    <About />
    {/* <Venue /> */}
    <VideoSection />
