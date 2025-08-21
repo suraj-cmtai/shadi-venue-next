@@ -5,16 +5,23 @@ import { getErrorMessage } from "@/lib/utils";
 
 // Define interfaces
 export interface Contact {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
   subject: string;
   message: string;
+  // Optional wedding inquiry fields
+  preferredDate?: string;
+  locationPreference?: string;
+  venueServiceType?: string;
+  guests?: number;
+  budgetRange?: string;
+  contactTimePreference?: string;
   status: 'New' | 'In Progress' | 'Completed';
   priority: 'Low' | 'Medium' | 'High';
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 interface ContactState {
@@ -58,7 +65,7 @@ export const createContact = createAsyncThunk<Contact, FormData>(
 );
 
 // Update a contact
-export const updateContact = createAsyncThunk<Contact, { id: number; data: FormData }>(
+export const updateContact = createAsyncThunk<Contact, { id: string; data: FormData }>(
   "contact/updateContact",
   async ({ id, data }, { rejectWithValue }) => {
     try {
@@ -71,7 +78,7 @@ export const updateContact = createAsyncThunk<Contact, { id: number; data: FormD
 );
 
 // Delete a contact
-export const deleteContact = createAsyncThunk<number, number>(
+export const deleteContact = createAsyncThunk<string, string>(
   "contact/deleteContact",
   async (id, { rejectWithValue }) => {
     try {
@@ -143,7 +150,7 @@ const contactSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteContact.fulfilled, (state, action: PayloadAction<number>) => {
+      .addCase(deleteContact.fulfilled, (state, action: PayloadAction<string>) => {
         state.contacts = state.contacts.filter(contact => contact.id !== action.payload);
         state.loading = false;
       })

@@ -4,8 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Image from "next/image";
+import { useState } from "react";
 
 const Contact = () => {
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setSubmitting(true);
+        setSuccess(null);
+        setError(null);
+        try {
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+            // Map existing placeholders to API field names
+            // message field is captured from textarea named additionalDetails
+            const res = await fetch('/api/routes/contact', {
+                method: 'POST',
+                body: formData,
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json?.errorMessage || 'Failed to submit');
+            setSuccess('Thanks! We will contact you shortly.');
+            form.reset();
+        } catch (err: any) {
+            setError(err.message || 'Something went wrong.');
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-background">
             {/* Get In Touch Section */}
@@ -44,42 +74,100 @@ const Contact = () => {
                     </p>
 
                     {/* Contact Form */}
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
                                 type="text"
-                                placeholder="Name*"
+                                name="name"
+                                placeholder="Full Name*"
+                                required
                                 className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
                             />
                             <Input
                                 type="email"
-                                placeholder="Email*"
+                                name="email"
+                                placeholder="Email Address*"
+                                required
                                 className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
                                 type="tel"
-                                placeholder="Phone No.*"
+                                name="phone"
+                                placeholder="Phone Number*"
+                                required
                                 className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
                             />
                             <Input
-                                type="url"
-                                placeholder="Website"
+                                type="date"
+                                name="preferredDate"
+                                placeholder="Preferred Date of Wedding*"
+                                required
                                 className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
                             />
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Input
+                                type="text"
+                                name="locationPreference"
+                                placeholder="Location / Destination Preference*"
+                                required
+                                className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
+                            />
+                            <Input
+                                type="text"
+                                name="venueServiceType"
+                                placeholder="Type of Venue / Service Needed* (e.g., Banquet Hall)"
+                                required
+                                className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Input
+                                type="number"
+                                name="guests"
+                                min={1}
+                                placeholder="Number of Guests*"
+                                required
+                                className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
+                            />
+                            <Input
+                                type="text"
+                                name="budgetRange"
+                                placeholder="Budget Range (Optional)"
+                                className="bg-background border-muted placeholder:text-muted-foreground text-foreground"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <select
+                                name="contactTimePreference"
+                                className="bg-background border border-muted text-foreground rounded-md px-3 py-2"
+                                defaultValue=""
+                            >
+                                <option value="" disabled>Preferred Time to Contact (Optional)</option>
+                                <option value="Morning">Morning</option>
+                                <option value="Afternoon">Afternoon</option>
+                                <option value="Evening">Evening</option>
+                            </select>
+                            <input type="hidden" name="priority" value="Low" />
+                        </div>
                         <Textarea
+                            name="additionalDetails"
                             placeholder="Comments*"
                             rows={6}
+                            required
                             className="bg-background border-muted placeholder:text-muted-foreground text-foreground resize-none"
                         />
                         <Button
                             type="submit"
+                            disabled={submitting}
                             className="bg-[#212D47] hover:bg-[#1a2137] text-white px-12 py-3 text-sm font-medium tracking-wider"
                         >
-                            SUBMIT NOW ▶
+                            {submitting ? 'Submitting…' : 'SUBMIT NOW ▶'}
                         </Button>
+                        {success && <p className="text-green-600 text-sm">{success}</p>}
+                        {error && <p className="text-red-600 text-sm">{error}</p>}
                     </form>
                 </div>
             </div>

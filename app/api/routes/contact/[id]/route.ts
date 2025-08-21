@@ -51,9 +51,16 @@ export async function PUT(
         const email = formData.get("email");
         const phone = formData.get("phone");
         const subject = formData.get("subject");
-        const message = formData.get("message");
+        const message = formData.get("message") || formData.get("additionalDetails");
         const status = formData.get("status");
         const priority = formData.get("priority");
+        // New optional fields
+        const preferredDate = formData.get("preferredDate");
+        const locationPreference = formData.get("locationPreference");
+        const venueServiceType = formData.get("venueServiceType");
+        const guests = formData.get("guests");
+        const budgetRange = formData.get("budgetRange");
+        const contactTimePreference = formData.get("contactTimePreference");
 
         // Validate contact exists
         const existingContact = await ContactService.getContactById(id);
@@ -74,6 +81,12 @@ export async function PUT(
         if (message) contactData.message = message.toString();
         if (status) contactData.status = status.toString();
         if (priority) contactData.priority = priority.toString();
+        if (preferredDate) contactData.preferredDate = preferredDate.toString();
+        if (locationPreference) contactData.locationPreference = locationPreference.toString();
+        if (venueServiceType) contactData.venueServiceType = venueServiceType.toString();
+        if (guests) contactData.guests = Number(guests.toString());
+        if (budgetRange) contactData.budgetRange = budgetRange.toString();
+        if (contactTimePreference) contactData.contactTimePreference = contactTimePreference.toString();
 
         const updatedContact = await ContactService.updateContact(id, contactData);
 

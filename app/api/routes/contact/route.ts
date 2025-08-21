@@ -45,16 +45,24 @@ export async function POST(req: Request) {
         const name = formData.get("name");
         const email = formData.get("email");
         const phone = formData.get("phone");
-        const subject = formData.get("subject");
-        const message = formData.get("message");
+        // Map new fields
+        const preferredDate = formData.get("preferredDate");
+        const locationPreference = formData.get("locationPreference");
+        const venueServiceType = formData.get("venueServiceType");
+        const guests = formData.get("guests");
+        const additionalDetails = formData.get("additionalDetails") || formData.get("message");
+        // Back-compat subject defaults to venueServiceType
+        const subject = formData.get("subject") || venueServiceType || "General Inquiry";
+        const budgetRange = formData.get("budgetRange");
+        const contactTimePreference = formData.get("contactTimePreference");
         const priority = formData.get("priority") || ContactPriority.LOW;
 
         // Validate required fields
-        if (!name || !email || !phone || !subject || !message) {
+        if (!name || !email || !phone || !preferredDate || !locationPreference || !venueServiceType || !guests || !additionalDetails) {
             return NextResponse.json({
                 statusCode: 400,
                 errorCode: "BAD_REQUEST",
-                errorMessage: "All fields are required",
+                errorMessage: "Missing required fields",
             }, { status: 400 });
         }
 
@@ -74,7 +82,13 @@ export async function POST(req: Request) {
             email: email.toString(),
             phone: phone.toString(),
             subject: subject.toString(),
-            message: message.toString(),
+            message: additionalDetails.toString(),
+            preferredDate: preferredDate.toString(),
+            locationPreference: locationPreference.toString(),
+            venueServiceType: venueServiceType.toString(),
+            guests: Number(guests.toString()),
+            budgetRange: budgetRange ? budgetRange.toString() : "",
+            contactTimePreference: contactTimePreference ? contactTimePreference.toString() : "",
             status: ContactStatus.NEW,
             priority: priority.toString() as ContactPriority,
         };
