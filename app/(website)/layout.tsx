@@ -3,7 +3,7 @@ import Header from "../../components/(website)/Header";
 import type { ReactNode } from "react";
 import Footer from "@/components/(website)/Footer";
 import FloatingButton from "@/components/(website)/floating-button";
-// import TopBar from "@/components/(website)/topbar";
+import Popup from "@/components/(website)/popup";
 
 /**
  * Website layout with Header and main content container.
@@ -12,7 +12,7 @@ import FloatingButton from "@/components/(website)/floating-button";
 export default function WebsiteLayout({ children }: { children: ReactNode }) {
   return (
     <>
-    {/* <TopBar /> */}
+    <Popup />
       <Header />
       <main className="flex-1">
         {children}

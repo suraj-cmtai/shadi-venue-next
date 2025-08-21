@@ -135,17 +135,6 @@ class HotelService {
         return new Date().toISOString();
     }
 
-   
-    // Helper method to ensure arrays are properly stored
-    private static ensureArray(value: any): string[] {
-        if (Array.isArray(value)) {
-            return value;
-        }
-        if (typeof value === 'string') {
-            return value ? [value] : [];
-        }
-        return [];
-    }
 
     // Helper method to convert document data to Hotel type
    // Updated backend convertToType method to match:
@@ -349,6 +338,9 @@ private static normalizeArrayOrString(value: any): string[] {
                 referralSource: hotelData.referralSource || "",
                 partnershipInterest: hotelData.partnershipInterest || "",
 
+                // googleLocation field added
+                googleLocation: hotelData.googleLocation || "",
+
                 // Legal and Agreement Fields
                 agreeToTerms: Boolean(hotelData.agreeToTerms),
                 agreeToPrivacy: Boolean(hotelData.agreeToPrivacy),
@@ -547,6 +539,9 @@ private static normalizeArrayOrString(value: any): string[] {
             if (updateData.refundPolicy !== undefined) processedUpdateData.refundPolicy = updateData.refundPolicy || "";
             if (updateData.referralSource !== undefined) processedUpdateData.referralSource = updateData.referralSource || "";
             if (updateData.partnershipInterest !== undefined) processedUpdateData.partnershipInterest = updateData.partnershipInterest || "";
+
+            // googleLocation field added
+            if (updateData.googleLocation !== undefined) processedUpdateData.googleLocation = updateData.googleLocation || "";
 
             // Legal and Agreement Fields
             if (updateData.agreeToTerms !== undefined) processedUpdateData.agreeToTerms = Boolean(updateData.agreeToTerms);
