@@ -54,12 +54,12 @@ interface HeaderProps {
 }
 
 const searchSuggestions = [
-  { label: "Courses", value: "courses", href: "/dashboard/courses" },
-  { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
-  { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
-  { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
-  { label: "Contact", value: "contact", href: "/dashboard/contact" },
-  {label: "Test", value: "test", href: "/dashboard/test" },
+  { label: "Dashboard", value: "dashboard", href: "/dashboard/vendor" },
+  // { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
+  // { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
+  // { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
+  // { label: "Contact", value: "contact", href: "/dashboard/contact" },
+  // {label: "Test", value: "test", href: "/dashboard/test" },
 ];
 
 const notifications = [
@@ -280,8 +280,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                <span onClick={() => router.push('/logout')}>Log out</span>
+              <DropdownMenuItem  onClick={() => router.push('/logout')} className="text-red-600 focus:text-red-600 cursor-pointer">
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

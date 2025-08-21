@@ -97,6 +97,9 @@ export interface Vendor {
   status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
+
+  // Premium field
+  isPremium?: boolean;
 }
 
 class VendorService {
@@ -163,6 +166,7 @@ class VendorService {
       status: data.status || "inactive",
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
+      isPremium: data.isPremium ?? false,
     };
   }
 
@@ -198,6 +202,7 @@ class VendorService {
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
       const newVendorRef = await db.collection("vendors").add({
         ...vendorData,
+        isPremium: vendorData.isPremium ?? false,
         createdAt: timestamp,
         updatedAt: timestamp,
       });

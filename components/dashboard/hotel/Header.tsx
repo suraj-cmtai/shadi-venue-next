@@ -281,8 +281,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
-                <span onClick={() => router.push('/logout')}>Log out</span>
+              <DropdownMenuItem  onClick={() => router.push('/logout')} className="text-red-600 focus:text-red-600 cursor-pointer">
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

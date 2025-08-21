@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Venue", href: "/venue" },
+  { label: "vendors", href: "/vendors" },
   { label: "Inspiration", href: "/inspiration" },
   { label: "Blog", href: "/blogs" },
   { label: "Gallery", href: "/gallery" },
@@ -149,6 +150,7 @@ export default function Header() {
               <SheetTitle hidden aria-hidden="true">Shadi Venue</SheetTitle>
               <div className="flex flex-col gap-6 p-4 sm:p-6">
                 {/* Logo and Flower in Sheet */}
+                
                 <div className="flex items-center gap-2 mb-4">
                   <img src={LOGO_IMG} alt="Logo" className="h-8 w-auto" />
                   <img src={FLOWER_IMG} alt="Decorative Flower" className="h-6 w-auto" />
@@ -167,7 +169,7 @@ export default function Header() {
                 <div className="mt-6 flex flex-col gap-3">
                   {!isAuthenticated ? (
                     <>
-                      <Link href="/login" passHref legacyBehavior>
+                      <Link href="/login" passHref >
                         <Button
                           variant="outline"
                           className="flex items-center gap-2 border border-[#212d47] rounded-xs bg-white/80 uppercase text-[#212d47] text-base font-medium font-cormorant w-full"
@@ -178,7 +180,7 @@ export default function Header() {
                           <span>Login</span>
                         </Button>
                       </Link>
-                      <Link href="/signup" passHref legacyBehavior>
+                      <Link href="/signup" passHref>
                         <Button
                           variant="default"
                           className="flex items-center gap-2 rounded-xs uppercase text-white bg-[#212d47] text-base font-medium font-cormorant w-full"

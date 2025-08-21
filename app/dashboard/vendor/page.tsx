@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent, MouseEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
 import {
@@ -23,21 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import Image from "next/image";
 import {
   MapPin,
   Phone,
@@ -57,11 +46,14 @@ import {
   Upload,
   Save,
   Eye,
+  Building,
+  DollarSign,
+  MapIcon,
+  Settings,
+  Image as ImageIcon,
 } from "lucide-react";
 
-import Link from "next/link";
-
-// Types (matching your vendor interface)
+// Types
 type VendorCategory =
   | "Venue"
   | "Planner"
@@ -73,6 +65,7 @@ type VendorCategory =
   | "Others";
 type ServiceArea = "Local City" | "Statewide" | "Pan India" | "International";
 type PaymentMode = "UPI" | "Cash" | "Bank Transfer" | "Card" | "Other";
+type Facility = "Rooms" | "Parking" | "Catering" | "Decor" | "DJ" | "Liquor License" | "Pool" | "Other";
 
 interface Vendor {
   id: string;
@@ -95,6 +88,7 @@ interface Vendor {
   startingPrice: number;
   guestCapacityMin?: number;
   guestCapacityMax?: number;
+  facilitiesAvailable?: Facility[];
   specialities?: string;
   logoUrl: string;
   coverImageUrl: string;
@@ -113,165 +107,52 @@ interface Vendor {
   updatedAt: string;
 }
 
-// Helper function to safely convert array or string to comma-separated string
-const arrayToString = (value: any): string => {
-  if (Array.isArray(value)) {
-    return value.join(", ");
-  }
-  if (typeof value === "string") {
-    return value;
-  }
-  return "";
-};
-
-// Helper function to safely convert comma-separated string to array
-const stringToArray = (value: string): string[] => {
-  if (!value || typeof value !== "string") return [];
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-};
-
-// Form state interface
-interface VendorFormState {
-  businessName: string;
-  category: VendorCategory;
-  yearOfEstablishment?: string;
-  contactPersonName: string;
-  designation: "Owner" | "Manager" | "Other";
-  mobileNumber: string;
-  mobileVerified?: boolean;
-  whatsappNumber?: string;
-  email: string;
-  websiteOrSocial?: string;
-  address: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  serviceAreas: ServiceArea[];
+interface VendorFormState extends Omit<Vendor, 'servicesOffered' | 'videoLinks' | 'serviceAreas' | 'paymentModesAccepted' | 'facilitiesAvailable'> {
   servicesOffered: string;
-  startingPrice: number;
-  guestCapacityMin?: number;
-  guestCapacityMax?: number;
-  specialities?: string;
-  logoUrl: string;
-  coverImageUrl: string;
-  portfolioImages: string[];
-  videoLinks?: string;
-  about: string;
-  awards?: string;
-  notableClients?: string;
-  advancePaymentPercent?: number;
-  refundPolicy?: string;
+  videoLinks: string;
+  serviceAreas: ServiceArea[];
   paymentModesAccepted: PaymentMode[];
-  username: string;
-  agreedToTerms: boolean;
-  status: "active" | "inactive";
-  createdAt: string;
-  updatedAt: string;
-  // File uploads
+  facilitiesAvailable: Facility[];
   logoFile?: File;
   coverImageFile?: File;
   portfolioFiles?: File[];
-  removeImages?: boolean;
+  removeImages?: string[];
 }
 
 const categories: VendorCategory[] = [
-  "Venue",
-  "Planner",
-  "Photographer",
-  "Decorator",
-  "Caterer",
-  "Makeup",
-  "Entertainment",
-  "Others",
+  "Venue", "Planner", "Photographer", "Decorator", "Caterer", "Makeup", "Entertainment", "Others"
 ];
-const serviceAreas: ServiceArea[] = [
-  "Local City",
-  "Statewide",
-  "Pan India",
-  "International",
-];
-const paymentModes: PaymentMode[] = [
-  "UPI",
-  "Cash",
-  "Bank Transfer",
-  "Card",
-  "Other",
-];
+const serviceAreas: ServiceArea[] = ["Local City", "Statewide", "Pan India", "International"];
+const paymentModes: PaymentMode[] = ["UPI", "Cash", "Bank Transfer", "Card", "Other"];
+const facilities: Facility[] = ["Rooms", "Parking", "Catering", "Decor", "DJ", "Liquor License", "Pool", "Other"];
+const designations = ["Owner", "Manager", "Other"];
 
-const statusColors: Record<Vendor["status"], string> = {
-  active: "bg-green-100 text-green-800 border-green-200",
-  inactive: "bg-gray-100 text-gray-800 border-gray-200",
+// Helper functions
+const arrayToString = (value: any): string => {
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "string") return value;
+  return "";
+};
+
+const stringToArray = (value: string): string[] => {
+  if (!value || typeof value !== "string") return [];
+  return value.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
 };
 
 const getInitialFormState = (vendor: Vendor | null): VendorFormState | null => {
   if (!vendor) return null;
   return {
-    businessName: vendor.businessName || "",
-    category: vendor.category || "Venue",
-    yearOfEstablishment: vendor.yearOfEstablishment || "",
-    contactPersonName: vendor.contactPersonName || "",
-    designation: vendor.designation || "Owner",
-    mobileNumber: vendor.mobileNumber || "",
-    mobileVerified: vendor.mobileVerified || false,
-    whatsappNumber: vendor.whatsappNumber || "",
-    email: vendor.email || "",
-    websiteOrSocial: vendor.websiteOrSocial || "",
-    address: vendor.address || "",
-    city: vendor.city || "",
-    state: vendor.state || "",
-    pinCode: vendor.pinCode || "",
-    serviceAreas: vendor.serviceAreas || [],
+    ...vendor,
     servicesOffered: arrayToString(vendor.servicesOffered),
-    startingPrice: vendor.startingPrice || 0,
-    guestCapacityMin: vendor.guestCapacityMin || undefined,
-    guestCapacityMax: vendor.guestCapacityMax || undefined,
-    specialities: vendor.specialities || "",
-    logoUrl: vendor.logoUrl || "",
-    coverImageUrl: vendor.coverImageUrl || "",
-    portfolioImages: vendor.portfolioImages || [],
-    videoLinks: vendor.videoLinks ? arrayToString(vendor.videoLinks) : "",
-    about: vendor.about || "",
-    awards: vendor.awards || "",
-    notableClients: vendor.notableClients || "",
-    advancePaymentPercent: vendor.advancePaymentPercent || undefined,
-    refundPolicy: vendor.refundPolicy || "",
+    videoLinks: arrayToString(vendor.videoLinks),
+    serviceAreas: vendor.serviceAreas || [],
     paymentModesAccepted: vendor.paymentModesAccepted || [],
-    username: vendor.username || "",
-    agreedToTerms: vendor.agreedToTerms || false,
-    status: vendor.status || "inactive",
-    createdAt: vendor.createdAt || "",
-    updatedAt: vendor.updatedAt || "",
+    facilitiesAvailable: vendor.facilitiesAvailable || [],
     logoFile: undefined,
     coverImageFile: undefined,
     portfolioFiles: [],
-    removeImages: false,
+    removeImages: [],
   };
-};
-
-// File upload helper functions
-const uploadFile = async (file: File): Promise<string> => {
-  try {
-    if (file.type.startsWith("image/")) {
-      return await uploadImageClient(file);
-    } else {
-      throw new Error("Unsupported file type");
-    }
-  } catch (error: any) {
-    throw new Error(`Failed to upload file: ${error.message}`);
-  }
-};
-
-const uploadFiles = async (files: File[]): Promise<string[]> => {
-  if (!files.length) return [];
-  try {
-    const uploadPromises = files.map((file) => uploadFile(file));
-    return await Promise.all(uploadPromises);
-  } catch (error: any) {
-    throw new Error(`Failed to upload files: ${error.message}`);
-  }
 };
 
 export default function VendorDashboard() {
@@ -287,47 +168,60 @@ export default function VendorDashboard() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // For file uploads in portfolio
-  const handleFileChange = async (
-    e: ChangeEvent<HTMLInputElement>,
-    field: keyof VendorFormState
-  ) => {
+  // File handling
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, field: keyof VendorFormState) => {
     if (!formData) return;
     const files = e.target.files ? Array.from(e.target.files) : [];
-    setFormData({
-      ...formData,
-      [field]: files,
-    });
+    
+    if (field === 'portfolioFiles') {
+      setFormData({ ...formData, [field]: files });
+    } else {
+      setFormData({ ...formData, [field]: files[0] });
+    }
   };
 
-  // For About and other text fields
+  // Input handling
   const handleInputChange = (field: keyof VendorFormState, value: any) => {
     if (!formData) return;
+    setFormData({ ...formData, [field]: value });
+  };
+
+  // Array field handling (checkboxes)
+  const handleArrayFieldChange = (field: keyof VendorFormState, value: string, checked: boolean) => {
+    if (!formData) return;
+    const currentArray = formData[field] as any[];
+    
+    if (checked) {
+      setFormData({ ...formData, [field]: [...currentArray, value] });
+    } else {
+      setFormData({ ...formData, [field]: currentArray.filter(item => item !== value) });
+    }
+  };
+
+  // Remove portfolio image
+  const handleRemovePortfolioImage = (index: number) => {
+    if (!formData) return;
+    const newImages = [...formData.portfolioImages];
+    const removedImage = newImages.splice(index, 1)[0];
     setFormData({
       ...formData,
-      [field]: value,
+      portfolioImages: newImages,
+      removeImages: [...(formData.removeImages || []), removedImage]
     });
   };
 
-  // Save handler for settings tab
+  // Submit handler
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData || !vendor) return;
+    
     setUploading(true);
     setError(null);
 
     try {
-      // Handle portfolio image uploads if any
-      let portfolioImages = vendor.portfolioImages || [];
-      if (formData.portfolioFiles && formData.portfolioFiles.length > 0) {
-        const uploaded = await uploadFiles(formData.portfolioFiles);
-        portfolioImages = [...portfolioImages, ...uploaded];
-      }
-
-      // Prepare FormData for multipart/form-data
       const fd = new FormData();
 
-      // Append all fields to FormData
+      // Basic fields
       fd.append("businessName", formData.businessName);
       fd.append("category", formData.category);
       if (formData.yearOfEstablishment) fd.append("yearOfEstablishment", formData.yearOfEstablishment);
@@ -346,44 +240,59 @@ export default function VendorDashboard() {
       // Array fields
       formData.serviceAreas.forEach((area) => fd.append("serviceAreas", area));
       stringToArray(formData.servicesOffered).forEach((service) => fd.append("servicesOffered", service));
+      formData.paymentModesAccepted.forEach((mode) => fd.append("paymentModesAccepted", mode));
+      formData.facilitiesAvailable.forEach((facility) => fd.append("facilitiesAvailable", facility));
+
+      // Numeric fields
       fd.append("startingPrice", String(formData.startingPrice));
       if (formData.guestCapacityMin !== undefined) fd.append("guestCapacityMin", String(formData.guestCapacityMin));
       if (formData.guestCapacityMax !== undefined) fd.append("guestCapacityMax", String(formData.guestCapacityMax));
-      if (formData.specialities) fd.append("specialities", formData.specialities);
+      if (formData.advancePaymentPercent !== undefined) fd.append("advancePaymentPercent", String(formData.advancePaymentPercent));
 
-      // Images/portfolio
-      fd.append("logoUrl", formData.logoUrl);
-      fd.append("coverImageUrl", formData.coverImageUrl);
-      portfolioImages.forEach((img) => fd.append("portfolioImages", img));
+      // Text fields
+      fd.append("about", formData.about);
+      if (formData.specialities) fd.append("specialities", formData.specialities);
+      if (formData.awards) fd.append("awards", formData.awards);
+      if (formData.notableClients) fd.append("notableClients", formData.notableClients);
+      if (formData.refundPolicy) fd.append("refundPolicy", formData.refundPolicy);
+
+      // Video links
       if (formData.videoLinks) {
         stringToArray(formData.videoLinks).forEach((link) => fd.append("videoLinks", link));
       }
 
-      fd.append("about", formData.about);
-      if (formData.awards) fd.append("awards", formData.awards);
-      if (formData.notableClients) fd.append("notableClients", formData.notableClients);
-      if (formData.advancePaymentPercent !== undefined) fd.append("advancePaymentPercent", String(formData.advancePaymentPercent));
-      if (formData.refundPolicy) fd.append("refundPolicy", formData.refundPolicy);
-      formData.paymentModesAccepted.forEach((mode) => fd.append("paymentModesAccepted", mode));
+      // System fields
       fd.append("username", formData.username);
       fd.append("agreedToTerms", String(formData.agreedToTerms));
       fd.append("status", formData.status);
-      fd.append("createdAt", formData.createdAt);
-      fd.append("updatedAt", formData.updatedAt);
 
-      // File uploads (logo, cover, portfolio)
+      // Current URLs (for non-file fields)
+      if (!formData.logoFile) fd.append("logoUrl", formData.logoUrl);
+      if (!formData.coverImageFile) fd.append("coverImageUrl", formData.coverImageUrl);
+      
+      // Portfolio images (existing ones not being removed)
+      formData.portfolioImages
+        .filter(img => !formData.removeImages?.includes(img))
+        .forEach((img) => fd.append("portfolioImages", img));
+
+      // File uploads
       if (formData.logoFile) fd.append("logoFile", formData.logoFile);
       if (formData.coverImageFile) fd.append("coverImageFile", formData.coverImageFile);
       if (formData.portfolioFiles && formData.portfolioFiles.length > 0) {
         formData.portfolioFiles.forEach((file) => fd.append("portfolioFiles", file));
       }
-      if (formData.removeImages) fd.append("removeImages", "true");
+
+      // Images to remove
+      if (formData.removeImages && formData.removeImages.length > 0) {
+        formData.removeImages.forEach((img) => fd.append("removeImages", img));
+      }
 
       await dispatch(updateVendor({ id: vendor.id, data: fd }) as any).unwrap();
       toast.success("Profile updated successfully!");
       setIsEditing(false);
     } catch (err: any) {
       setError(err?.message || "Failed to update profile");
+      toast.error(err?.message || "Failed to update profile");
     } finally {
       setUploading(false);
     }
@@ -410,6 +319,7 @@ export default function VendorDashboard() {
       </div>
     );
   }
+
   if (error || !vendor) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -417,12 +327,7 @@ export default function VendorDashboard() {
           <XCircle className="mx-auto text-red-500 mb-4" size={64} />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error || 'Vendor not found'}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Retry
-          </button>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
@@ -460,26 +365,21 @@ export default function VendorDashboard() {
             <div className="flex-1 text-white mb-4">
               <h1 className="text-3xl font-bold mb-2">{vendor.businessName}</h1>
               <div className="flex items-center gap-4">
-                <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                <Badge variant="secondary" className="bg-white bg-opacity-20 text-white">
                   {vendor.category}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  vendor.status === 'active'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                </Badge>
+                <Badge className={vendor.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}>
                   {vendor.status}
-                </span>
+                </Badge>
               </div>
             </div>
             <div className="mb-4">
               <Button
                 variant="outline"
-                onClick={() => setIsEditing((prev) => !prev)}
-                className="flex items-center gap-2 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label={isEditing ? "Cancel Edit" : "Edit Profile"}
+                onClick={() => setIsEditing(!isEditing)}
+                className="bg-white text-gray-900 hover:bg-gray-100"
               >
-                <Edit size={20} />
+                <Edit size={16} className="mr-2" />
                 {isEditing ? 'Cancel Edit' : 'Edit Profile'}
               </Button>
             </div>
@@ -488,293 +388,900 @@ export default function VendorDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6">
-          <nav className="flex space-x-8">
-            {['overview', 'services', 'portfolio', 'settings'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm capitalize transition-colors ${
-                  activeTab === tab
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-                aria-current={activeTab === tab ? "page" : undefined}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-600 hover:text-red-800 mt-2"
-            >
-              Dismiss
-            </button>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-6">
+            <TabsList className="h-auto p-0 bg-transparent">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none py-4">
+                <Eye size={16} className="mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="business" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none py-4">
+                <Building size={16} className="mr-2" />
+                Business Info
+              </TabsTrigger>
+              <TabsTrigger value="services" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none py-4">
+                <Settings size={16} className="mr-2" />
+                Services
+              </TabsTrigger>
+              <TabsTrigger value="portfolio" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-none py-4">
+                <ImageIcon size={16} className="mr-2" />
+                Portfolio
+              </TabsTrigger>
+            </TabsList>
           </div>
-        )}
+        </div>
 
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Info */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Quick Stats */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600">₹{vendor.startingPrice?.toLocaleString()}</div>
-                    <div className="text-sm text-gray-600">Starting Price</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600">
-                      {vendor.guestCapacityMax || 'N/A'}
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-600">{error}</p>
+              <Button variant="ghost" size="sm" onClick={() => setError(null)} className="mt-2">
+                Dismiss
+              </Button>
+            </div>
+          )}
+
+          <TabsContent value="overview">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Info */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Quick Stats */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-blue-600">₹{vendor.startingPrice?.toLocaleString()}</div>
+                        <div className="text-sm text-gray-600">Starting Price</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600">
+                          {vendor.guestCapacityMax || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600">Max Capacity</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-purple-600">
+                          {vendor.serviceAreas?.length || 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Service Areas</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">Max Capacity</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-600">
-                      {vendor.serviceAreas?.length || 0}
+                  </CardContent>
+                </Card>
+
+                {/* About */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>About</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 leading-relaxed">
+                      {vendor.about || 'No description available.'}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Services */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Services Offered</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {vendor.servicesOffered?.map((service, index) => (
+                        <Badge key={index} variant="secondary">
+                          {service}
+                        </Badge>
+                      ))}
                     </div>
-                    <div className="text-sm text-gray-600">Service Areas</div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* About */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">About</h2>
-                {isEditing ? (
-                  <Textarea
-                    rows={4}
-                    value={formData?.about || ''}
-                    onChange={(e) => handleInputChange('about', e.target.value)}
-                    className="w-full"
-                    placeholder="Tell us about your business..."
-                  />
-                ) : (
-                  <p className="text-gray-700 leading-relaxed">
-                    {vendor.about || 'No description available.'}
-                  </p>
-                )}
-              </div>
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Contact Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Phone className="text-gray-400" size={18} />
+                      <span>{vendor.mobileNumber}</span>
+                      {vendor.mobileVerified && (
+                        <CheckCircle className="text-green-500" size={16} />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Mail className="text-gray-400" size={18} />
+                      <span>{vendor.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="text-gray-400" size={18} />
+                      <span>{vendor.city}, {vendor.state}</span>
+                    </div>
+                    {vendor.websiteOrSocial && (
+                      <div className="flex items-center gap-3">
+                        <Globe className="text-gray-400" size={18} />
+                        <a
+                          href={vendor.websiteOrSocial}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Website
+                        </a>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-              {/* Services */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Services Offered</h2>
-                <div className="flex flex-wrap gap-2">
-                  {vendor.servicesOffered?.map((service, index) => (
-                    <span
-                      key={index}
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      {service}
-                    </span>
-                  ))}
-                </div>
+                {/* Payment Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="text-sm text-gray-600">Advance Payment:</span>
+                      <div className="font-semibold">
+                        {vendor.advancePaymentPercent ? `${vendor.advancePaymentPercent}%` : 'Not specified'}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600 block mb-2">Accepted Modes:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {vendor.paymentModesAccepted?.map((mode, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {mode}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Business Highlights */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Business Highlights</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {vendor.yearOfEstablishment && (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="text-gray-400" size={18} />
+                        <span>Est. {vendor.yearOfEstablishment}</span>
+                      </div>
+                    )}
+                    {vendor.awards && (
+                      <div className="flex items-center gap-3">
+                        <Award className="text-gray-400" size={18} />
+                        <span>{vendor.awards}</span>
+                      </div>
+                    )}
+                    {vendor.notableClients && (
+                      <div className="flex items-center gap-3">
+                        <Users className="text-gray-400" size={18} />
+                        <span>{vendor.notableClients}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </div>
+          </TabsContent>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Contact Info */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Phone className="text-gray-400" size={18} />
-                    <span>{vendor.mobileNumber}</span>
-                    {vendor.mobileVerified && (
-                      <CheckCircle className="text-green-500" size={16} />
+          <TabsContent value="business">
+            {isEditing ? (
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Basic Business Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="businessName">Business Name *</Label>
+                        <Input
+                          id="businessName"
+                          value={formData?.businessName || ''}
+                          onChange={(e) => handleInputChange('businessName', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="category">Category *</Label>
+                        <Select value={formData?.category} onValueChange={(value) => handleInputChange('category', value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="yearOfEstablishment">Year of Establishment</Label>
+                        <Input
+                          id="yearOfEstablishment"
+                          type="number"
+                          value={formData?.yearOfEstablishment || ''}
+                          onChange={(e) => handleInputChange('yearOfEstablishment', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="username">Username *</Label>
+                        <Input
+                          id="username"
+                          value={formData?.username || ''}
+                          onChange={(e) => handleInputChange('username', e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="contactPersonName">Contact Person Name *</Label>
+                        <Input
+                          id="contactPersonName"
+                          value={formData?.contactPersonName || ''}
+                          onChange={(e) => handleInputChange('contactPersonName', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="designation">Designation *</Label>
+                        <Select value={formData?.designation} onValueChange={(value) => handleInputChange('designation', value)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {designations.map((des) => (
+                              <SelectItem key={des} value={des}>{des}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="mobileNumber">Mobile Number *</Label>
+                        <Input
+                          id="mobileNumber"
+                          value={formData?.mobileNumber || ''}
+                          onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+                        <Input
+                          id="whatsappNumber"
+                          value={formData?.whatsappNumber || ''}
+                          onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData?.email || ''}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="websiteOrSocial">Website/Social Media</Label>
+                        <Input
+                          id="websiteOrSocial"
+                          value={formData?.websiteOrSocial || ''}
+                          onChange={(e) => handleInputChange('websiteOrSocial', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Location & Coverage</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="address">Address *</Label>
+                      <Textarea
+                        id="address"
+                        value={formData?.address || ''}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="city">City *</Label>
+                        <Input
+                          id="city"
+                          value={formData?.city || ''}
+                          onChange={(e) => handleInputChange('city', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="state">State *</Label>
+                        <Input
+                          id="state"
+                          value={formData?.state || ''}
+                          onChange={(e) => handleInputChange('state', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="pinCode">Pin Code *</Label>
+                        <Input
+                          id="pinCode"
+                          value={formData?.pinCode || ''}
+                          onChange={(e) => handleInputChange('pinCode', e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Service Areas *</Label>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {serviceAreas.map((area) => (
+                          <div key={area} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`serviceArea-${area}`}
+                              checked={formData?.serviceAreas?.includes(area) || false}
+                              onCheckedChange={(checked) => 
+                                handleArrayFieldChange('serviceAreas', area, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`serviceArea-${area}`} className="text-sm">{area}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-4">
+                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={uploading}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={uploading}>
+                    {uploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} className="mr-2" />
+                        Save Changes
+                      </>
                     )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="text-gray-400" size={18} />
-                    <span>{vendor.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="text-gray-400" size={18} />
-                    <span>{vendor.city}, {vendor.state}</span>
-                  </div>
-                  {vendor.websiteOrSocial && (
-                    <div className="flex items-center gap-3">
-                      <Globe className="text-gray-400" size={18} />
-                      <a
-                        href={vendor.websiteOrSocial}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Website
-                      </a>
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Basic Business Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-gray-600">Business Name</Label>
+                        <p className="font-semibold">{vendor.businessName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Category</Label>
+                        <p className="font-semibold">{vendor.category}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Year of Establishment</Label>
+                        <p className="font-semibold">{vendor.yearOfEstablishment || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Username</Label>
+                        <p className="font-semibold">{vendor.username}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-gray-600">Contact Person</Label>
+                        <p className="font-semibold">{vendor.contactPersonName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Designation</Label>
+                        <p className="font-semibold">{vendor.designation}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Mobile Number</Label>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold">{vendor.mobileNumber}</p>
+                          {vendor.mobileVerified && <CheckCircle className="text-green-500" size={16} />}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">WhatsApp Number</Label>
+                        <p className="font-semibold">{vendor.whatsappNumber || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Email</Label>
+                        <p className="font-semibold">{vendor.email}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Website/Social</Label>
+                        <p className="font-semibold">{vendor.websiteOrSocial || 'Not provided'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Location & Coverage</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-gray-600">Address</Label>
+                      <p className="font-semibold">{vendor.address}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-sm text-gray-600">City</Label>
+                        <p className="font-semibold">{vendor.city}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">State</Label>
+                        <p className="font-semibold">{vendor.state}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Pin Code</Label>
+                        <p className="font-semibold">{vendor.pinCode}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-gray-600">Service Areas</Label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {vendor.serviceAreas?.map((area, index) => (
+                          <Badge key={index} variant="secondary">{area}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="services">
+            {isEditing && (
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Services &amp; Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="servicesOffered">Services Offered (comma-separated) *</Label>
+                      <Textarea
+                        id="servicesOffered"
+                        value={formData?.servicesOffered || ''}
+                        onChange={(e) => handleInputChange('servicesOffered', e.target.value)}
+                        placeholder="e.g., Wedding Photography, Pre-wedding Shoots, Event Coverage"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="startingPrice">Starting Price (₹) *</Label>
+                        <Input
+                          id="startingPrice"
+                          type="number"
+                          value={formData?.startingPrice || ''}
+                          onChange={(e) => handleInputChange('startingPrice', parseInt(e.target.value) || 0)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="guestCapacityMin">Min Guest Capacity</Label>
+                        <Input
+                          id="guestCapacityMin"
+                          type="number"
+                          value={formData?.guestCapacityMin || ''}
+                          onChange={(e) => handleInputChange('guestCapacityMin', parseInt(e.target.value) || undefined)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="guestCapacityMax">Max Guest Capacity</Label>
+                        <Input
+                          id="guestCapacityMax"
+                          type="number"
+                          value={formData?.guestCapacityMax || ''}
+                          onChange={(e) => handleInputChange('guestCapacityMax', parseInt(e.target.value) || undefined)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="specialities">Specialities</Label>
+                      <Textarea
+                        id="specialities"
+                        value={formData?.specialities || ''}
+                        onChange={(e) => handleInputChange('specialities', e.target.value)}
+                        placeholder="What makes your service special?"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Facilities Available</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {facilities.map((facility) => (
+                        <div key={facility} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`facility-${facility}`}
+                            checked={formData?.facilitiesAvailable?.includes(facility) || false}
+                            onCheckedChange={(checked) =>
+                              handleArrayFieldChange('facilitiesAvailable', facility, checked as boolean)
+                            }
+                          />
+                          <Label htmlFor={`facility-${facility}`} className="text-sm">{facility}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment &amp; Booking Terms</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="advancePaymentPercent">Advance Payment (%)</Label>
+                        <Input
+                          id="advancePaymentPercent"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData?.advancePaymentPercent || ''}
+                          onChange={(e) => handleInputChange('advancePaymentPercent', parseInt(e.target.value) || undefined)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="refundPolicy">Refund Policy</Label>
+                      <Textarea
+                        id="refundPolicy"
+                        value={formData?.refundPolicy || ''}
+                        onChange={(e) => handleInputChange('refundPolicy', e.target.value)}
+                        placeholder="Describe your refund policy"
+                      />
+                    </div>
+                    <div>
+                      <Label>Payment Modes Accepted</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mt-2">
+                        {paymentModes.map((mode) => (
+                          <div key={mode} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`payment-${mode}`}
+                              checked={formData?.paymentModesAccepted?.includes(mode) || false}
+                              onCheckedChange={(checked) =>
+                                handleArrayFieldChange('paymentModesAccepted', mode, checked as boolean)
+                              }
+                            />
+                            <Label htmlFor={`payment-${mode}`} className="text-sm">{mode}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Business Highlights</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="about">About Your Business *</Label>
+                      <Textarea
+                        id="about"
+                        rows={4}
+                        value={formData?.about || ''}
+                        onChange={(e) => handleInputChange('about', e.target.value)}
+                        placeholder="Tell us about your business, experience, and what makes you unique"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="awards">Awards &amp; Recognition</Label>
+                      <Textarea
+                        id="awards"
+                        value={formData?.awards || ''}
+                        onChange={(e) => handleInputChange('awards', e.target.value)}
+                        placeholder="Any awards, certifications, or recognition received"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="notableClients">Notable Clients</Label>
+                      <Textarea
+                        id="notableClients"
+                        value={formData?.notableClients || ''}
+                        onChange={(e) => handleInputChange('notableClients', e.target.value)}
+                        placeholder="Mention any notable clients or events you've handled"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="videoLinks">Video Links (YouTube/Vimeo, comma-separated)</Label>
+                      <Textarea
+                        id="videoLinks"
+                        value={formData?.videoLinks || ''}
+                        onChange={(e) => handleInputChange('videoLinks', e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..., https://vimeo.com/..."
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Images</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Logo Upload */}
+                    <div>
+                      <Label>Business Logo</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        {vendor.logoUrl && (
+                          <img src={vendor.logoUrl} alt="Current Logo" className="w-16 h-16 rounded object-cover" />
+                        )}
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, 'logoFile')}
+                            className="hidden"
+                            id="logo-upload"
+                          />
+                          <label htmlFor="logo-upload" className="cursor-pointer">
+                            <div className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
+                              <Upload size={16} />
+                              {formData?.logoFile ? formData.logoFile.name : 'Choose Logo'}
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cover Image Upload */}
+                    <div>
+                      <Label>Cover Image</Label>
+                      <div className="flex items-center gap-4 mt-2">
+                        {vendor.coverImageUrl && (
+                          <img src={vendor.coverImageUrl} alt="Current Cover" className="w-24 h-16 rounded object-cover" />
+                        )}
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileChange(e, 'coverImageFile')}
+                            className="hidden"
+                            id="cover-upload"
+                          />
+                          <label htmlFor="cover-upload" className="cursor-pointer">
+                            <div className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors">
+                              <Upload size={16} />
+                              {formData?.coverImageFile ? formData.coverImageFile.name : 'Choose Cover Image'}
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end gap-4">
+                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={uploading}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={uploading}>
+                    {uploading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} className="mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </TabsContent>
+
+          <TabsContent value="portfolio">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Portfolio Images</CardTitle>
+                  {isEditing && (
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleFileChange(e, 'portfolioFiles')}
+                        className="hidden"
+                        id="portfolio-upload"
+                      />
+                      <label htmlFor="portfolio-upload" className="cursor-pointer">
+                        <div className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                          <Plus size={16} />
+                          Add Images
+                        </div>
+                      </label>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Payment Info */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-sm text-gray-600">Advance Payment:</span>
-                    <div className="font-semibold">
-                      {vendor.advancePaymentPercent ? `${vendor.advancePaymentPercent}%` : 'Not specified'}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-gray-600 block mb-2">Accepted Modes:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {vendor.paymentModesAccepted?.map((mode, index) => (
-                        <span
-                          key={index}
-                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                        >
-                          {mode}
-                        </span>
+              </CardHeader>
+              <CardContent>
+                {isEditing && formData?.portfolioFiles && formData.portfolioFiles.length > 0 && (
+                  <div className="mb-6">
+                    <Label className="text-sm text-gray-600 block mb-2">New Images to Upload:</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.portfolioFiles.map((file, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`New ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                          <Badge variant="secondary" className="absolute top-2 left-2 text-xs">
+                            New
+                          </Badge>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Business Highlights */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Business Highlights</h2>
-                <div className="space-y-3">
-                  {vendor.yearOfEstablishment && (
-                    <div className="flex items-center gap-3">
-                      <Calendar className="text-gray-400" size={18} />
-                      <span>Est. {vendor.yearOfEstablishment}</span>
-                    </div>
-                  )}
-                  {vendor.awards && (
-                    <div className="flex items-center gap-3">
-                      <Award className="text-gray-400" size={18} />
-                      <span>{vendor.awards}</span>
-                    </div>
-                  )}
-                  {vendor.notableClients && (
-                    <div className="flex items-center gap-3">
-                      <Users className="text-gray-400" size={18} />
-                      <span>{vendor.notableClients}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'portfolio' && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Portfolio</h2>
-              {isEditing && (
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => handleFileChange(e, 'portfolioFiles')}
-                    className="hidden"
-                    id="portfolio-upload"
-                  />
-                  <label
-                    htmlFor="portfolio-upload"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-700"
-                  >
-                    <Plus size={16} />
-                    Add Images
-                  </label>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {vendor.portfolioImages?.map((image, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={image}
-                    alt={`Portfolio ${index + 1}`}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  {isEditing && (
-                    <button className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {(!vendor.portfolioImages || vendor.portfolioImages.length === 0) && (
-              <div className="text-center py-12 text-gray-500">
-                <Camera size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No portfolio images uploaded yet.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Fix: Add missing edit form rendering for 'settings' tab */}
-        {isEditing && activeTab === 'settings' && (
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white rounded-lg p-6 shadow-sm mt-8">
-            {/* Example: Only About field for brevity, add more fields as needed */}
-            <div className="mb-4">
-              <Label className="block text-gray-700 font-medium mb-2" htmlFor="about">
-                About
-              </Label>
-              <Textarea
-                id="about"
-                rows={4}
-                value={formData?.about || ''}
-                onChange={(e) => handleInputChange('about', e.target.value)}
-                className="w-full"
-                placeholder="Tell us about your business..."
-              />
-            </div>
-            {/* Add more editable fields here as needed */}
-            <div className="flex justify-end gap-4 mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                disabled={uploading}
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} />
-                    Save Changes
-                  </>
                 )}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {vendor.portfolioImages?.map((image, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={image}
+                        alt={`Portfolio ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      {isEditing && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleRemovePortfolioImage(index)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {(!vendor.portfolioImages || vendor.portfolioImages.length === 0) && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Camera size={48} className="mx-auto mb-4 opacity-50" />
+                    <p>No portfolio images uploaded yet.</p>
+                    {isEditing && (
+                      <p className="text-sm mt-2">Use the "Add Images" button above to upload portfolio images.</p>
+                    )}
+                  </div>
+                )}
+
+                {isEditing && (
+                  <div className="flex justify-end gap-4 mt-6 pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={uploading}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={uploading}
+                      form="" // This will not submit any form, but we want to handle click below
+                      onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                        // Prevent default button behavior
+                        e.preventDefault();
+                        // Find the closest form and submit it
+                        const form = (e.target as HTMLElement).closest("form");
+                        if (form) {
+                          form.requestSubmit();
+                        }
+                      }}
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={16} className="mr-2" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Video Links Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Video Portfolio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vendor.videoLinks && vendor.videoLinks.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {vendor.videoLinks.map((link, index) => (
+                      <div key={index} className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                        <a 
+                          href={link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-2"
+                        >
+                          <Globe size={16} />
+                          Video {index + 1}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Globe size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No video links added yet.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
-};
+}
