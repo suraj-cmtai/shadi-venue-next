@@ -1,46 +1,21 @@
-"use client"
-
-import { useEffect, useState } from "react";
+"use client";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
 import {
-  fetchVendors,
+  fetchVendorById,
   updateVendor,
-  deleteVendor,
-  setFilters,
-  clearFilters,
-  selectVendors,
+  selectSelectedVendor,
   selectVendorLoading,
   selectVendorError,
-  VendorType,
 } from "@/lib/redux/features/vendorSlice";
-import { AlertCircle, ImageIcon, Loader2Icon, SearchIcon, TrashIcon, FilterIcon } from "lucide-react";
+import { selectAuth } from "@/lib/redux/features/authSlice";
 import { toast } from "sonner";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { uploadImageClient } from "@/lib/firebase-client";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -48,624 +23,758 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import Image from "next/image";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Star,
+  Award,
+  Users,
+  CreditCard,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Plus,
+  Trash2,
+  Camera,
+  Edit,
+  Upload,
+  Save,
+  Eye,
+} from "lucide-react";
 
-interface VendorFormState {
-  name: string;
-  type: VendorType;
-  description: string;
-  services: string[];
-  basePrice: number;
-  currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
+import Link from "next/link";
+
+// Types (matching your vendor interface)
+type VendorCategory =
+  | "Venue"
+  | "Planner"
+  | "Photographer"
+  | "Decorator"
+  | "Caterer"
+  | "Makeup"
+  | "Entertainment"
+  | "Others";
+type ServiceArea = "Local City" | "Statewide" | "Pan India" | "International";
+type PaymentMode = "UPI" | "Cash" | "Bank Transfer" | "Card" | "Other";
+
+interface Vendor {
+  id: string;
+  businessName: string;
+  category: VendorCategory;
+  yearOfEstablishment?: string;
+  contactPersonName: string;
+  designation: "Owner" | "Manager" | "Other";
+  mobileNumber: string;
+  mobileVerified?: boolean;
+  whatsappNumber?: string;
+  email: string;
+  websiteOrSocial?: string;
   address: string;
   city: string;
   state: string;
-  country: string;
-  phone: string;
-  email: string;
-  website?: string;
-  images: File[];
-  availableDays: string[];
-  availableHours: string;
-  status: 'active' | 'inactive';
+  pinCode: string;
+  serviceAreas: ServiceArea[];
+  servicesOffered: string[];
+  startingPrice: number;
+  guestCapacityMin?: number;
+  guestCapacityMax?: number;
+  specialities?: string;
+  logoUrl: string;
+  coverImageUrl: string;
+  portfolioImages: string[];
+  videoLinks?: string[];
+  about: string;
+  awards?: string;
+  notableClients?: string;
+  advancePaymentPercent?: number;
+  refundPolicy?: string;
+  paymentModesAccepted: PaymentMode[];
+  username: string;
+  agreedToTerms: boolean;
+  status: "active" | "inactive";
+  createdAt: string;
+  updatedAt: string;
 }
 
-const initialFormState: VendorFormState = {
-  name: "",
-  type: "other",
-  description: "",
-  services: [],
-  basePrice: 0,
-  currency: "USD",
-  address: "",
-  city: "",
-  state: "",
-  country: "",
-  phone: "",
-  email: "",
-  website: "",
-  images: [],
-  availableDays: [],
-  availableHours: "",
-  status: "active",
+// Helper function to safely convert array or string to comma-separated string
+const arrayToString = (value: any): string => {
+  if (Array.isArray(value)) {
+    return value.join(", ");
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return "";
 };
 
-const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR'] as const;
-const vendorTypes: VendorType[] = ['flower', 'catering', 'decoration', 'photography', 'music', 'other'];
+// Helper function to safely convert comma-separated string to array
+const stringToArray = (value: string): string[] => {
+  if (!value || typeof value !== "string") return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
 
-export default function VendorsPage() {
+// Form state interface
+interface VendorFormState {
+  businessName: string;
+  category: VendorCategory;
+  yearOfEstablishment?: string;
+  contactPersonName: string;
+  designation: "Owner" | "Manager" | "Other";
+  mobileNumber: string;
+  mobileVerified?: boolean;
+  whatsappNumber?: string;
+  email: string;
+  websiteOrSocial?: string;
+  address: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  serviceAreas: ServiceArea[];
+  servicesOffered: string;
+  startingPrice: number;
+  guestCapacityMin?: number;
+  guestCapacityMax?: number;
+  specialities?: string;
+  logoUrl: string;
+  coverImageUrl: string;
+  portfolioImages: string[];
+  videoLinks?: string;
+  about: string;
+  awards?: string;
+  notableClients?: string;
+  advancePaymentPercent?: number;
+  refundPolicy?: string;
+  paymentModesAccepted: PaymentMode[];
+  username: string;
+  agreedToTerms: boolean;
+  status: "active" | "inactive";
+  createdAt: string;
+  updatedAt: string;
+  // File uploads
+  logoFile?: File;
+  coverImageFile?: File;
+  portfolioFiles?: File[];
+  removeImages?: boolean;
+}
+
+const categories: VendorCategory[] = [
+  "Venue",
+  "Planner",
+  "Photographer",
+  "Decorator",
+  "Caterer",
+  "Makeup",
+  "Entertainment",
+  "Others",
+];
+const serviceAreas: ServiceArea[] = [
+  "Local City",
+  "Statewide",
+  "Pan India",
+  "International",
+];
+const paymentModes: PaymentMode[] = [
+  "UPI",
+  "Cash",
+  "Bank Transfer",
+  "Card",
+  "Other",
+];
+
+const statusColors: Record<Vendor["status"], string> = {
+  active: "bg-green-100 text-green-800 border-green-200",
+  inactive: "bg-gray-100 text-gray-800 border-gray-200",
+};
+
+const getInitialFormState = (vendor: Vendor | null): VendorFormState | null => {
+  if (!vendor) return null;
+  return {
+    businessName: vendor.businessName || "",
+    category: vendor.category || "Venue",
+    yearOfEstablishment: vendor.yearOfEstablishment || "",
+    contactPersonName: vendor.contactPersonName || "",
+    designation: vendor.designation || "Owner",
+    mobileNumber: vendor.mobileNumber || "",
+    mobileVerified: vendor.mobileVerified || false,
+    whatsappNumber: vendor.whatsappNumber || "",
+    email: vendor.email || "",
+    websiteOrSocial: vendor.websiteOrSocial || "",
+    address: vendor.address || "",
+    city: vendor.city || "",
+    state: vendor.state || "",
+    pinCode: vendor.pinCode || "",
+    serviceAreas: vendor.serviceAreas || [],
+    servicesOffered: arrayToString(vendor.servicesOffered),
+    startingPrice: vendor.startingPrice || 0,
+    guestCapacityMin: vendor.guestCapacityMin || undefined,
+    guestCapacityMax: vendor.guestCapacityMax || undefined,
+    specialities: vendor.specialities || "",
+    logoUrl: vendor.logoUrl || "",
+    coverImageUrl: vendor.coverImageUrl || "",
+    portfolioImages: vendor.portfolioImages || [],
+    videoLinks: vendor.videoLinks ? arrayToString(vendor.videoLinks) : "",
+    about: vendor.about || "",
+    awards: vendor.awards || "",
+    notableClients: vendor.notableClients || "",
+    advancePaymentPercent: vendor.advancePaymentPercent || undefined,
+    refundPolicy: vendor.refundPolicy || "",
+    paymentModesAccepted: vendor.paymentModesAccepted || [],
+    username: vendor.username || "",
+    agreedToTerms: vendor.agreedToTerms || false,
+    status: vendor.status || "inactive",
+    createdAt: vendor.createdAt || "",
+    updatedAt: vendor.updatedAt || "",
+    logoFile: undefined,
+    coverImageFile: undefined,
+    portfolioFiles: [],
+    removeImages: false,
+  };
+};
+
+// File upload helper functions
+const uploadFile = async (file: File): Promise<string> => {
+  try {
+    if (file.type.startsWith("image/")) {
+      return await uploadImageClient(file);
+    } else {
+      throw new Error("Unsupported file type");
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to upload file: ${error.message}`);
+  }
+};
+
+const uploadFiles = async (files: File[]): Promise<string[]> => {
+  if (!files.length) return [];
+  try {
+    const uploadPromises = files.map((file) => uploadFile(file));
+    return await Promise.all(uploadPromises);
+  } catch (error: any) {
+    throw new Error(`Failed to upload files: ${error.message}`);
+  }
+};
+
+export default function VendorDashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const vendors = useSelector(selectVendors);
+  const auth = useSelector(selectAuth);
+  const vendor = useSelector(selectSelectedVendor);
   const isLoading = useSelector(selectVendorLoading);
-  const error = useSelector(selectVendorError);
+  const errorFromRedux = useSelector(selectVendorError);
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState<VendorType | ''>('');
-  const [selectedCity, setSelectedCity] = useState("");
-  const [editVendorForm, setEditVendorForm] = useState<VendorFormState | null>(null);
-  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<VendorFormState | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // For file uploads in portfolio
+  const handleFileChange = async (
+    e: ChangeEvent<HTMLInputElement>,
+    field: keyof VendorFormState
+  ) => {
+    if (!formData) return;
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    setFormData({
+      ...formData,
+      [field]: files,
+    });
+  };
+
+  // For About and other text fields
+  const handleInputChange = (field: keyof VendorFormState, value: any) => {
+    if (!formData) return;
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  };
+
+  // Save handler for settings tab
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formData || !vendor) return;
+    setUploading(true);
+    setError(null);
+
+    try {
+      // Handle portfolio image uploads if any
+      let portfolioImages = vendor.portfolioImages || [];
+      if (formData.portfolioFiles && formData.portfolioFiles.length > 0) {
+        const uploaded = await uploadFiles(formData.portfolioFiles);
+        portfolioImages = [...portfolioImages, ...uploaded];
+      }
+
+      // Prepare FormData for multipart/form-data
+      const fd = new FormData();
+
+      // Append all fields to FormData
+      fd.append("businessName", formData.businessName);
+      fd.append("category", formData.category);
+      if (formData.yearOfEstablishment) fd.append("yearOfEstablishment", formData.yearOfEstablishment);
+      fd.append("contactPersonName", formData.contactPersonName);
+      fd.append("designation", formData.designation);
+      fd.append("mobileNumber", formData.mobileNumber);
+      fd.append("mobileVerified", String(formData.mobileVerified ?? false));
+      if (formData.whatsappNumber) fd.append("whatsappNumber", formData.whatsappNumber);
+      fd.append("email", formData.email);
+      if (formData.websiteOrSocial) fd.append("websiteOrSocial", formData.websiteOrSocial);
+      fd.append("address", formData.address);
+      fd.append("city", formData.city);
+      fd.append("state", formData.state);
+      fd.append("pinCode", formData.pinCode);
+
+      // Array fields
+      formData.serviceAreas.forEach((area) => fd.append("serviceAreas", area));
+      stringToArray(formData.servicesOffered).forEach((service) => fd.append("servicesOffered", service));
+      fd.append("startingPrice", String(formData.startingPrice));
+      if (formData.guestCapacityMin !== undefined) fd.append("guestCapacityMin", String(formData.guestCapacityMin));
+      if (formData.guestCapacityMax !== undefined) fd.append("guestCapacityMax", String(formData.guestCapacityMax));
+      if (formData.specialities) fd.append("specialities", formData.specialities);
+
+      // Images/portfolio
+      fd.append("logoUrl", formData.logoUrl);
+      fd.append("coverImageUrl", formData.coverImageUrl);
+      portfolioImages.forEach((img) => fd.append("portfolioImages", img));
+      if (formData.videoLinks) {
+        stringToArray(formData.videoLinks).forEach((link) => fd.append("videoLinks", link));
+      }
+
+      fd.append("about", formData.about);
+      if (formData.awards) fd.append("awards", formData.awards);
+      if (formData.notableClients) fd.append("notableClients", formData.notableClients);
+      if (formData.advancePaymentPercent !== undefined) fd.append("advancePaymentPercent", String(formData.advancePaymentPercent));
+      if (formData.refundPolicy) fd.append("refundPolicy", formData.refundPolicy);
+      formData.paymentModesAccepted.forEach((mode) => fd.append("paymentModesAccepted", mode));
+      fd.append("username", formData.username);
+      fd.append("agreedToTerms", String(formData.agreedToTerms));
+      fd.append("status", formData.status);
+      fd.append("createdAt", formData.createdAt);
+      fd.append("updatedAt", formData.updatedAt);
+
+      // File uploads (logo, cover, portfolio)
+      if (formData.logoFile) fd.append("logoFile", formData.logoFile);
+      if (formData.coverImageFile) fd.append("coverImageFile", formData.coverImageFile);
+      if (formData.portfolioFiles && formData.portfolioFiles.length > 0) {
+        formData.portfolioFiles.forEach((file) => fd.append("portfolioFiles", file));
+      }
+      if (formData.removeImages) fd.append("removeImages", "true");
+
+      await dispatch(updateVendor({ id: vendor.id, data: fd }) as any).unwrap();
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (err: any) {
+      setError(err?.message || "Failed to update profile");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchVendors());
-  }, [dispatch]);
-
-  const filteredVendors = vendors.filter(vendor => {
-    const matchesSearch = 
-      vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vendor.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vendor.location.city.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesType = !selectedType || vendor.type === selectedType;
-    const matchesCity = !selectedCity || vendor.location.city.toLowerCase() === selectedCity.toLowerCase();
-
-    return matchesSearch && matchesType && matchesCity;
-  });
-
-  const uniqueCities = Array.from(new Set(vendors.map(v => v.location.city))).filter(Boolean);
-
-  const handleTypeFilter = (type: VendorType | '') => {
-    setSelectedType(type);
-    dispatch(setFilters({ type }));
-  };
-
-  const handleCityFilter = (city: string) => {
-    setSelectedCity(city);
-    dispatch(setFilters({ city }));
-  };
-
-  const clearAllFilters = () => {
-    setSelectedType('');
-    setSelectedCity('');
-    setSearchQuery('');
-    dispatch(clearFilters());
-  };
-
-  const handleEdit = async () => {
-    if (!editVendorForm || !selectedVendorId || isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("id", selectedVendorId);
-      formData.append("name", editVendorForm.name);
-      formData.append("type", editVendorForm.type);
-      formData.append("description", editVendorForm.description);
-      formData.append("services", editVendorForm.services.join(','));
-      formData.append("basePrice", editVendorForm.basePrice.toString());
-      formData.append("currency", editVendorForm.currency);
-      formData.append("address", editVendorForm.address);
-      formData.append("city", editVendorForm.city);
-      formData.append("state", editVendorForm.state);
-      formData.append("country", editVendorForm.country);
-      formData.append("phone", editVendorForm.phone);
-      formData.append("email", editVendorForm.email);
-      if (editVendorForm.website) {
-        formData.append("website", editVendorForm.website);
-      }
-      formData.append("availableDays", editVendorForm.availableDays.join(','));
-      formData.append("availableHours", editVendorForm.availableHours);
-      formData.append("status", editVendorForm.status);
-
-      editVendorForm.images.forEach(image => {
-        formData.append("images", image);
-      });
-
-      await dispatch(updateVendor({ id: selectedVendorId, data: formData })).unwrap();
-      toast.success("Vendor updated successfully");
-      setIsEditDialogOpen(false);
-      setEditVendorForm(null);
-      setSelectedVendorId(null);
-    } catch (err: any) {
-      toast.error(err.message || "Error updating vendor");
-    } finally {
-      setIsSubmitting(false);
+    if (auth?.data?.role === "vendor" && auth?.data?.roleId) {
+      dispatch(fetchVendorById(auth.data.roleId));
     }
-  };
+  }, [auth, dispatch]);
 
-  const handleDelete = async () => {
-    if (!selectedVendorId || isSubmitting) return;
+  useEffect(() => {
+    setFormData(getInitialFormState(vendor));
+  }, [vendor]);
 
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (errorFromRedux) setError(errorFromRedux);
+  }, [errorFromRedux]);
 
-    try {
-      await dispatch(deleteVendor(selectedVendorId)).unwrap();
-      toast.success("Vendor deleted successfully");
-      setIsDeleteDialogOpen(false);
-      setSelectedVendorId(null);
-    } catch (err: any) {
-      toast.error(err.message || "Error deleting vendor");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  if (error || !vendor) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-sm text-center">
+          <XCircle className="mx-auto text-red-500 mb-4" size={64} />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error || 'Vendor not found'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Vendor Management</h1>
-        <div className="flex gap-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search vendors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <FilterIcon className="h-4 w-4" />
-                Filters
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="p-2">
-                <Label>Vendor Type</Label>
-                <Select value={selectedType} onValueChange={(value: VendorType | '') => handleTypeFilter(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
-                    {vendorTypes.map(type => (
-                      <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Cover Image */}
+      <div className="relative h-64 bg-gradient-to-r from-blue-600 to-purple-600">
+        {vendor.coverImageUrl && (
+          <img
+            src={vendor.coverImageUrl}
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-black bg-opacity-30" />
+
+        {/* Profile Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="max-w-7xl mx-auto flex items-end gap-6">
+            <div className="relative">
+              {vendor.logoUrl ? (
+                <img
+                  src={vendor.logoUrl}
+                  alt={vendor.businessName}
+                  className="w-32 h-32 rounded-full border-4 border-white object-cover"
+                />
+              ) : (
+                <div className="w-32 h-32 bg-gray-300 rounded-full border-4 border-white flex items-center justify-center">
+                  <Camera className="text-gray-500" size={32} />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 text-white mb-4">
+              <h1 className="text-3xl font-bold mb-2">{vendor.businessName}</h1>
+              <div className="flex items-center gap-4">
+                <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                  {vendor.category}
+                </span>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  vendor.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {vendor.status}
+                </span>
               </div>
-              <div className="p-2">
-                <Label>City</Label>
-                <Select value={selectedCity} onValueChange={handleCityFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Cities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Cities</SelectItem>
-                    {uniqueCities.map(city => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <DropdownMenuItem 
-                className="justify-center text-blue-600"
-                onClick={clearAllFilters}
+            </div>
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditing((prev) => !prev)}
+                className="flex items-center gap-2 bg-white text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label={isEditing ? "Cancel Edit" : "Edit Profile"}
               >
-                Clear Filters
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Edit size={20} />
+                {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="px-4 py-3 text-left">Vendor</th>
-                <th className="px-4 py-3 text-left">Type</th>
-                <th className="px-4 py-3 text-left">Contact</th>
-                <th className="px-4 py-3 text-left">Location</th>
-                <th className="px-4 py-3 text-left">Base Price</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVendors.map((vendor) => (
-                <tr key={vendor.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage 
-                          src={vendor.portfolio.images[0]} 
-                          alt={vendor.name}
-                        />
-                        <AvatarFallback>
-                          {vendor.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold">{vendor.name}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-[200px]">
-                          {vendor.description}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant="secondary">
-                      {vendor.type}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm">
-                      {vendor.contactInfo.phone}
-                      <div className="text-gray-500">{vendor.contactInfo.email}</div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm">
-                      {vendor.location.city}, {vendor.location.country}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm">
-                      {vendor.pricing.basePrice} {vendor.pricing.currency}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge
-                      variant={vendor.status === 'active' ? 'default' : 'secondary'}
-                    >
-                      {vendor.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVendorId(vendor.id);
-                          setEditVendorForm({
-                            name: vendor.name,
-                            type: vendor.type,
-                            description: vendor.description,
-                            services: vendor.services,
-                            basePrice: vendor.pricing.basePrice,
-                            currency: vendor.pricing.currency,
-                            address: vendor.location.address,
-                            city: vendor.location.city,
-                            state: vendor.location.state,
-                            country: vendor.location.country,
-                            phone: vendor.contactInfo.phone,
-                            email: vendor.contactInfo.email,
-                            website: vendor.contactInfo.website,
-                            images: [],
-                            availableDays: vendor.availability.days,
-                            availableHours: vendor.availability.hours,
-                            status: vendor.status,
-                          });
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedVendorId(vendor.id);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredVendors.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                    No vendors found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6">
+          <nav className="flex space-x-8">
+            {['overview', 'services', 'portfolio', 'settings'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`py-4 px-2 border-b-2 font-medium text-sm capitalize transition-colors ${
+                  activeTab === tab
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                aria-current={activeTab === tab ? "page" : undefined}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
         </div>
-      </Card>
+      </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Edit Vendor</DialogTitle>
-          </DialogHeader>
-          {editVendorForm && (
-            <form onSubmit={(e) => { e.preventDefault(); handleEdit(); }}>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={editVendorForm.name}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, name: e.target.value })
-                      }
-                    />
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-600">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 hover:text-red-800 mt-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Info */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Quick Stats */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Quick Stats</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">₹{vendor.startingPrice?.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">Starting Price</div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="type">Type</Label>
-                    <Select
-                      value={editVendorForm.type}
-                      onValueChange={(value: VendorType) =>
-                        setEditVendorForm({ ...editVendorForm, type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vendorTypes.map(type => (
-                          <SelectItem key={type} value={type}>
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={editVendorForm.description}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, description: e.target.value })
-                      }
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="services">Services (comma-separated)</Label>
-                    <Input
-                      id="services"
-                      value={editVendorForm.services.join(', ')}
-                      onChange={(e) =>
-                        setEditVendorForm({
-                          ...editVendorForm,
-                          services: e.target.value.split(',').map(s => s.trim()),
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="basePrice">Base Price</Label>
-                      <Input
-                        id="basePrice"
-                        type="number"
-                        value={editVendorForm.basePrice}
-                        onChange={(e) =>
-                          setEditVendorForm({
-                            ...editVendorForm,
-                            basePrice: Number(e.target.value),
-                          })
-                        }
-                      />
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600">
+                      {vendor.guestCapacityMax || 'N/A'}
                     </div>
-                    <div>
-                      <Label htmlFor="currency">Currency</Label>
-                      <Select
-                        value={editVendorForm.currency}
-                        onValueChange={(value: typeof currencies[number]) =>
-                          setEditVendorForm({ ...editVendorForm, currency: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currencies.map(currency => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="text-sm text-gray-600">Max Capacity</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-600">
+                      {vendor.serviceAreas?.length || 0}
                     </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={editVendorForm.address}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, address: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={editVendorForm.city}
-                        onChange={(e) =>
-                          setEditVendorForm({ ...editVendorForm, city: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="state">State</Label>
-                      <Input
-                        id="state"
-                        value={editVendorForm.state}
-                        onChange={(e) =>
-                          setEditVendorForm({ ...editVendorForm, state: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      value={editVendorForm.country}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, country: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={editVendorForm.phone}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, phone: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={editVendorForm.email}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, email: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="website">Website (optional)</Label>
-                    <Input
-                      id="website"
-                      value={editVendorForm.website}
-                      onChange={(e) =>
-                        setEditVendorForm({ ...editVendorForm, website: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={editVendorForm.status}
-                      onValueChange={(value: 'active' | 'inactive') =>
-                        setEditVendorForm({ ...editVendorForm, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="text-sm text-gray-600">Service Areas</div>
                   </div>
                 </div>
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsEditDialogOpen(false);
-                    setEditVendorForm(null);
-                    setSelectedVendorId(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+              {/* About */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">About</h2>
+                {isEditing ? (
+                  <Textarea
+                    rows={4}
+                    value={formData?.about || ''}
+                    onChange={(e) => handleInputChange('about', e.target.value)}
+                    className="w-full"
+                    placeholder="Tell us about your business..."
+                  />
+                ) : (
+                  <p className="text-gray-700 leading-relaxed">
+                    {vendor.about || 'No description available.'}
+                  </p>
+                )}
+              </div>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Vendor</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this vendor? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedVendorId(null)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
+              {/* Services */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Services Offered</h2>
+                <div className="flex flex-wrap gap-2">
+                  {vendor.servicesOffered?.map((service, index) => (
+                    <span
+                      key={index}
+                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Contact Info */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Phone className="text-gray-400" size={18} />
+                    <span>{vendor.mobileNumber}</span>
+                    {vendor.mobileVerified && (
+                      <CheckCircle className="text-green-500" size={16} />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="text-gray-400" size={18} />
+                    <span>{vendor.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="text-gray-400" size={18} />
+                    <span>{vendor.city}, {vendor.state}</span>
+                  </div>
+                  {vendor.websiteOrSocial && (
+                    <div className="flex items-center gap-3">
+                      <Globe className="text-gray-400" size={18} />
+                      <a
+                        href={vendor.websiteOrSocial}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Website
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Info */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-gray-600">Advance Payment:</span>
+                    <div className="font-semibold">
+                      {vendor.advancePaymentPercent ? `${vendor.advancePaymentPercent}%` : 'Not specified'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600 block mb-2">Accepted Modes:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {vendor.paymentModesAccepted?.map((mode, index) => (
+                        <span
+                          key={index}
+                          className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
+                        >
+                          {mode}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Highlights */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Business Highlights</h2>
+                <div className="space-y-3">
+                  {vendor.yearOfEstablishment && (
+                    <div className="flex items-center gap-3">
+                      <Calendar className="text-gray-400" size={18} />
+                      <span>Est. {vendor.yearOfEstablishment}</span>
+                    </div>
+                  )}
+                  {vendor.awards && (
+                    <div className="flex items-center gap-3">
+                      <Award className="text-gray-400" size={18} />
+                      <span>{vendor.awards}</span>
+                    </div>
+                  )}
+                  {vendor.notableClients && (
+                    <div className="flex items-center gap-3">
+                      <Users className="text-gray-400" size={18} />
+                      <span>{vendor.notableClients}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'portfolio' && (
+          <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Portfolio</h2>
+              {isEditing && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleFileChange(e, 'portfolioFiles')}
+                    className="hidden"
+                    id="portfolio-upload"
+                  />
+                  <label
+                    htmlFor="portfolio-upload"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-700"
+                  >
+                    <Plus size={16} />
+                    Add Images
+                  </label>
+                </div>
               )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {vendor.portfolioImages?.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={image}
+                    alt={`Portfolio ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  {isEditing && (
+                    <button className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {(!vendor.portfolioImages || vendor.portfolioImages.length === 0) && (
+              <div className="text-center py-12 text-gray-500">
+                <Camera size={48} className="mx-auto mb-4 opacity-50" />
+                <p>No portfolio images uploaded yet.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fix: Add missing edit form rendering for 'settings' tab */}
+        {isEditing && activeTab === 'settings' && (
+          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white rounded-lg p-6 shadow-sm mt-8">
+            {/* Example: Only About field for brevity, add more fields as needed */}
+            <div className="mb-4">
+              <Label className="block text-gray-700 font-medium mb-2" htmlFor="about">
+                About
+              </Label>
+              <Textarea
+                id="about"
+                rows={4}
+                value={formData?.about || ''}
+                onChange={(e) => handleInputChange('about', e.target.value)}
+                className="w-full"
+                placeholder="Tell us about your business..."
+              />
+            </div>
+            {/* Add more editable fields here as needed */}
+            <div className="flex justify-end gap-4 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={uploading}
+                onClick={() => setIsEditing(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
-}
+};

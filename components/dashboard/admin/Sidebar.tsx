@@ -42,6 +42,7 @@ const links = [
   { name: "Contact", href: "/dashboard/admin/contact", icon: MailCheck, badge: null },
   { name: "Hotel", href: "/dashboard/admin/hotel", icon: HotelIcon, badge : null },
   { name: "Users", href: "/dashboard/admin/users", icon: Users, badge: null },
+  { name: "Vendors", href:" /dashboard/admin/vendors", icon: Package, badge: null },
   { name: "Wedding Themes", href: "/dashboard/admin/wedding", icon: GalleryVerticalEnd, badge:null},
   { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
   { name: "Hero Extension", href: "/dashboard/admin/hero-extension", icon: ContactRound, badge: null },

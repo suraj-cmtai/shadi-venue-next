@@ -196,7 +196,7 @@ export async function PUT(
         // Google location field
         const googleLocation = formData.get("googleLocation")?.toString(); 
 
-        if (address || city || state || country || zipCode || googleLocation) {
+        if (address || city || state || country || zipCode ) {
             hotelData.location = {
                 address: address || existingHotel.location?.address || "",
                 city: city || existingHotel.location?.city || "",

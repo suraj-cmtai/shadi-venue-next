@@ -58,7 +58,7 @@ export default function Header() {
     <header className="w-full bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-200 px-4 sm:px-6 md:px-8">
       <div className="max-w-7xl mx-auto flex items-center justify-between py-2 min-h-12 md:min-h-16 gap-2 md:gap-4">
         {/* Logo and Flower */}
-        <div className="flex items-center gap-2 md:gap-4 min-w-fit">
+        <Link href="/" className="flex items-center gap-2 md:gap-4 min-w-fit">
           <motion.img
             src={LOGO_IMG}
             alt="Logo"
@@ -75,7 +75,7 @@ export default function Header() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           />
-        </div>
+        </Link>
         {/* Desktop Navbar - only show on xl and up */}
         <nav className="hidden xl:flex flex-1 items-center justify-center">
           <ul className="flex flex-row gap-6 lg:gap-10 text-[#212d47] text-sm font-medium font-cormorant uppercase tracking-wide">

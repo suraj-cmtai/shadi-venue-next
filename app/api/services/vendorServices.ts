@@ -2,109 +2,167 @@ import { db } from "../config/firebase";
 import consoleManager from "../utils/consoleManager";
 import admin from "firebase-admin";
 
-export type VendorType = 'flower' | 'catering' | 'decoration' | 'photography' | 'music' | 'other';
-export type VendorStatus = 'active' | 'inactive';
+// Vendor Category options as per new requirements
+export type VendorCategory =
+  | "Venue"
+  | "Planner"
+  | "Photographer"
+  | "Decorator"
+  | "Caterer"
+  | "Makeup"
+  | "Entertainment"
+  | "Others";
 
-interface Vendor {
+// Service Areas options
+export type ServiceArea =
+  | "Local City"
+  | "Statewide"
+  | "Pan India"
+  | "International";
+
+// Payment Modes
+export type PaymentMode =
+  | "UPI"
+  | "Cash"
+  | "Bank Transfer"
+  | "Card"
+  | "Other";
+
+// Facilities for venues
+export type Facility =
+  | "Rooms"
+  | "Parking"
+  | "Catering"
+  | "Decor"
+  | "DJ"
+  | "Liquor License"
+  | "Pool"
+  | "Other";
+
+// Vendor interface as per new registration form
+export interface Vendor {
   id: string;
-  name: string;
-  type: VendorType;
-  description: string;
-  services: string[];
-  pricing: {
-    basePrice: number;
-    currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
-  };
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    country: string;
-  };
-  contactInfo: {
-    phone: string;
-    email: string;
-    website?: string;
-  };
-  portfolio: {
-    images: string[];
-    videos?: string[];
-  };
-  rating: number;
-  reviews: {
-    userId: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }[];
-  availability: {
-    days: string[];
-    hours: string;
-  };
-  status: VendorStatus;
-  createdAt: Date;
-  updatedAt: Date;
+
+  // Step 1: Basic Business Info
+  businessName: string;
+  category: VendorCategory;
+  yearOfEstablishment?: string;
+
+  // Step 2: Contact Details
+  contactPersonName: string;
+  designation: "Owner" | "Manager" | "Other";
+  mobileNumber: string;
+  mobileVerified?: boolean;
+  whatsappNumber?: string;
+  email: string;
+  websiteOrSocial?: string;
+
+  // Step 3: Location & Coverage
+  address: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  serviceAreas: ServiceArea[];
+
+  // Step 4: Services / Venue Details
+  servicesOffered: string[];
+  startingPrice: number;
+  guestCapacityMin?: number;
+  guestCapacityMax?: number;
+  facilitiesAvailable?: Facility[];
+  specialities?: string;
+
+  // Step 5: Portfolio Upload
+  logoUrl: string;
+  coverImageUrl: string;
+  portfolioImages: string[]; // up to 10–15
+  videoLinks?: string[]; // YouTube/Vimeo
+
+  // Step 6: Business Highlights
+  about: string;
+  awards?: string;
+  notableClients?: string;
+
+  // Step 7: Payment & Booking Terms
+  advancePaymentPercent?: number;
+  refundPolicy?: string;
+  paymentModesAccepted: PaymentMode[];
+
+  // Step 8: Account Setup
+  username: string;
+  passwordHash?: string; // never expose plain password
+  agreedToTerms: boolean;
+
+  // System fields
+  status: "active" | "inactive";
+  createdAt: string;
+  updatedAt: string;
 }
 
 class VendorService {
   static vendors: Vendor[] = [];
   static isInitialized = false;
 
-  private static convertTimestamp(timestamp: any): Date {
+  private static convertTimestampToString(timestamp: any): string {
     if (timestamp && timestamp._seconds) {
-      return new Date(timestamp._seconds * 1000);
+      return new Date(timestamp._seconds * 1000).toISOString();
     }
-    if (timestamp && typeof timestamp.toDate === 'function') {
-      return timestamp.toDate();
+    if (timestamp && typeof timestamp.toDate === "function") {
+      return timestamp.toDate().toISOString();
     }
     if (timestamp instanceof Date) {
-      return timestamp;
+      return timestamp.toISOString();
     }
-    if (typeof timestamp === 'string') {
+    if (typeof timestamp === "string") {
       const date = new Date(timestamp);
-      return isNaN(date.getTime()) ? new Date() : date;
+      return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
     }
-    if (typeof timestamp === 'number') {
-      return new Date(timestamp);
+    if (typeof timestamp === "number") {
+      return new Date(timestamp).toISOString();
     }
-    return new Date();
+    return new Date().toISOString();
   }
 
   private static convertToType(id: string, data: any): Vendor {
     return {
       id,
-      name: data.name || "",
-      type: data.type || "other",
-      description: data.description || "",
-      services: data.services || [],
-      pricing: {
-        basePrice: Number(data.pricing?.basePrice || 0),
-        currency: data.pricing?.currency || "USD",
-      },
-      location: {
-        address: data.location?.address || "",
-        city: data.location?.city || "",
-        state: data.location?.state || "",
-        country: data.location?.country || "",
-      },
-      contactInfo: {
-        phone: data.contactInfo?.phone || "",
-        email: data.contactInfo?.email || "",
-        website: data.contactInfo?.website || "",
-      },
-      portfolio: {
-        images: data.portfolio?.images || [],
-        videos: data.portfolio?.videos || [],
-      },
-      rating: Number(data.rating || 0),
-      reviews: data.reviews || [],
-      availability: {
-        days: data.availability?.days || [],
-        hours: data.availability?.hours || "",
-      },
+      businessName: data.businessName || "",
+      category: data.category || "Others",
+      yearOfEstablishment: data.yearOfEstablishment || "",
+      contactPersonName: data.contactPersonName || "",
+      designation: data.designation || "Other",
+      mobileNumber: data.mobileNumber || "",
+      mobileVerified: data.mobileVerified ?? false,
+      whatsappNumber: data.whatsappNumber || "",
+      email: data.email || "",
+      websiteOrSocial: data.websiteOrSocial || "",
+      address: data.address || "",
+      city: data.city || "",
+      state: data.state || "",
+      pinCode: data.pinCode || "",
+      serviceAreas: data.serviceAreas || [],
+      servicesOffered: data.servicesOffered || [],
+      startingPrice: Number(data.startingPrice || 0),
+      guestCapacityMin: data.guestCapacityMin ? Number(data.guestCapacityMin) : undefined,
+      guestCapacityMax: data.guestCapacityMax ? Number(data.guestCapacityMax) : undefined,
+      facilitiesAvailable: data.facilitiesAvailable || [],
+      specialities: data.specialities || "",
+      logoUrl: data.logoUrl || "",
+      coverImageUrl: data.coverImageUrl || "",
+      portfolioImages: data.portfolioImages || [],
+      videoLinks: data.videoLinks || [],
+      about: data.about || "",
+      awards: data.awards || "",
+      notableClients: data.notableClients || "",
+      advancePaymentPercent: data.advancePaymentPercent ? Number(data.advancePaymentPercent) : undefined,
+      refundPolicy: data.refundPolicy || "",
+      paymentModesAccepted: data.paymentModesAccepted || [],
+      username: data.username || "",
+      passwordHash: data.passwordHash || "",
+      agreedToTerms: !!data.agreedToTerms,
       status: data.status || "inactive",
-      createdAt: this.convertTimestamp(data.createdAt),
-      updatedAt: this.convertTimestamp(data.updatedAt),
+      createdAt: this.convertTimestampToString(data.createdAt),
+      updatedAt: this.convertTimestampToString(data.updatedAt),
     };
   }
 
@@ -135,24 +193,22 @@ class VendorService {
     return this.vendors;
   }
 
-  static async addVendor(vendorData: Omit<Vendor, 'id' | 'createdAt' | 'updatedAt'>) {
+  static async addVendor(vendorData: Omit<Vendor, "id" | "createdAt" | "updatedAt">) {
     try {
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
       const newVendorRef = await db.collection("vendors").add({
         ...vendorData,
-        rating: 0,
-        reviews: [],
         createdAt: timestamp,
         updatedAt: timestamp,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const newVendorDoc = await db.collection("vendors").doc(newVendorRef.id).get();
       const newVendor = this.convertToType(newVendorDoc.id, newVendorDoc.data());
-      
+
       await this.getAllVendors(true);
-      
+
       return newVendor;
     } catch (error: any) {
       consoleManager.error("Error adding new vendor:", error);
@@ -168,7 +224,7 @@ class VendorService {
       }
 
       const vendorDoc = await db.collection("vendors").doc(id).get();
-      
+
       if (!vendorDoc.exists) {
         throw new Error("Vendor not found");
       }
@@ -189,9 +245,9 @@ class VendorService {
         updatedAt: timestamp,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await this.getAllVendors(true);
-      
+
       return await this.getVendorById(id);
     } catch (error: any) {
       consoleManager.error("Error updating vendor:", error);
@@ -210,22 +266,25 @@ class VendorService {
     }
   }
 
-  static async getVendorsByType(type: VendorType) {
-    return this.vendors.filter(vendor => vendor.type === type);
+  static async getVendorsByCategory(category: VendorCategory) {
+    return this.vendors.filter((vendor) => vendor.category === category);
   }
 
   static async getActiveVendors() {
-    return this.vendors.filter(vendor => vendor.status === "active");
+    return this.vendors.filter((vendor) => vendor.status === "active");
   }
 
   static async searchVendors(query: string) {
     const searchTerm = query.toLowerCase();
-    return this.vendors.filter(vendor => 
-      vendor.name.toLowerCase().includes(searchTerm) ||
-      vendor.description.toLowerCase().includes(searchTerm) ||
-      vendor.type.toLowerCase().includes(searchTerm) ||
-      vendor.location.city.toLowerCase().includes(searchTerm) ||
-      vendor.location.country.toLowerCase().includes(searchTerm)
+    return this.vendors.filter((vendor) =>
+      vendor.businessName.toLowerCase().includes(searchTerm) ||
+      vendor.category.toLowerCase().includes(searchTerm) ||
+      vendor.city.toLowerCase().includes(searchTerm) ||
+      vendor.state.toLowerCase().includes(searchTerm) ||
+      vendor.address.toLowerCase().includes(searchTerm) ||
+      vendor.servicesOffered.some((service) => service.toLowerCase().includes(searchTerm)) ||
+      (vendor.specialities && vendor.specialities.toLowerCase().includes(searchTerm)) ||
+      (vendor.about && vendor.about.toLowerCase().includes(searchTerm))
     );
   }
 }
