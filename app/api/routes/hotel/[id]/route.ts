@@ -144,7 +144,29 @@ export async function PUT(
         const description = formData.get("description")?.toString();
         const rating = formData.get("rating")?.toString();
         const status = formData.get("status")?.toString();
-        const amenities = formData.get("amenities")?.toString();
+
+        // Amenities: always expect as array, fallback to [] if not present
+        let amenities: string[] = [];
+        if (formData.has("amenities")) {
+            // If amenities is sent as multiple fields (array)
+            const amenitiesRaw = formData.getAll("amenities");
+            if (amenitiesRaw.length > 1) {
+                amenities = amenitiesRaw.map(a => a.toString().trim()).filter(Boolean);
+            } else if (amenitiesRaw.length === 1) {
+                // If sent as a single comma-separated string
+                const val = amenitiesRaw[0]?.toString();
+                if (val && val.includes(",")) {
+                    amenities = val.split(",").map(a => a.trim()).filter(Boolean);
+                } else if (val) {
+                    amenities = [val.trim()];
+                }
+            }
+        }
+        // If not present, keep existing amenities
+        if (amenities.length > 0) {
+            hotelData.amenities = amenities;
+        }
+
         const rooms = formData.get("rooms")?.toString();
 
         if (name) hotelData.name = name;
@@ -152,7 +174,6 @@ export async function PUT(
         if (description) hotelData.description = description;
         if (rating) hotelData.rating = safeParseNumber(rating);
         if (status) hotelData.status = status as HotelStatus;
-        if (amenities) hotelData.amenities = amenities.split(',').map(item => item.trim());
         if (rooms) {
             try {
                 hotelData.rooms = JSON.parse(rooms);
@@ -167,8 +188,10 @@ export async function PUT(
         const state = formData.get("location[state]")?.toString() || formData.get("state")?.toString();
         const country = formData.get("location[country]")?.toString() || formData.get("country")?.toString();
         const zipCode = formData.get("location[zipCode]")?.toString() || formData.get("zipCode")?.toString();
+        // Google location field
+        const googleLocation = formData.get("googleLocation")?.toString(); 
 
-        if (address || city || state || country || zipCode) {
+        if (address || city || state || country || zipCode || googleLocation) {
             hotelData.location = {
                 address: address || existingHotel.location?.address || "",
                 city: city || existingHotel.location?.city || "",
@@ -177,6 +200,7 @@ export async function PUT(
                 zipCode: zipCode || existingHotel.location?.zipCode || "",
             };
         }
+        if(googleLocation) hotelData.googleLocation = googleLocation || "";
 
         // Price Range - check for nested field names
         const startingPrice = formData.get("priceRange[startingPrice]")?.toString() || formData.get("startingPrice")?.toString();
