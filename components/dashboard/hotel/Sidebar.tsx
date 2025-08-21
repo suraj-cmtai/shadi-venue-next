@@ -4,40 +4,44 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import Link from "next/link";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Image, 
-  LogOut, 
-  MapPin, 
-  Package, 
-  Menu,
+import {
+  LayoutDashboard,
+  BookOpenText,
+  LogOut,
   X,
   ChevronLeft,
-  ChevronRight,
-  ContactRound,
-  BookOpenText,
-  Newspaper,
-  Users2,
-  GalleryVerticalEnd,
-  MailCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectAuth } from "@/lib/redux/features/authSlice"; // Adjust path to your auth slice
 
-const links = [
-  { name: "Dashboard", href: "/dashboard/hotel", icon: LayoutDashboard, badge: null },
-  // { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
-  // { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
-  // { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },
-  // { name: "Gallery", href: "/dashboard/gallery", icon: GalleryVerticalEnd, badge: null },
-  // { name: "Contact", href: "/dashboard/contact", icon: MailCheck, badge: null },
-  // { name: "Test", href: "/dashboard/test", icon: FileText, badge: null },
+// All possible links
+const allLinks = [
+  {
+    name: "Dashboard",
+    href: "/dashboard/hotel",
+    icon: LayoutDashboard,
+    badge: null,
+    requiredStatus: null,
+  },
+  {
+    name: "Hotel Enquiry",
+    href: "/dashboard/hotel/hotelEnquiry",
+    icon: BookOpenText,
+    badge: null,
+    requiredStatus: "isPremium",
+  },
+  // Add other links here with their required statuses if any
 ];
 
 interface SidebarProps {
@@ -45,19 +49,23 @@ interface SidebarProps {
   isMobile?: boolean;
 }
 
-const sidebarVariants:Variants = {
+const sidebarVariants: Variants = {
   open: { width: 280, transition: { duration: 0.3, ease: "easeInOut" } },
-  collapsed: { width: 80, transition: { duration: 0.3, ease: "easeInOut" } }
+  collapsed: { width: 80, transition: { duration: 0.3, ease: "easeInOut" } },
 };
 
 const linkVariants = {
-  hover: { scale: 1.02, transition: { duration: 0.2 } },
-  tap: { scale: 0.98, transition: { duration: 0.1 } }
+  hover: { scale: 1.02 },
+  tap: { scale: 0.98 },
 };
 
 const textVariants = {
   hidden: { opacity: 0, width: 0, transition: { duration: 0.2 } },
-  visible: { opacity: 1, width: "auto", transition: { duration: 0.3, delay: 0.1 } }
+  visible: {
+    opacity: 1,
+    width: "auto",
+    transition: { duration: 0.3, delay: 0.1 },
+  },
 };
 
 const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
@@ -65,7 +73,25 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Auto-collapse on mobile
+  const authState = useAppSelector(selectAuth);
+  // Assuming the status is stored in userInfo.hotelStatus
+  const hotelStatus = authState?.userInfo?.hotelStatus;
+
+  // Filter links based on the user's hotel status
+  type LinkType = {
+    name: string;
+    href: string;
+    icon: any;
+    badge: any;
+    requiredStatus?: string | null;
+  };
+  const visibleLinks = allLinks.filter((link: LinkType) => {
+    if (link.requiredStatus) {
+      return hotelStatus === link.requiredStatus;
+    }
+    return true;
+  });
+
   useEffect(() => {
     if (isMobile) {
       setIsCollapsed(false);
@@ -77,13 +103,11 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
       onClose();
     }
   };
-
   const toggleCollapse = () => {
     if (!isMobile) {
       setIsCollapsed(!isCollapsed);
     }
   };
-
   const handleLogout = () => {
     if (isMobile && onClose) {
       onClose();
@@ -91,15 +115,14 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
     router.push("/logout");
   };
 
-  const SidebarContent = () => (
+  return (
     <motion.div
       variants={sidebarVariants}
       animate={isCollapsed && !isMobile ? "collapsed" : "open"}
       className="flex flex-col h-full bg-background border-r"
     >
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {(!isCollapsed || isMobile) && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
@@ -107,26 +130,28 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
               exit={{ opacity: 0, x: -10 }}
               className="flex items-center space-x-3"
             >
-              <Link href="/" target="_blank" className="w-8 h-8 rounded-lg flex items-center justify-center">
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src="/avatar.png" alt="User" />
-                  <AvatarFallback className="bg-gradient-to-br from-orange-600 to-navy-600 text-white">
-                    SA
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
+              <Link href="/" target="_blank">
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full"
+                >
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="/avatar.png" alt="User" />
+                    <AvatarFallback className="bg-gradient-to-br from-orange-600 to-navy-600 text-white">
+                      SA
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
               </Link>
               <div>
-                <Link href="/" target="_blank" className="text-lg font-bold text-primary">
-                  <span className="text-navy">Shadi</span> <span className="text-orange">Venue</span>
+                <Link href="/" target="_blank" className="text-lg font-bold">
+                  <span className="text-navy">Shadi</span>{" "}
+                  <span className="text-orange">Venue</span>
                 </Link>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        
-        {/* Collapse Toggle (Desktop only) */}
         {!isMobile && (
           <Button
             variant="ghost"
@@ -134,16 +159,11 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
             onClick={toggleCollapse}
             className="h-8 w-8"
           >
-            <motion.div
-              animate={{ rotate: isCollapsed ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div animate={{ rotate: isCollapsed ? 180 : 0 }}>
               <ChevronLeft className="h-4 w-4" />
             </motion.div>
           </Button>
         )}
-
-        {/* Close Button (Mobile only) */}
         {isMobile && onClose && (
           <Button
             variant="ghost"
@@ -155,33 +175,33 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
           </Button>
         )}
       </div>
-
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         <TooltipProvider>
-          {links.map((link, index) => {
+          {visibleLinks.map((link, index) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
-            
             const LinkContent = (
               <motion.div
                 variants={linkVariants}
                 whileHover="hover"
                 whileTap="tap"
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors cursor-pointer group",
+                  "flex items-center space-x-3 px-3 py-3 rounded-lg cursor-pointer group",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "hover:bg-muted/50"
                 )}
                 onClick={handleLinkClick}
               >
-                <Icon className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
-                )} />
-                
-                <AnimatePresence mode="wait">
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    isActive
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground group-hover:text-foreground"
+                  )}
+                />
+                <AnimatePresence>
                   {(!isCollapsed || isMobile) && (
                     <motion.div
                       variants={textVariants}
@@ -192,7 +212,7 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
                     >
                       <span className="font-medium truncate">{link.name}</span>
                       {link.badge && (
-                        <Badge 
+                        <Badge
                           variant={isActive ? "secondary" : "outline"}
                           className="ml-2 h-5 px-2 text-xs"
                         >
@@ -204,7 +224,6 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
                 </AnimatePresence>
               </motion.div>
             );
-
             return (
               <motion.div
                 key={link.name}
@@ -215,33 +234,29 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
                 {isCollapsed && !isMobile ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Link href={link.href}>
-                        {LinkContent}
-                      </Link>
+                      <Link href={link.href}>{LinkContent}</Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="flex items-center space-x-2">
+                    <TooltipContent side="right">
                       <span>{link.name}</span>
                       {link.badge && (
-                        <Badge variant="outline" className="h-5 px-2 text-xs">
+                        <Badge
+                          variant="outline"
+                          className="h-5 px-2 text-xs ml-2"
+                        >
                           {link.badge}
                         </Badge>
                       )}
                     </TooltipContent>
                   </Tooltip>
                 ) : (
-                  <Link href={link.href}>
-                    {LinkContent}
-                  </Link>
+                  <Link href={link.href}>{LinkContent}</Link>
                 )}
               </motion.div>
             );
           })}
         </TooltipProvider>
       </nav>
-
       <Separator />
-
-      {/* Footer */}
       <div className="p-4">
         <TooltipProvider>
           {isCollapsed && !isMobile ? (
@@ -274,8 +289,5 @@ const Sidebar = ({ onClose, isMobile = false }: SidebarProps) => {
       </div>
     </motion.div>
   );
-
-  return <SidebarContent />;
 };
-
 export default Sidebar;

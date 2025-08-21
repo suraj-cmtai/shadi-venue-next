@@ -36,13 +36,14 @@ import heroReducer from "./features/heroSlice";
 import testimonialReducer from "./features/testimonialSlice";
 import heroExtensionReducer from "./features/heroExtensionSlice";
 import aboutReducer from "./features/aboutSlice";
-
+import vendorEnquiryReducer from "./features/vendorEnquirySlice";
+import hotelEnquiryReducer from "./features/hotelEnquirySlice";
 
 // Configuration for redux-persist
 const persistConfig = {
-  key: 'auth',
+  key: "auth",
   storage,
-  whitelist: ['auth'], // only auth will be persisted
+  whitelist: ["auth"], // only auth will be persisted
   blacklist: [], // optionally blacklist any redux path
 };
 
@@ -65,7 +66,8 @@ const rootReducer = combineReducers({
   testimonial: testimonialReducer,
   heroExtension: heroExtensionReducer,
   about: aboutReducer,
-
+  vendorEnquiry: vendorEnquiryReducer,
+  hotelEnquiry: hotelEnquiryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

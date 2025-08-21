@@ -34,24 +34,85 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const links = [
-  { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard, badge: null },
+  {
+    name: "Dashboard",
+    href: "/dashboard/admin",
+    icon: LayoutDashboard,
+    badge: null,
+  },
   // { name: "Courses", href: "/dashboard/admin/courses", icon: BookOpenText, badge: null },
-  { name: "Blogs", href: "/dashboard/admin/blogs", icon: Newspaper, badge: null },
+  {
+    name: "Blogs",
+    href: "/dashboard/admin/blogs",
+    icon: Newspaper,
+    badge: null,
+  },
   { name: "Signup", href: "/dashboard/admin/signup", icon: User, badge: null },
-  { name: "Gallery", href: "/dashboard/admin/gallery", icon: GalleryVerticalEnd, badge: null },
-  { name: "Contact", href: "/dashboard/admin/contact", icon: MailCheck, badge: null },
-  { name: "Hotel", href: "/dashboard/admin/hotel", icon: HotelIcon, badge : null },
+  {
+    name: "Gallery",
+    href: "/dashboard/admin/gallery",
+    icon: GalleryVerticalEnd,
+    badge: null,
+  },
+  {
+    name: "Contact",
+    href: "/dashboard/admin/contact",
+    icon: MailCheck,
+    badge: null,
+  },
+  {
+    name: "Vendor Enquiry",
+    href: "/dashboard/admin/vendorEnquiry",
+    icon: MailCheck,
+    badge: null,
+  },
+  {
+    name: "Hotel Enquiry",
+    href: "/dashboard/admin/hotelEnquiry",
+    icon: MailCheck,
+    badge: null,
+  },
+  {
+    name: "Hotel",
+    href: "/dashboard/admin/hotel",
+    icon: HotelIcon,
+    badge: null,
+  },
   { name: "Users", href: "/dashboard/admin/users", icon: Users, badge: null },
-  { name: "Vendors", href:" /dashboard/admin/vendors", icon: Package, badge: null },
-  { name: "Wedding Themes", href: "/dashboard/admin/wedding", icon: GalleryVerticalEnd, badge:null},
+  {
+    name: "Vendors",
+    href: " /dashboard/admin/vendors",
+    icon: Package,
+    badge: null,
+  },
+  {
+    name: "Wedding Themes",
+    href: "/dashboard/admin/wedding",
+    icon: GalleryVerticalEnd,
+    badge: null,
+  },
   { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
-  { name: "Hero Extension", href: "/dashboard/admin/hero-extension", icon: ContactRound, badge: null },
-  { name: "Testimonials", href: "/dashboard/admin/testimonials", icon: Users2, badge: null },
-  { name: "About", href: "/dashboard/admin/about", icon: FileText, badge: null },
+  {
+    name: "Hero Extension",
+    href: "/dashboard/admin/hero-extension",
+    icon: ContactRound,
+    badge: null,
+  },
+  {
+    name: "Testimonials",
+    href: "/dashboard/admin/testimonials",
+    icon: Users2,
+    badge: null,
+  },
+  {
+    name: "About",
+    href: "/dashboard/admin/about",
+    icon: FileText,
+    badge: null,
+  },
   // { name: "Vendors", href: "/dashboard/admin/vendors", icon: Package, badge: null },
   // { name: "Map", href: "/dashboard/admin/map", icon: MapPin, badge: null },
   // { name: "Settings", href: "/dashboard/admin/settings", icon: Menu, badge: null },
-
 ];
 
 interface SidebarProps {
