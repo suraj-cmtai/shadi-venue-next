@@ -1,3 +1,4 @@
+"use client";
 import Hero from '@/components/(website)/home/Hero'
 import HeroExtension from '@/components/(website)/home/HeroExtension'
 import AllLogos from '@/components/(website)/home/AllLogos'
