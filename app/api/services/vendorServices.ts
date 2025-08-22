@@ -278,18 +278,6 @@ class VendorService {
 
   static async getActiveVendors(forceRefresh = true) {
     if (forceRefresh || !this.isInitialized) {
-<<<<<<< HEAD
-      this.initVendors();
-      const snapshot = await db.collection("vendors").where("status", "==", status).orderBy("createdAt", "desc").get();
-      const activeVendors = snapshot.docs.map((doc: any) => this.convertToType(doc.id, doc.data()));
-      consoleManager.log(`Fetched ${activeVendors.length} active vendors from Firestore`);
-      return activeVendors;
-    }
-    const cachedVendors = this.vendors.filter(vendor => vendor.status === status);
-    consoleManager.log(`Returning ${cachedVendors.length} cached active vendors`);
-    return cachedVendors;
-  } 
-=======
       consoleManager.log("Force refreshing active vendors from Firestore...");
       const snapshot = await db
         .collection("vendors")
@@ -304,7 +292,6 @@ class VendorService {
     }
     return this.vendors;
   }
->>>>>>> 5341e699325aef0994e8cb7b02469108536fedc1
 
   static async searchVendors(query: string) {
     const searchTerm = query.toLowerCase();
