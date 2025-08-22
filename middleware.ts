@@ -98,6 +98,12 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
+  //  /api/routes/vendor/active
+  {
+    pattern: /\/api\/routes\/vendor\/active$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
   {
     // This covers /api/routes/(published|active|login|signup|logout|public|auth) for any method
     pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,

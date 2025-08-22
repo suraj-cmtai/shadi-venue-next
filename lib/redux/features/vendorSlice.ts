@@ -165,7 +165,7 @@ export const fetchActiveVendors = createAsyncThunk<Vendor[]>(
   "vendor/fetchActiveVendors",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/routes/vendor?status=active");
+      const response = await axios.get("/api/routes/vendor/active");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));

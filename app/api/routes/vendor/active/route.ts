@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import HotelService from "../../../services/hotelServices";
+import vendorService from "../../../services/vendorServices";
 import consoleManager from "../../../utils/consoleManager";
 
 // Get all active hotels (GET)
 export async function GET(req: Request) {
     try {
-        const hotels = await HotelService.getAllActiveHotels();
+        const hotels = await vendorService.getActiveVendors();
         
         consoleManager.log("Fetched active hotels");
 
