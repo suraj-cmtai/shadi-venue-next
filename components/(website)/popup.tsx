@@ -30,7 +30,7 @@ const Popup: React.FC = () => {
       setSubmitted(false);
       setName("");
       setPhone("");
-    }, 3000); // Show success message for 3 seconds
+    }, 1000); // Show success message for 3 seconds
   };
 
   // If the show state is false, render nothing
