@@ -275,8 +275,21 @@ class VendorService {
     return this.vendors.filter((vendor) => vendor.category === category);
   }
 
-  static async getActiveVendors() {
-    return this.vendors.filter((vendor) => vendor.status === "active");
+  static async getActiveVendors(forceRefresh = true) {
+    if (forceRefresh || !this.isInitialized) {
+      consoleManager.log("Force refreshing active vendors from Firestore...");
+      const snapshot = await db
+        .collection("vendors")
+        .where("status", "==", "active")
+        .orderBy("createdAt", "desc")
+        .get();
+      this.vendors = snapshot.docs.map((doc: any) => {
+        return this.convertToType(doc.id, doc.data());
+      });
+    } else {
+      consoleManager.log("Returning cached active vendors. No Firestore read.");
+    }
+    return this.vendors;
   }
 
   static async searchVendors(query: string) {
