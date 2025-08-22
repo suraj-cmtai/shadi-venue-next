@@ -281,9 +281,12 @@ class VendorService {
       this.initVendors();
       const snapshot = await db.collection("vendors").where("status", "==", status).orderBy("createdAt", "desc").get();
       const activeVendors = snapshot.docs.map((doc: any) => this.convertToType(doc.id, doc.data()));
+      consoleManager.log(`Fetched ${activeVendors.length} active vendors from Firestore`);
       return activeVendors;
     }
-    return this.vendors.filter(vendor => vendor.status === status);
+    const cachedVendors = this.vendors.filter(vendor => vendor.status === status);
+    consoleManager.log(`Returning ${cachedVendors.length} cached active vendors`);
+    return cachedVendors;
   } 
 
   static async searchVendors(query: string) {
@@ -316,7 +319,19 @@ class VendorService {
         consoleManager.log("Returning cached premium vendors. No Firestore read.");
         return this.vendors.filter(vendor => vendor.isPremium && vendor.status === status);
     }
-}
+  }
+
+  // Debug method to check vendor count
+  static async getVendorCount() {
+    try {
+      const snapshot = await db.collection("vendors").get();
+      consoleManager.log(`Total vendors in database: ${snapshot.size}`);
+      return snapshot.size;
+    } catch (error) {
+      consoleManager.error("Error getting vendor count:", error);
+      return 0;
+    }
+  }
 }
 
 export default VendorService;

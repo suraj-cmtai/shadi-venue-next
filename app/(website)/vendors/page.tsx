@@ -63,26 +63,51 @@ const DynamicVendorPage: React.FC = () => {
     if (!hasFetched) {
       dispatch(fetchActiveVendors());
     }
-    // Clear filters and search by default
-    dispatch(clearFilters());
-    setLocalSearch('');
-
+    
     // If deep link contains ?search=city, initialize filters accordingly
     const qp = searchParams.get('search');
+    const cityParam = searchParams.get('city');
+    
     if (qp && qp.trim() !== '') {
       dispatch(setFilters({ city: qp, search: qp }));
       setLocalSearch(qp);
+    } else if (cityParam && cityParam.trim() !== '') {
+      dispatch(setFilters({ city: cityParam }));
+      setLocalSearch(cityParam);
+    } else {
+      // Clear filters and search by default only if no search params
+      dispatch(clearFilters());
+      setLocalSearch('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, hasFetched]);
+  }, [dispatch, hasFetched, searchParams]);
 
   // Keep localSearch in sync with redux search filter (for reset)
   useEffect(() => {
     setLocalSearch(filters.search || '');
   }, [filters.search]);
 
+  // Handle URL parameter changes when component is already mounted
+  useEffect(() => {
+    const qp = searchParams.get('search');
+    const cityParam = searchParams.get('city');
+    const categoryParam = searchParams.get('category');
+    
+    if (qp && qp.trim() !== '') {
+      dispatch(setFilters({ city: qp, search: qp }));
+      setLocalSearch(qp);
+    } else if (cityParam && cityParam.trim() !== '') {
+      dispatch(setFilters({ city: cityParam }));
+    } else if (categoryParam && categoryParam.trim() !== '') {
+      // Type assertion for category parameter
+      dispatch(setFilters({ category: categoryParam as any }));
+    }
+  }, [searchParams, dispatch]);
+
   // Dynamic filter options derived from active vendors only
   const filterOptions = useMemo(() => {
+    console.log('Active vendors:', activeVendors.length, activeVendors);
+    
     const categories = Array.from(
       new Set(activeVendors.map(vendor => vendor.category).filter(cat => cat && cat.trim() !== ''))
     );
@@ -270,7 +295,17 @@ const DynamicVendorPage: React.FC = () => {
           {filterOptions.cities.slice(0, 8).map((city) => (
             <button
               key={city}
-              onClick={() => dispatch(setFilters({ city }))}
+              onClick={() => {
+                dispatch(setFilters({ city }));
+                // Update URL with city parameter
+                const params = new URLSearchParams(searchParams);
+                if (city) {
+                  params.set('city', city);
+                } else {
+                  params.delete('city');
+                }
+                router.push(`/vendors?${params.toString()}`);
+              }}
               className={`group relative flex flex-col items-center transition-all duration-300 ${
                 filters.city === city ? 'scale-110' : 'hover:scale-105'
               }`}
@@ -322,7 +357,17 @@ const DynamicVendorPage: React.FC = () => {
             return (
               <button
                 key={category}
-                onClick={() => dispatch(setFilters({ category }))}
+                onClick={() => {
+                  dispatch(setFilters({ category }));
+                  // Update URL with category parameter
+                  const params = new URLSearchParams(searchParams);
+                  if (category) {
+                    params.set('category', category);
+                  } else {
+                    params.delete('category');
+                  }
+                  router.push(`/vendors?${params.toString()}`);
+                }}
                 className={`group relative flex flex-col items-center p-4 rounded-lg transition-all duration-300 ${
                   filters.category === category 
                     ? 'bg-[#212D47] text-white shadow-lg scale-105' 
@@ -686,17 +731,22 @@ const DynamicVendorPage: React.FC = () => {
       {/* Search and Controls */}
       <VendorSearch />
 
-      {/* Results Section */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Wedding Vendors</h2>
-          {!loading && !error && (
-            <p className="text-gray-600">
-              Showing {filteredVendors.length} results
-              {(filters.search || activeFilterCount > 0) && ' matching your criteria'}
-            </p>
-          )}
-        </div>
+              {/* Results Section */}
+        <main className="max-w-7xl mx-auto px-4 py-8">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Wedding Vendors</h2>
+            {!loading && !error && (
+              <p className="text-gray-600">
+                Showing {filteredVendors.length} results
+                {(filters.search || activeFilterCount > 0) && ' matching your criteria'}
+              </p>
+            )}
+            {/* Debug info */}
+            <div className="text-xs text-gray-400 mt-2">
+              Debug: Active vendors: {activeVendors.length}, Filtered: {filteredVendors.length}, 
+              Filters: {JSON.stringify(filters)}
+            </div>
+          </div>
 
         {/* Loading State */}
         {loading && <LoadingSkeleton />}

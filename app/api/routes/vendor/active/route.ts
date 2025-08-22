@@ -5,9 +5,13 @@ import consoleManager from "../../../utils/consoleManager";
 // Get all active vendors (GET)
 export async function GET(req: Request) {
     try {
+        // Debug: Check total vendor count first
+        const totalCount = await VendorService.getVendorCount();
+        consoleManager.log(`Total vendors in database: ${totalCount}`);
+        
         const vendors = await VendorService.getActiveVendors();
         
-        consoleManager.log("Fetched active vendors");
+        consoleManager.log(`Fetched ${vendors.length} active vendors`);
 
         return NextResponse.json({
             statusCode: 200,

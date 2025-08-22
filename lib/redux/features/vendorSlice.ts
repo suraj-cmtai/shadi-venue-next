@@ -403,9 +403,9 @@ export const selectVendorFilters = (state: RootState) => state.vendor.filters;
 
 // Advanced selectors with filtering and searching
 export const selectFilteredVendors = createSelector(
-  [selectVendors, selectVendorFilters],
-  (vendors, filters) => {
-    return vendors.filter(vendor => {
+  [selectActiveVendors, selectVendorFilters],
+  (activeVendors, filters) => {
+    return activeVendors.filter(vendor => {
       // Text search
       const matchesSearch = !filters.search ||
         vendor.businessName.toLowerCase().includes(filters.search.toLowerCase()) ||

@@ -149,47 +149,69 @@ interface InviteSectionForm {
 // Theme presets for quick selection
 const THEME_PRESETS = [
   {
-    name: 'Classic White',
+    name: 'Royal Elegance',
     theme: {
-      primaryColor: '#000000',
-      secondaryColor: '#ffffff',
-      titleColor: '#000000',
-      nameColor: '#333333',
-      backgroundColor: '#ffffff',
-      textColor: '#000000'
+      primaryColor: '#D4AF37',      // Deep Gold
+      secondaryColor: '#F7E7CE',    // Champagne
+      titleColor: '#800000',        // Maroon
+      nameColor: '#003366',         // Dark Blue
+      backgroundColor: '#FFFFF0',   // Ivory
+      textColor: '#FADADD'          // Soft Pink
     }
   },
   {
-    name: 'Romantic Rose',
+    name: 'Vintage Glamour',
     theme: {
-      primaryColor: '#d946ef',
-      secondaryColor: '#fdf2f8',
-      titleColor: '#be185d',
-      nameColor: '#9d174d',
-      backgroundColor: '#fef7ff',
-      textColor: '#581c87'
+      primaryColor: '#B76E79',      // Rose Gold
+      secondaryColor: '#F2C1D1',    // Blush Pink
+      titleColor: '#C8A2C8',        // Lavender
+      nameColor: '#FFD700',         // Gold Accents
+      backgroundColor: '#FFFFF0',   // Ivory
+      textColor: '#E0E0E0'          // Pale Grey
     }
   },
   {
-    name: 'Elegant Navy',
+    name: 'Traditional Richness',
     theme: {
-      primaryColor: '#1e3a8a',
-      secondaryColor: '#dbeafe',
-      titleColor: '#1e40af',
-      nameColor: '#1e3a8a',
-      backgroundColor: '#f8fafc',
-      textColor: '#0f172a'
+      primaryColor: '#A52A2A',      // Deep Red
+      secondaryColor: '#FFD700',    // Gold
+      titleColor: '#800000',        // Maroon
+      nameColor: '#50C878',         // Emerald Green
+      backgroundColor: '#FFFFF0',   // Ivory
+      textColor: '#CD7F32'          // Bronze
     }
   },
   {
-    name: 'Golden Luxury',
+    name: 'Contemporary Brights',
     theme: {
-      primaryColor: '#f59e0b',
-      secondaryColor: '#fffbeb',
-      titleColor: '#d97706',
-      nameColor: '#b45309',
-      backgroundColor: '#fefdf8',
-      textColor: '#78350f'
+      primaryColor: '#40E0D0',      // Turquoise Blue
+      secondaryColor: '#FF69B4',    // Hot Pink
+      titleColor: '#FFD700',        // Bright Yellow
+      nameColor: '#FF7F50',         // Soft Coral
+      backgroundColor: '#FFFFFF',   // White
+      textColor: '#98FF98'          // Light Mint
+    }
+  },
+  {
+    name: 'Elegant Pastels',
+    theme: {
+      primaryColor: '#98FF98',      // Mint Green
+      secondaryColor: '#FFDAB9',    // Peach
+      titleColor: '#E6E6FA',        // Lavender
+      nameColor: '#FFB6C1',         // Light Pink
+      backgroundColor: '#FAF0E6',   // Off-white
+      textColor: '#FFFFE0'          // Pale Yellow
+    }
+  },
+  {
+    name: 'Cultural & Festive',
+    theme: {
+      primaryColor: '#4B0082',      // Deep Indigo
+      secondaryColor: '#FFD700',    // Gold
+      titleColor: '#DC143C',        // Bright Crimson
+      nameColor: '#40E0D0',         // Turquoise
+      backgroundColor: '#FFFFF0',   // Ivory
+      textColor: '#FF8C00'          // Rich Orange
     }
   }
 ];
