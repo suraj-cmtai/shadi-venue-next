@@ -3,11 +3,12 @@ import axios from "axios";
 import { RootState } from "../store";
 import { getErrorMessage } from "@/lib/utils";
 
-// Define interfaces matching the service
+// Define interfaces matching the backend service (see @file_context_0)
 export interface HotelEnquiry {
   id: string;
-  hotelName: string;
-  city: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
   status: "Pending" | "Contacted" | "Closed";
   createdAt: string;
   updatedAt: string;
@@ -251,8 +252,5 @@ export const selectHotelEnquiriesByStatus = (status: "Pending" | "Contacted" | "
 
 export const selectHotelEnquiryById = (id: string) => (state: RootState) =>
   state.hotelEnquiry.enquiries.find(enquiry => enquiry.id === id);
-
-export const selectHotelEnquiriesByCity = (city: string) => (state: RootState) =>
-  state.hotelEnquiry.enquiries.filter(enquiry => enquiry.city.toLowerCase() === city.toLowerCase());
 
 export default hotelEnquirySlice.reducer;

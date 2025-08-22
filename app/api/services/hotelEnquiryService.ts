@@ -4,13 +4,13 @@ import admin from "firebase-admin";
 import HotelService from "./hotelServices";
 
 /**
- * HotelEnquiry interface (now includes authId for hotel-specific queries)
- * Fields: id, hotelName, city, status, createdAt, updatedAt, authId
+ * HotelEnquiry interface (fields: id, name, email, phoneNumber, status, createdAt, updatedAt, authId)
  */
 export interface HotelEnquiry {
   id: string;
-  hotelName: string;
-  city: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
   status: "Pending" | "Contacted" | "Closed";
   createdAt: string;
   updatedAt: string;
@@ -30,8 +30,9 @@ class HotelEnquiryService {
   private static convertToType(id: string, data: any): HotelEnquiry {
     return {
       id,
-      hotelName: data.hotelName || "Unknown Hotel",
-      city: data.city || "Unknown City",
+      name: data.name || "Unknown Name",
+      email: data.email || "",
+      phoneNumber: data.phoneNumber || "",
       status: data.status || "Pending",
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
@@ -74,7 +75,7 @@ class HotelEnquiryService {
   }
 
   /**
-   * Get all hotel enquiries. If authId is provided, only return those for that hotel.
+   * Get all hotel enquiries.
    */
   static async getAllEnquiries(): Promise<HotelEnquiry[]> {
     try {
@@ -169,10 +170,6 @@ class HotelEnquiryService {
       if (!authId) {
         throw new Error("authId is required.");
       }
-
-      
-
-      
 
       // Use HotelService.getHotelById to get the hotel (ensures consistent conversion)
       const hotel = await HotelService.getHotelById(authId);

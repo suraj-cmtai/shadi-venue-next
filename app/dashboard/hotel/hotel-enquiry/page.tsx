@@ -1,40 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { useSelector } from "react-redux";
+import { useParams, useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  Plus,
+  ArrowLeft,
   Pencil,
   Trash2,
-  Search,
   Loader2,
-  MoreHorizontal,
+  Building,
+  MapPin,
+  User,
+  AlertCircle,
+  Crown,
+  Calendar,
+  Clock,
+  CheckCircle,
+  Circle,
+  Eye,
+  MessageCircle,
   Mail,
   Phone,
-  Users,
-  Calendar,
-  Star, // Premium icon
 } from "lucide-react";
+
+import {
+  fetchHotelEnquiryById,
+  updateHotelEnquiry,
+  deleteHotelEnquiry,
+  selectSelectedHotelEnquiry,
+  selectHotelEnquiryLoading,
+  selectHotelEnquiryError,
+  HotelEnquiry,
+} from "@/lib/redux/features/hotelEnquirySlice";
+
+import { selectAuth } from "@/lib/redux/features/authSlice";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -52,425 +59,499 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-type HotelEnquiry = {
-  id: string;
-  hotelName: string;
-  city: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  eventType: string;
-  eventDate: string;
-  guestCount: number;
-  status: "Pending" | "isPremium";
-  createdAt: string;
-  updatedAt: string;
-};
+export default function HotelEnquirySinglePage() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const params = useParams();
+  const enquiryId = params?.id as string;
 
-const mockHotelEnquiries: HotelEnquiry[] = [
-  {
-    id: "1",
-    hotelName: "The Grand Palace",
-    city: "Jaipur",
-    contactName: "Anjali Verma",
-    contactEmail: "anjali.v@email.com",
-    contactPhone: "9988776655",
-    eventType: "Wedding",
-    eventDate: "2024-12-15",
-    guestCount: 300,
-    status: "isPremium",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    hotelName: "Sea Breeze Resort",
-    city: "Goa",
-    contactName: "Sameer Khan",
-    contactEmail: "sameer.k@email.com",
-    contactPhone: "9112233445",
-    eventType: "Corporate Event",
-    eventDate: "2024-11-20",
-    guestCount: 150,
-    status: "Pending",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+  const selectedEnquiry = useAppSelector(selectSelectedHotelEnquiry);
+  const isLoading = useAppSelector(selectHotelEnquiryLoading);
+  const error = useAppSelector(selectHotelEnquiryError);
+  const auth = useSelector(selectAuth);
 
-const initialHotelEnquiryState: Omit<
-  HotelEnquiry,
-  "id" | "createdAt" | "updatedAt"
-> = {
-  hotelName: "",
-  city: "",
-  contactName: "",
-  contactEmail: "",
-  contactPhone: "",
-  eventType: "Wedding",
-  eventDate: "",
-  guestCount: 100,
-  status: "Pending",
-};
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editData, setEditData] = useState<HotelEnquiry | null>(null);
 
-export default function HotelEnquiryPage() {
-  const [enquiries, setEnquiries] =
-    useState<HotelEnquiry[]>(mockHotelEnquiries);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedEnquiry, setSelectedEnquiry] = useState<HotelEnquiry | null>(
-    null
-  );
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
-  const [newEnquiry, setNewEnquiry] = useState(initialHotelEnquiryState);
+  // Get authId from auth slice
+  const authId = auth?.data?.roleId;
+  const isHotel = auth?.data?.role === "hotel";
 
-  const filteredEnquiries = enquiries.filter((enquiry) => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch =
-      enquiry.hotelName.toLowerCase().includes(searchLower) ||
-      enquiry.contactName.toLowerCase().includes(searchLower) ||
-      enquiry.city.toLowerCase().includes(searchLower);
-    const matchesStatus =
-      statusFilter === "all" || enquiry.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    if (isHotel && authId && enquiryId) {
+      dispatch(fetchHotelEnquiryById(enquiryId));
+    }
+  }, [auth, authId, isHotel, enquiryId, dispatch]);
 
-  const getStatusColor = (status: HotelEnquiry["status"]): string => {
+  // Initialize edit data when enquiry loads
+  useEffect(() => {
+    if (selectedEnquiry) {
+      setEditData(selectedEnquiry);
+    }
+  }, [selectedEnquiry]);
+
+  // If not a hotel or no authId, show appropriate message
+  if (!isHotel || !authId) {
+    return (
+      <div className="p-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Access denied. This page is only available for authenticated hotels.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Check if error is related to premium access
+  const isPremiumError = error?.includes("premium") || error?.includes("Premium");
+
+  const getStatusColor = (status: HotelEnquiry["status"]) => {
     switch (status) {
       case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "isPremium":
-        return "bg-green-100 text-green-800";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "Contacted":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "Closed":
+        return "bg-gray-100 text-gray-800 border-gray-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const handleAdd = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const newEntry = {
-        ...newEnquiry,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setEnquiries((prev) => [newEntry, ...prev]);
-      setIsLoading(false);
-      setIsAddDialogOpen(false);
-      setNewEnquiry(initialHotelEnquiryState);
-      toast.success("Hotel enquiry added successfully!");
-    }, 500);
+  const getStatusIcon = (status: HotelEnquiry["status"]) => {
+    switch (status) {
+      case "Pending":
+        return <Circle className="w-4 h-4" />;
+      case "Contacted":
+        return <MessageCircle className="w-4 h-4" />;
+      case "Closed":
+        return <CheckCircle className="w-4 h-4" />;
+      default:
+        return <Circle className="w-4 h-4" />;
+    }
   };
 
   const handleUpdate = () => {
-    if (!selectedEnquiry) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setEnquiries((prev) =>
-        prev.map((e) =>
-          e.id === selectedEnquiry.id
-            ? { ...selectedEnquiry, updatedAt: new Date().toISOString() }
-            : e
-        )
+    if (!editData) return;
+
+    const updateData = {
+      name: editData.name,
+      email: editData.email,
+      phoneNumber: editData.phoneNumber,
+      status: editData.status,
+    };
+
+    dispatch(updateHotelEnquiry({ id: editData.id, data: updateData }))
+      .unwrap()
+      .then(() => {
+        toast.success("Hotel enquiry updated successfully!");
+        setIsEditDialogOpen(false);
+      })
+      .catch((err: unknown) =>
+        toast.error(`Failed to update enquiry: ${getErrorMessage(err)}`)
       );
-      setIsLoading(false);
-      setIsEditDialogOpen(false);
-      toast.success("Hotel enquiry updated successfully!");
-    }, 500);
   };
 
   const handleDelete = () => {
     if (!selectedEnquiry) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setEnquiries((prev) => prev.filter((e) => e.id !== selectedEnquiry.id));
-      setIsLoading(false);
-      setIsDeleteDialogOpen(false);
-      toast.success("Hotel enquiry deleted successfully!");
-    }, 500);
+    dispatch(deleteHotelEnquiry(selectedEnquiry.id))
+      .unwrap()
+      .then(() => {
+        toast.success("Hotel enquiry deleted successfully!");
+        router.push("/hotel/enquiries");
+      })
+      .catch((err: unknown) =>
+        toast.error(`Failed to delete enquiry: ${getErrorMessage(err)}`)
+      );
   };
 
-  type HotelEnquiryFormFieldsProps = {
-    data: HotelEnquiry | Omit<HotelEnquiry, "id" | "createdAt" | "updatedAt">;
-    setData: React.Dispatch<React.SetStateAction<any>>;
+  const handleStatusUpdate = (newStatus: HotelEnquiry["status"]) => {
+    if (!selectedEnquiry) return;
+
+    const updateData = {
+      name: selectedEnquiry.name,
+      email: selectedEnquiry.email,
+      phoneNumber: selectedEnquiry.phoneNumber,
+      status: newStatus,
+    };
+
+    dispatch(updateHotelEnquiry({ id: selectedEnquiry.id, data: updateData }))
+      .unwrap()
+      .then(() => {
+        toast.success(`Status updated to ${newStatus}!`);
+      })
+      .catch((err: unknown) =>
+        toast.error(`Failed to update status: ${getErrorMessage(err)}`)
+      );
   };
-  const HotelEnquiryFormFields = ({
-    data,
-    setData,
-  }: HotelEnquiryFormFieldsProps) => (
-    <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="hotelName">Hotel Name</Label>
-          <Input
-            id="hotelName"
-            value={data.hotelName}
-            onChange={(e) => setData({ ...data, hotelName: e.target.value })}
-          />
+
+  // Reusable Form Component
+  type EnquiryFormFieldsProps = {
+    data: HotelEnquiry;
+    setData: React.Dispatch<React.SetStateAction<HotelEnquiry | null>>;
+  };
+
+  const EnquiryFormFields = ({ data, setData }: EnquiryFormFieldsProps) => (
+    <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
+      <section>
+        <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+          Enquiry Information
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={data.name}
+              onChange={(e) => setData(prev => prev ? { ...prev, name: e.target.value } : null)}
+              placeholder="Enter name"
+            />
+          </div>
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={data.email}
+              onChange={(e) => setData(prev => prev ? { ...prev, email: e.target.value } : null)}
+              placeholder="Enter email"
+            />
+          </div>
+          <div>
+            <Label htmlFor="phoneNumber">Phone Number *</Label>
+            <Input
+              id="phoneNumber"
+              value={data.phoneNumber}
+              onChange={(e) => setData(prev => prev ? { ...prev, phoneNumber: e.target.value } : null)}
+              placeholder="Enter phone number"
+            />
+          </div>
         </div>
-        <div>
-          <Label htmlFor="city">City</Label>
+        <div className="mt-4">
+          <Label htmlFor="authId">Hotel Auth ID</Label>
           <Input
-            id="city"
-            value={data.city}
-            onChange={(e) => setData({ ...data, city: e.target.value })}
+            id="authId"
+            value={data.authId}
+            disabled
+            className="bg-muted"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Auth ID cannot be modified
+          </p>
         </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      </section>
+
+      <section>
+        <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+          Status Management
+        </h3>
         <div>
-          <Label htmlFor="contactName">Contact Name</Label>
-          <Input
-            id="contactName"
-            value={data.contactName}
-            onChange={(e) => setData({ ...data, contactName: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="contactPhone">Contact Phone</Label>
-          <Input
-            id="contactPhone"
-            value={data.contactPhone}
-            onChange={(e) => setData({ ...data, contactPhone: e.target.value })}
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="contactEmail">Contact Email</Label>
-        <Input
-          id="contactEmail"
-          type="email"
-          value={data.contactEmail}
-          onChange={(e) => setData({ ...data, contactEmail: e.target.value })}
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="eventType">Event Type</Label>
+          <Label htmlFor="status">Status</Label>
           <Select
-            value={data.eventType}
-            onValueChange={(value) => setData({ ...data, eventType: value })}
+            value={data.status}
+            onValueChange={(value) => setData(prev => prev ? { ...prev, status: value as HotelEnquiry["status"] } : null)}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Wedding">Wedding</SelectItem>
-              <SelectItem value="Corporate Event">Corporate Event</SelectItem>
-              <SelectItem value="Birthday Party">Birthday Party</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Contacted">Contacted</SelectItem>
+              <SelectItem value="Closed">Closed</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="eventDate">Event Date</Label>
-          <Input
-            id="eventDate"
-            type="date"
-            value={data.eventDate}
-            onChange={(e) => setData({ ...data, eventDate: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="guestCount">Guest Count</Label>
-          <Input
-            id="guestCount"
-            type="number"
-            value={data.guestCount}
-            onChange={(e) =>
-              setData({ ...data, guestCount: Number(e.target.value) })
-            }
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={data.status}
-          onValueChange={(value: HotelEnquiry["status"]) =>
-            setData({ ...data, status: value })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="isPremium">isPremium</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      </section>
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/hotel/enquiries")}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+        </div>
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading enquiry details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Hotel Enquiries</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Add Enquiry
-        </Button>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search by hotel, contact name, city..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/hotel/enquiries")}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Hotel Enquiry Details</h1>
+            <p className="text-muted-foreground">
+              {selectedEnquiry ? `Enquiry for ${selectedEnquiry.name}` : "View and manage hotel enquiry"}
+            </p>
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="isPremium">isPremium</SelectItem>
-          </SelectContent>
-        </Select>
+        {selectedEnquiry && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+              className="gap-2"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
-      <motion.div layout className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Hotel / City</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Event Details</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Submitted On</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                </TableCell>
-              </TableRow>
-            ) : filteredEnquiries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  No enquiries found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredEnquiries.map((enquiry) => (
-                <motion.tr
-                  key={enquiry.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  layout
-                >
-                  <TableCell>
-                    <div className="font-medium">{enquiry.hotelName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {enquiry.city}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{enquiry.contactName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {enquiry.contactEmail}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      {format(new Date(enquiry.eventDate), "MMM d, yyyy")}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      {enquiry.guestCount} Guests
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(enquiry.status)}>
-                      {enquiry.status === "isPremium" && (
-                        <Star className="w-3 h-3 mr-1.5 fill-current" />
-                      )}
-                      {enquiry.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(enquiry.createdAt), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedEnquiry(enquiry);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setSelectedEnquiry(enquiry);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </motion.tr>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </motion.div>
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Hotel Enquiry</DialogTitle>
-          </DialogHeader>
-          <HotelEnquiryFormFields data={newEnquiry} setData={setNewEnquiry} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Cancel
+
+      {/* Premium Access Error */}
+      {isPremiumError && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Crown className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Premium Feature:</strong> Access to enquiries requires a premium subscription. 
+            Please upgrade your account to view and manage enquiries.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* General Error Display */}
+      {error && !isPremiumError && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Enquiry Not Found */}
+      {!isLoading && !selectedEnquiry && !error && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Enquiry Not Found</h3>
+            <p className="text-muted-foreground mb-4">
+              The enquiry you're looking for doesn't exist or you don't have access to it.
+            </p>
+            <Button onClick={() => router.push("/hotel/enquiries")}>
+              Go Back to Enquiries
             </Button>
-            <Button onClick={handleAdd} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
-                </>
-              ) : (
-                "Add Enquiry"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enquiry Details */}
+      {selectedEnquiry && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid gap-6"
+        >
+          {/* Status and Quick Actions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(selectedEnquiry.status)}
+                  <div>
+                    <CardTitle className="text-lg">Status Management</CardTitle>
+                    <CardDescription>Current enquiry status and quick actions</CardDescription>
+                  </div>
+                </div>
+                <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
+                  {selectedEnquiry.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                {(["Pending", "Contacted", "Closed"] as const).map((status) => (
+                  <Button
+                    key={status}
+                    variant={selectedEnquiry.status === status ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleStatusUpdate(status)}
+                    disabled={selectedEnquiry.status === status || isLoading}
+                    className="gap-2"
+                  >
+                    {getStatusIcon(status)}
+                    {status}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enquiry Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Enquiry Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Name</Label>
+                      <p className="text-base font-semibold">{selectedEnquiry.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                      <p className="text-base">{selectedEnquiry.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Phone Number</Label>
+                      <p className="text-base">{selectedEnquiry.phoneNumber}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Auth ID</Label>
+                      <code className="bg-muted px-2 py-1 rounded text-xs block mt-1">
+                        {selectedEnquiry.authId}
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Created</Label>
+                    <p className="text-base font-semibold">
+                      {format(new Date(selectedEnquiry.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                    <p className="text-base font-semibold">
+                      {format(new Date(selectedEnquiry.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enquiry Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Eye className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <p className="text-lg font-semibold">{selectedEnquiry.status}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <User className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Name</p>
+                    <p className="text-lg font-semibold truncate">{selectedEnquiry.name}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Phone className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                    <p className="text-lg font-semibold">{selectedEnquiry.phoneNumber}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Hotel Enquiry</DialogTitle>
+            <DialogDescription>
+              Update the hotel enquiry information and status.
+            </DialogDescription>
           </DialogHeader>
-          {selectedEnquiry && (
-            <HotelEnquiryFormFields
-              data={selectedEnquiry}
-              setData={setSelectedEnquiry}
+          {editData && (
+            <EnquiryFormFields
+              data={editData}
+              setData={setEditData}
             />
           )}
           <DialogFooter>
@@ -492,12 +573,25 @@ export default function HotelEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Enquiry</DialogTitle>
-            <DialogDescription>Are you sure?</DialogDescription>
+            <DialogTitle>Delete Hotel Enquiry</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this hotel enquiry? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
+          {selectedEnquiry && (
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <p><strong>Name:</strong> {selectedEnquiry.name}</p>
+              <p><strong>Email:</strong> {selectedEnquiry.email}</p>
+              <p><strong>Phone Number:</strong> {selectedEnquiry.phoneNumber}</p>
+              <p><strong>Status:</strong> {selectedEnquiry.status}</p>
+              <p><strong>Auth ID:</strong> {selectedEnquiry.authId}</p>
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
@@ -515,7 +609,7 @@ export default function HotelEnquiryPage() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
                 </>
               ) : (
-                "Delete"
+                "Delete Enquiry"
               )}
             </Button>
           </DialogFooter>

@@ -25,8 +25,9 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { hotelName, city, status, authId } = body;
+    const { name, email, phoneNumber, authId, status } = body;
 
+    // Validate required fields
     if (!authId) {
       return NextResponse.json(
         {
@@ -37,25 +38,27 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!hotelName || !city) {
+    if (!name || !email || !phoneNumber) {
       return NextResponse.json(
         {
           success: false,
-          error: "hotelName and city are required"
+          error: "name, email, and phoneNumber are required"
         },
         { status: 400 }
       );
     }
 
+    // Prepare enquiry data as per HotelEnquiry interface
     const enquiryData = {
-      hotelName,
-      city,
+      name,
+      email,
+      phoneNumber,
       status: status || "Pending",
       authId
     };
 
     const newEnquiry = await HotelEnquiryService.createEnquiry(enquiryData);
-    
+
     return NextResponse.json({
       success: true,
       data: newEnquiry,

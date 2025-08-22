@@ -48,8 +48,9 @@ export async function GET(
 }
 
 // PUT /api/routes/vendor-enquiry/[id] - Update a specific hotel enquiry
+// PUT /api/routes/hotel-enquiry/[id] - Update a specific hotel enquiry
 export async function PUT(
-  req: Request, 
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -66,12 +67,18 @@ export async function PUT(
       );
     }
 
-    // Extract allowed update fields (excluding id, createdAt, authId)
-    const { hotelName, city, status } = body;
-    const updateData: any = {};
+    // Only allow updating name, email, phoneNumber, and status (not id, createdAt, updatedAt, authId)
+    const { name, email, phoneNumber, status } = body;
+    const updateData: Partial<{
+      name: string;
+      email: string;
+      phoneNumber: string;
+      status: "Pending" | "Contacted" | "Closed";
+    }> = {};
 
-    if (hotelName !== undefined) updateData.hotelName = hotelName;
-    if (city !== undefined) updateData.city = city;
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
     if (status !== undefined) {
       if (!["Pending", "Contacted", "Closed"].includes(status)) {
         return NextResponse.json(
@@ -83,6 +90,9 @@ export async function PUT(
         );
       }
       updateData.status = status;
+    } else {
+      // If status is not provided, default to "Pending"
+      updateData.status = "Pending";
     }
 
     if (Object.keys(updateData).length === 0) {

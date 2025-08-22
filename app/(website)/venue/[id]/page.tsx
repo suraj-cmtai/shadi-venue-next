@@ -89,7 +89,7 @@ const toTitleCase = (value: string) =>
 
 interface EnquiryFormData {
   name: string;
-  phone: string;
+  phoneNumber: string;
   email: string;
 }
 
@@ -113,7 +113,7 @@ export default function HotelDetailsPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [formData, setFormData] = useState<EnquiryFormData>({
     name: "",
-    phone: "",
+    phoneNumber: "",
     email: "",
   });
 
@@ -151,33 +151,24 @@ export default function HotelDetailsPage() {
       return;
     }
 
+    // Only use the fields from the HotelEnquiry interface
     const enquiryData = {
-      hotelName: hotel.name || "",
-      city: hotel.location?.city || "",
-      status: "Pending" as const,
       name: formData.name,
       email: formData.email || "",
-      phoneNumber: formData.phone,
+      phoneNumber: formData.phoneNumber,
+      status: "Pending" as const,
       authId: hotel.id,
+      // id, createdAt, updatedAt will be set by backend
     };
 
     try {
       await dispatch(
-        createHotelEnquiry({
-          hotelName: enquiryData.hotelName,
-          city: enquiryData.city,
-          status: enquiryData.status,
-          authId: enquiryData.authId,
-          // Only these fields are required by the backend, but we can pass extra fields if needed
-          // The backend should ignore unknown fields
-          // name, phone, email are not part of HotelEnquiry interface, but you may want to store them in a custom field or as part of the backend logic
-          // For now, we only pass the required fields
-        } as any)
+        createHotelEnquiry(enquiryData as any)
       ).unwrap();
       setEnquirySuccess(true);
       setFormData({
         name: "",
-        phone: "",
+        phoneNumber: "",
         email: "",
       });
     } catch (error) {
@@ -628,7 +619,7 @@ export default function HotelDetailsPage() {
                     onClick={() => {
                       setFormData({
                         name: "",
-                        phone: "",
+                        phoneNumber: "",
                         email: "",
                       });
                       setEnquirySuccess(false);
@@ -658,12 +649,12 @@ export default function HotelDetailsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number *</Label>
+                      <Label htmlFor="phoneNumber">Phone Number *</Label>
                       <Input
-                        id="phone"
-                        name="phone"
+                        id="phoneNumber"
+                        name="phoneNumber"
                         type="tel"
-                        value={formData.phone}
+                        value={formData.phoneNumber}
                         onChange={handleInputChange}
                         required
                         placeholder="Enter your phone number"

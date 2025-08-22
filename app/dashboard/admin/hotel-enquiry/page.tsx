@@ -20,7 +20,9 @@ import {
   Loader2,
   MoreHorizontal,
   Building,
-  MapPin,
+  Phone,
+  Mail,
+  User,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -61,8 +63,9 @@ const initialHotelEnquiryState: Omit<
   HotelEnquiry,
   "id" | "createdAt" | "updatedAt"
 > = {
-  hotelName: "",
-  city: "",
+  name: "",
+  email: "",
+  phoneNumber: "",
   authId: "",
   status: "Pending",
 };
@@ -95,25 +98,35 @@ const HotelEnquiryFormFields = ({
   <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <Label htmlFor="hotelName">Hotel Name</Label>
+        <Label htmlFor="name">Name</Label>
         <Input
-          id="hotelName"
-          value={data.hotelName}
-          onChange={(e) => setData({ ...data, hotelName: e.target.value })}
-          placeholder="Enter hotel name"
+          id="name"
+          value={data.name}
+          onChange={(e) => setData({ ...data, name: e.target.value })}
+          placeholder="Enter name"
         />
       </div>
       <div>
-        <Label htmlFor="city">City</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
-          id="city"
-          value={data.city}
-          onChange={(e) => setData({ ...data, city: e.target.value })}
-          placeholder="Enter city"
+          id="email"
+          type="email"
+          value={data.email}
+          onChange={(e) => setData({ ...data, email: e.target.value })}
+          placeholder="Enter email"
         />
       </div>
     </div>
-    <div className="grid grid-cols-1 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="phoneNumber">Phone Number</Label>
+        <Input
+          id="phoneNumber"
+          value={data.phoneNumber}
+          onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
+          placeholder="Enter phone number"
+        />
+      </div>
       <div>
         <Label htmlFor="authId">Hotel Auth ID</Label>
         <Input
@@ -170,8 +183,9 @@ export default function HotelEnquiryPage() {
   const filteredEnquiries = enquiries.filter((enquiry) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      enquiry.hotelName.toLowerCase().includes(searchLower) ||
-      enquiry.city.toLowerCase().includes(searchLower) ||
+      enquiry.name.toLowerCase().includes(searchLower) ||
+      enquiry.email.toLowerCase().includes(searchLower) ||
+      enquiry.phoneNumber.toLowerCase().includes(searchLower) ||
       enquiry.authId.toLowerCase().includes(searchLower);
     const matchesStatus =
       statusFilter === "all" || enquiry.status === statusFilter;
@@ -179,7 +193,12 @@ export default function HotelEnquiryPage() {
   });
 
   const handleAdd = async () => {
-    if (!newEnquiry.hotelName.trim() || !newEnquiry.city.trim() || !newEnquiry.authId.trim()) {
+    if (
+      !newEnquiry.name.trim() ||
+      !newEnquiry.email.trim() ||
+      !newEnquiry.phoneNumber.trim() ||
+      !newEnquiry.authId.trim()
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -199,18 +218,21 @@ export default function HotelEnquiryPage() {
 
   const handleUpdate = async () => {
     if (!selectedEnquiry) return;
-    
+
     setIsSubmitting(true);
     try {
       const updateData = {
-        hotelName: selectedEnquiry.hotelName,
-        city: selectedEnquiry.city,
+        name: selectedEnquiry.name,
+        email: selectedEnquiry.email,
+        phoneNumber: selectedEnquiry.phoneNumber,
         status: selectedEnquiry.status,
       };
-      await dispatch(updateHotelEnquiry({ 
-        id: selectedEnquiry.id, 
-        data: updateData 
-      })).unwrap();
+      await dispatch(
+        updateHotelEnquiry({
+          id: selectedEnquiry.id,
+          data: updateData,
+        })
+      ).unwrap();
       setIsEditDialogOpen(false);
       toast.success("Hotel enquiry updated successfully!");
     } catch (err: any) {
@@ -238,9 +260,9 @@ export default function HotelEnquiryPage() {
   const getStatusStats = () => {
     const stats = {
       total: enquiries.length,
-      pending: enquiries.filter(e => e.status === "Pending").length,
-      contacted: enquiries.filter(e => e.status === "Contacted").length,
-      closed: enquiries.filter(e => e.status === "Closed").length,
+      pending: enquiries.filter((e) => e.status === "Pending").length,
+      contacted: enquiries.filter((e) => e.status === "Contacted").length,
+      closed: enquiries.filter((e) => e.status === "Closed").length,
     };
     return stats;
   };
@@ -298,7 +320,7 @@ export default function HotelEnquiryPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search by hotel name, city, or auth ID..."
+            placeholder="Search by name, email, phone, or auth ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -322,7 +344,9 @@ export default function HotelEnquiryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Hotel Details</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Auth ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
@@ -333,13 +357,13 @@ export default function HotelEnquiryPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
             ) : filteredEnquiries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <div className="flex flex-col items-center gap-2">
                     <Building className="h-8 w-8 text-muted-foreground" />
                     <p className="text-muted-foreground">No enquiries found</p>
@@ -368,10 +392,21 @@ export default function HotelEnquiryPage() {
                   layout
                 >
                   <TableCell>
-                    <div className="font-medium">{enquiry.hotelName}</div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="w-3 h-3" />
-                      {enquiry.city}
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">{enquiry.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{enquiry.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{enquiry.phoneNumber}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -506,8 +541,9 @@ export default function HotelEnquiryPage() {
           {selectedEnquiry && (
             <div className="py-4">
               <div className="bg-muted p-4 rounded-lg">
-                <h4 className="font-medium">{selectedEnquiry.hotelName}</h4>
-                <p className="text-sm text-muted-foreground">{selectedEnquiry.city}</p>
+                <h4 className="font-medium">{selectedEnquiry.name}</h4>
+                <p className="text-sm text-muted-foreground">{selectedEnquiry.email}</p>
+                <p className="text-sm text-muted-foreground">{selectedEnquiry.phoneNumber}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Auth ID: {selectedEnquiry.authId}
                 </p>
