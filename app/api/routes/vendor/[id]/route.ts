@@ -28,7 +28,6 @@ export async function GET(
       data: vendor
     });
   } catch (error: any) {
-    // params may be a promise, so we can't access params.id directly here
     console.error(`Error fetching vendor:`, error);
 
     if (error.message === "Vendor not found") {
@@ -52,7 +51,7 @@ export async function GET(
   }
 }
 
-// PUT /api/routes/vendor/[id] - Update vendor
+// PUT /api/routes/vendor/[id] - Update vendor (all fields)
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -108,54 +107,96 @@ export async function PUT(
       }
     }
 
-    // Parse update data
+    // Parse update data for all fields in Vendor interface
     const updateData: any = {};
 
-    // Only update fields that are provided
-    const fields = [
-      'businessName', 'category', 'yearOfEstablishment', 'contactPersonName',
-      'designation', 'mobileNumber', 'whatsappNumber', 'email', 'websiteOrSocial',
-      'address', 'city', 'state', 'pinCode', 'specialities', 'about',
-      'awards', 'notableClients', 'refundPolicy', 'username', 'status'
+    // All fields from Vendor interface
+    const allFields = [
+      // Basic Business Info
+      'businessName', 'category', 'yearOfEstablishment',
+      // Contact Details
+      'contactPersonName', 'designation', 'mobileNumber', 'mobileVerified', 
+      'whatsappNumber', 'email', 'websiteOrSocial',
+      // Location & Coverage
+      'address', 'city', 'state', 'pinCode', 'serviceAreas',
+      // Services / Venue Details
+      'servicesOffered', 'startingPrice', 'guestCapacityMin', 'guestCapacityMax',
+      'facilitiesAvailable', 'specialities',
+      // Portfolio Upload
+      'logoUrl', 'coverImageUrl', 'portfolioImages', 'videoLinks',
+      // Business Highlights
+      'about', 'awards', 'notableClients',
+      // Payment & Booking Terms
+      'advancePaymentPercent', 'refundPolicy', 'paymentModesAccepted',
+      // Account Setup
+      'username', 'passwordHash', 'agreedToTerms',
+      // System fields
+      'status', 'isPremium'
     ];
 
-    fields.forEach(field => {
+    // Fields that are arrays (parse as JSON)
+    const arrayFields = [
+      'serviceAreas', 'servicesOffered', 'facilitiesAvailable', 'portfolioImages', 
+      'videoLinks', 'paymentModesAccepted'
+    ];
+
+    // Fields that are numbers
+    const numberFields = [
+      'startingPrice', 'guestCapacityMin', 'guestCapacityMax', 'advancePaymentPercent'
+    ];
+
+    // Fields that are booleans
+    const booleanFields = [
+      'agreedToTerms', 'mobileVerified', 'isPremium'
+    ];
+
+    // Parse all fields from formData
+    for (const field of allFields) {
+      if (field === 'logoUrl' || field === 'coverImageUrl' || field === 'portfolioImages') {
+        // These are handled above
+        continue;
+      }
       const value = formData.get(field);
       if (value !== null) {
-        updateData[field] = value;
+        if (arrayFields.includes(field)) {
+          try {
+            updateData[field] = JSON.parse(value as string);
+          } catch {
+            updateData[field] = [];
+          }
+        } else if (numberFields.includes(field)) {
+          updateData[field] = value === "" ? undefined : Number(value);
+        } else if (booleanFields.includes(field)) {
+          // Use consistent boolean parsing style
+          updateData[field] = value?.toString().toLowerCase() === "true";
+        } else {
+          updateData[field] = value;
+        }
       }
-    });
-
-    // Handle array and number fields
-    const arrayFields = ['serviceAreas', 'servicesOffered', 'facilitiesAvailable', 'videoLinks', 'paymentModesAccepted'];
-    arrayFields.forEach(field => {
-      const value = formData.get(field);
-      if (value !== null) {
-        updateData[field] = JSON.parse(value as string);
-      }
-    });
-
-    const numberFields = ['startingPrice', 'guestCapacityMin', 'guestCapacityMax', 'advancePaymentPercent'];
-    numberFields.forEach(field => {
-      const value = formData.get(field);
-      if (value !== null && value !== '') {
-        updateData[field] = Number(value);
-      }
-    });
-
-    // Handle boolean fields
-    if (formData.get('agreedToTerms') !== null) {
-      updateData.agreedToTerms = formData.get('agreedToTerms') === 'true';
-    }
-
-    if (formData.get('mobileVerified') !== null) {
-      updateData.mobileVerified = formData.get('mobileVerified') === 'true';
     }
 
     // Update image URLs
     updateData.logoUrl = logoUrl;
     updateData.coverImageUrl = coverImageUrl;
     updateData.portfolioImages = portfolioImages;
+
+    // passwordHash: never allow update to plain password, only hash if provided
+    if (formData.get('passwordHash') !== null) {
+      updateData.passwordHash = formData.get('passwordHash');
+    }
+
+    // status: allow update if provided
+    if (formData.get('status') !== null) {
+      updateData.status = formData.get('status');
+    }
+
+    // isPremium: allow update if provided, use consistent boolean parsing style
+    if (formData.get('isPremium') !== null) {
+      const isPremium = formData.get("isPremium")?.toString();
+      updateData.isPremium = isPremium?.toLowerCase() === "true";
+    }
+
+    // createdAt, updatedAt: do not allow manual update (handled by backend)
 
     const updatedVendor = await VendorService.updateVendor(id, updateData);
 
