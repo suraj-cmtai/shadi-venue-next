@@ -2,16 +2,21 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 
 const NotFound = () => {
     const pathname = usePathname();
+    const mainRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         console.log("404 Error: User attempted to access non-existent route:", pathname);
+        // Instantly scroll to main section (no smooth/scroll effect)
+        if (mainRef.current) {
+            mainRef.current.scrollIntoView({ behavior: "auto" });
+        }
     }, [pathname]);
 
     return (
@@ -49,6 +54,16 @@ const NotFound = () => {
                     flexShrink: 0,
                 }}
             >
+                {/* Hero Background Image */}
+                <div className="absolute inset-0">
+                    <Image
+                        src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+                        alt="Beautiful Wedding Mandap"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                </div>
                 {/* Background Overlays */}
                 <div className="absolute inset-0 z-0">
                     <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
@@ -82,7 +97,10 @@ const NotFound = () => {
             </section>
 
             {/* Main content */}
-            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-8">
+            <div
+                ref={mainRef}
+                className="relative z-10 flex flex-col items-center justify-center min-h-screen px-8"
+            >
                 <div>
                     <Image
                         src="/images/wedding/404.png"
@@ -121,7 +139,7 @@ const NotFound = () => {
                 {/* Back button */}
                 <Button
                     onClick={() => window.location.href = '/'}
-                    className="bg-[#212D47] hover:bg-[#1a2137] text-white px-8 py-3 rounded-sm"
+                    className="bg-[#212D47] hover:bg-[#1a2137] text-white px-8 py-3 rounded-sm cursor-pointer transition-colors duration-300 shadow-md hover:shadow-lg"
                 >
                     ← Back To Home Page
                 </Button>
