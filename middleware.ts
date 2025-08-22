@@ -86,6 +86,18 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"], 
     isPublic: true,
   },
+  //  https://shadi-venue-next.vercel.app/api/routes/hero-extension/content
+  {
+    pattern: /\/api\/routes\/hero-extension\/content$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
+  // https://shadi-venue-next.vercel.app/api/routes/about/process-steps/active
+  {
+    pattern: /\/api\/routes\/about\/process-steps\/active$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
   {
     // This covers /api/routes/(published|active|login|signup|logout|public|auth) for any method
     pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,
