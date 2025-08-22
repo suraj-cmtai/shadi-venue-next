@@ -130,7 +130,7 @@ export default function FeaturedVendors() {
                     <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
                       <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
                         {/* Updated link to a generic vendor page */}
-                        <Link href={`/vendor/${vendor.id}`} passHref>
+                        <Link href={`/vendors/${vendor.id}`} passHref>
                           {vendor.businessName || "Vendor Name"}
                         </Link>
                       </p>

@@ -183,7 +183,7 @@ const DynamicVendorPage: React.FC = () => {
 
   // Handle vendor click
   const handleVendorClick = (vendorId: string) => {
-    router.push(`/vendor/${vendorId}`);
+            router.push(`/vendors/${vendorId}`);
   };
 
   // Count active filters

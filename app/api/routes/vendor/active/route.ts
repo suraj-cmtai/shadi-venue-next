@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import vendorService from "../../../services/vendorServices";
+import VendorService from "../../../services/vendorServices";
 import consoleManager from "../../../utils/consoleManager";
 
 // Get all active vendors (GET)
 export async function GET(req: Request) {
     try {
-        const vendors = await vendorService.getActiveVendors();
+        const vendors = await VendorService.getActiveVendors();
         
         consoleManager.log("Fetched active vendors");
 

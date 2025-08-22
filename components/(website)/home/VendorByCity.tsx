@@ -31,8 +31,6 @@ export default function VendorsByCity() {
     dispatch(fetchActiveVendors());
   }, [dispatch]);
 
-  console.log("activeVendors", activeVendors);
-
   // The core logic, now adapted for the Vendor data structure
   const cityTiles = useMemo(() => {
     if (!activeVendors || activeVendors.length === 0)

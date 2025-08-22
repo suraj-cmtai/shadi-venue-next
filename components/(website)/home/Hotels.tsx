@@ -19,7 +19,6 @@ const VECTOR02_IMG = "/images/hotels-flower-vector-right.svg";
 
 export default function Hotels() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
   const hotels = useSelector(selectPremiumHotel);
   const isLoading = useSelector(selectHotelLoading);
   const error = useSelector(selectHotelError);

@@ -175,9 +175,15 @@ const API_ROUTES: RouteConfig[] = [
     isPublic: true,
   },
 
-  // /api/routes/vendor/[id] - admin and vendor, all methods
+  // /api/routes/vendor/[id] - public for GET, admin/vendor for other methods
   {
     pattern: /^\/api\/routes\/vendor\/[^/]+$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
+  {
+    pattern: /^\/api\/routes\/vendor\/[^/]+$/,
+    methods: ["PUT", "DELETE", "PATCH"],
     roles: ["admin", "vendor"],
   },
 

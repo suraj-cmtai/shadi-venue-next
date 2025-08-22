@@ -5,7 +5,7 @@ import Hero from '@/components/(website)/home/Hero'
 import HeroExtension from '@/components/(website)/home/HeroExtension'
 import AllLogos from '@/components/(website)/home/AllLogos'
 import About from '@/components/(website)/home/About'
-import Venue from '@/components/(website)/home/Venue'
+import Process from "@/components/(website)/home/Process";
 import VideoSection from '@/components/(website)/home/VideoSection'
 import Hotels from '@/components/(website)/home/Hotels'
 import Award from '@/components/(website)/home/Award'
@@ -20,6 +20,7 @@ import Loading from "../loading"
 import Vendor from "@/components/(website)/home/Vendor";
 import VendorsByCity from "@/components/(website)/home/VendorByCity";
 
+
 const HomePage = () => {
   return (
     <Suspense fallback={<Loading />}>
@@ -29,10 +30,10 @@ const HomePage = () => {
       <HotelByCity />
       <VendorsByCity />
       <About />
-      {/* <Venue /> */}
       <VideoSection />
       <Hotels />
       <Vendor />
+      <Process />
       <Award />
       <Wedding />
       <Gallery />
