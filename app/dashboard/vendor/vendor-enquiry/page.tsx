@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { useSelector } from "react-redux";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -26,10 +26,10 @@ import {
 } from "lucide-react";
 
 import {
-  fetchVendorEnquiryById,
+  fetchVendorEnquiriesByAuthId,
   updateVendorEnquiry,
   deleteVendorEnquiry,
-  selectSelectedVendorEnquiry,
+  selectVendorEnquiries,
   selectVendorEnquiryLoading,
   selectVendorEnquiryError,
   VendorEnquiry,
@@ -61,13 +61,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default function VendorEnquirySinglePage() {
+export default function VendorEnquiryListPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const params = useParams();
-  const enquiryId = params?.id as string;
 
-  const selectedEnquiry = useAppSelector(selectSelectedVendorEnquiry);
+  const vendorEnquiries = useAppSelector(selectVendorEnquiries);
   const isLoading = useAppSelector(selectVendorEnquiryLoading);
   const error = useAppSelector(selectVendorEnquiryError);
   const auth = useSelector(selectAuth);
@@ -75,23 +73,17 @@ export default function VendorEnquirySinglePage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editData, setEditData] = useState<VendorEnquiry | null>(null);
+  const [selectedEnquiry, setSelectedEnquiry] = useState<VendorEnquiry | null>(null);
 
   // Get authId from auth slice
   const authId = auth?.data?.roleId;
   const isVendor = auth?.data?.role === "vendor";
 
   useEffect(() => {
-    if (isVendor && authId && enquiryId) {
-      dispatch(fetchVendorEnquiryById(enquiryId));
+    if (isVendor && authId) {
+      dispatch(fetchVendorEnquiriesByAuthId(authId));
     }
-  }, [auth, authId, isVendor, enquiryId, dispatch]);
-
-  // Initialize edit data when enquiry loads
-  useEffect(() => {
-    if (selectedEnquiry) {
-      setEditData(selectedEnquiry);
-    }
-  }, [selectedEnquiry]);
+  }, [auth, authId, isVendor, dispatch]);
 
   // If not a vendor or no authId, show appropriate message
   if (!isVendor || !authId) {
@@ -138,7 +130,7 @@ export default function VendorEnquirySinglePage() {
 
   const handleUpdate = () => {
     if (!editData) return;
-    
+
     const updateData = {
       name: editData.name,
       email: editData.email,
@@ -163,7 +155,8 @@ export default function VendorEnquirySinglePage() {
       .unwrap()
       .then(() => {
         toast.success("Enquiry deleted successfully!");
-        router.push("/vendor/enquiries");
+        setIsDeleteDialogOpen(false);
+        setSelectedEnquiry(null);
       })
       .catch((err: unknown) =>
         toast.error(`Failed to delete enquiry: ${getErrorMessage(err)}`)
@@ -258,6 +251,12 @@ export default function VendorEnquirySinglePage() {
     </div>
   );
 
+  // New: List selection handler
+  const handleSelectEnquiry = (enquiry: VendorEnquiry) => {
+    setSelectedEnquiry(enquiry);
+    setEditData(enquiry);
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
@@ -273,7 +272,7 @@ export default function VendorEnquirySinglePage() {
         </div>
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading enquiry details...</p>
+          <p className="text-muted-foreground">Loading enquiries...</p>
         </div>
       </div>
     );
@@ -293,32 +292,12 @@ export default function VendorEnquirySinglePage() {
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Enquiry Details</h1>
+            <h1 className="text-2xl font-bold">Vendor Enquiries</h1>
             <p className="text-muted-foreground">
-              {selectedEnquiry ? `Enquiry from ${selectedEnquiry.name}` : "View and manage enquiry"}
+              View and manage all your customer enquiries.
             </p>
           </div>
         </div>
-        {selectedEnquiry && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(true)}
-              className="gap-2"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Premium Access Error */}
@@ -342,14 +321,14 @@ export default function VendorEnquirySinglePage() {
         </Alert>
       )}
 
-      {/* Enquiry Not Found */}
-      {!isLoading && !selectedEnquiry && !error && (
+      {/* No Enquiries */}
+      {!isLoading && (!vendorEnquiries || vendorEnquiries.length === 0) && !error && (
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Enquiry Not Found</h3>
+            <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
             <p className="text-muted-foreground mb-4">
-              The enquiry you're looking for doesn't exist or you don't have access to it.
+              You have not received any enquiries yet.
             </p>
             <Button onClick={() => router.push("/vendor/enquiries")}>
               Go Back to Enquiries
@@ -358,125 +337,195 @@ export default function VendorEnquirySinglePage() {
         </Card>
       )}
 
-      {/* Enquiry Details */}
-      {selectedEnquiry && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid gap-6"
-        >
-          {/* Status and Quick Actions */}
-          <Card>
+      {/* Enquiries List and Details */}
+      {vendorEnquiries && vendorEnquiries.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Enquiry List */}
+          <Card className="md:col-span-1 h-fit">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(selectedEnquiry.status)}
-                  <div>
-                    <CardTitle className="text-lg">Status Management</CardTitle>
-                    <CardDescription>Current enquiry status and quick actions</CardDescription>
-                  </div>
-                </div>
-                <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
-                  {selectedEnquiry.status}
-                </Badge>
-              </div>
+              <CardTitle className="text-lg">All Enquiries</CardTitle>
+              <CardDescription>
+                Select an enquiry to view details.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2">
-                {Object.values(VendorEnquiryStatus).map((status) => (
+              <div className="flex flex-col gap-2">
+                {vendorEnquiries.map((enquiry) => (
                   <Button
-                    key={status}
-                    variant={selectedEnquiry.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusUpdate(status)}
-                    disabled={selectedEnquiry.status === status || isLoading}
-                    className="gap-2"
+                    key={enquiry.id}
+                    variant={selectedEnquiry && selectedEnquiry.id === enquiry.id ? "default" : "outline"}
+                    className="justify-between w-full"
+                    onClick={() => handleSelectEnquiry(enquiry)}
                   >
-                    {getStatusIcon(status)}
-                    {status}
+                    <span className="flex items-center gap-2">
+                      {getStatusIcon(enquiry.status)}
+                      {enquiry.name}
+                    </span>
+                    <Badge className={getStatusColor(enquiry.status)}>
+                      {enquiry.status}
+                    </Badge>
                   </Button>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                      <p className="text-base font-semibold">{selectedEnquiry.name}</p>
+          {/* Enquiry Details */}
+          <div className="md:col-span-2">
+            {selectedEnquiry ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="grid gap-6"
+              >
+                {/* Status and Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(selectedEnquiry.status)}
+                        <div>
+                          <CardTitle className="text-lg">Status Management</CardTitle>
+                          <CardDescription>Current enquiry status and quick actions</CardDescription>
+                        </div>
+                      </div>
+                      <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
+                        {selectedEnquiry.status}
+                      </Badge>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                      <p className="text-base">{selectedEnquiry.email}</p>
-                      <Button variant="link" className="p-0 h-auto font-normal" asChild>
-                        <a href={`mailto:${selectedEnquiry.email}`}>Send Email</a>
-                      </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      {Object.values(VendorEnquiryStatus).map((status) => (
+                        <Button
+                          key={status}
+                          variant={selectedEnquiry.status === status ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleStatusUpdate(status)}
+                          disabled={selectedEnquiry.status === status || isLoading}
+                          className="gap-2"
+                        >
+                          {getStatusIcon(status)}
+                          {status}
+                        </Button>
+                      ))}
                     </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Phone Number</Label>
-                      <p className="text-base">{selectedEnquiry.phoneNumber}</p>
-                      <Button variant="link" className="p-0 h-auto font-normal" asChild>
-                        <a href={`tel:${selectedEnquiry.phoneNumber}`}>Call Now</a>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
 
-          {/* Timeline Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Created</Label>
-                    <p className="text-base font-semibold">
-                      {format(new Date(selectedEnquiry.createdAt), "MMMM d, yyyy 'at' h:mm a")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
-                    <p className="text-base font-semibold">
-                      {format(new Date(selectedEnquiry.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                {/* Contact Information */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="w-5 h-5" />
+                        Contact Information
+                      </CardTitle>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setEditData(selectedEnquiry);
+                            setIsEditDialogOpen(true);
+                          }}
+                          className="gap-2"
+                        >
+                          <Pencil className="w-4 h-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">Name</Label>
+                            <p className="text-base font-semibold">{selectedEnquiry.name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <Mail className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                            <p className="text-base">{selectedEnquiry.email}</p>
+                            <Button variant="link" className="p-0 h-auto font-normal" asChild>
+                              <a href={`mailto:${selectedEnquiry.email}`}>Send Email</a>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                          <Phone className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">Phone Number</Label>
+                            <p className="text-base">{selectedEnquiry.phoneNumber}</p>
+                            <Button variant="link" className="p-0 h-auto font-normal" asChild>
+                              <a href={`tel:${selectedEnquiry.phoneNumber}`}>Call Now</a>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Timeline Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5" />
+                      Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Created</Label>
+                          <p className="text-base font-semibold">
+                            {format(new Date(selectedEnquiry.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Clock className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                          <p className="text-base font-semibold">
+                            {format(new Date(selectedEnquiry.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No Enquiry Selected</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Please select an enquiry from the list to view its details.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Edit Dialog */}
