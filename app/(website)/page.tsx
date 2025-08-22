@@ -17,6 +17,8 @@ import Blog from '@/components/(website)/home/Blog'
 import GetInTouch from '@/components/(website)/home/GetInTouch'
 import HotelByCity from '@/components/(website)/home/HotelByCity'
 import Loading from "../loading"
+import Vendor from "@/components/(website)/home/Vendor";
+import VendorsByCity from "@/components/(website)/home/VendorByCity";
 
 const HomePage = () => {
   return (
@@ -25,10 +27,12 @@ const HomePage = () => {
       <HeroExtension />
       <AllLogos />
       <HotelByCity />
+      <VendorsByCity />
       <About />
       {/* <Venue /> */}
       <VideoSection />
       <Hotels />
+      <Vendor />
       <Award />
       <Wedding />
       <Gallery />
