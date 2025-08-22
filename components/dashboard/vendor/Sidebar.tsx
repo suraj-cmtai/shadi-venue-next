@@ -31,13 +31,14 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const links = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, badge: null },
-  { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
-  { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
-  { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },
-  { name: "Gallery", href: "/dashboard/gallery", icon: GalleryVerticalEnd, badge: null },
-  { name: "Contact", href: "/dashboard/contact", icon: MailCheck, badge: null },
-  { name: "Test", href: "/dashboard/test", icon: FileText, badge: null },
+  { name: "Dashboard", href: "/dashboard/vendor", icon: LayoutDashboard, badge: null },
+  { name: "Vendor Enquiry", href: "/dashboard/vendor/vendor-enquiry", icon: ContactRound, badge: null },
+  // { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
+  // { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
+  // { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },
+  // { name: "Gallery", href: "/dashboard/gallery", icon: GalleryVerticalEnd, badge: null },
+  // { name: "Contact", href: "/dashboard/contact", icon: MailCheck, badge: null },
+  // { name: "Test", href: "/dashboard/test", icon: FileText, badge: null },
 ];
 
 interface SidebarProps {

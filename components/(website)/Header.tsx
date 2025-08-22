@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MenuIcon, LogIn, UserPlus, User2, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, selectIsAuthenticated } from "@/lib/redux/features/authSlice";
@@ -47,13 +47,11 @@ export default function Header() {
     setSheetOpen(false);
   };
 
-  // Memoize dashboard link for the current role
-  const dashboardHref = useMemo(() => {
-    if (auth?.role && ROLE_DASHBOARDS[auth.role]) {
-      return ROLE_DASHBOARDS[auth.role];
-    }
-    return "/dashboard/user";
-  }, [auth?.role]);
+  // Compute dashboard link for the current role (removed useMemo)
+  const dashboardHref =
+    auth?.role && ROLE_DASHBOARDS[auth.role]
+      ? ROLE_DASHBOARDS[auth.role]
+      : "/dashboard/user";
 
   return (
     <header className="w-full bg-neutral-50/80 backdrop-blur-md sticky top-0 z-50 border-b border-neutral-200 px-4 sm:px-6 md:px-8">
@@ -121,7 +119,7 @@ export default function Header() {
                   aria-label="User Dashboard"
                 >
                   <User2 className="h-4 w-4" />
-                  <span className="truncate max-w-[6rem]">{auth?.name || "User"}</span>
+                  <span className="truncate max-w-[6rem]">{auth?.name || auth?.role ||"User"}</span>
                 </Button>
               </Link>
               <Button
@@ -146,7 +144,7 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             {/* SheetContent appears from the left side */}
-            <SheetContent side="left" className="p-0 w-full max-w-xs">
+            <SheetContent side="right" className="p-0 w-full max-w-xs">
               <SheetTitle hidden aria-hidden="true">Shadi Venue</SheetTitle>
               <div className="flex flex-col gap-6 p-4 sm:p-6">
                 {/* Logo and Flower in Sheet */}
@@ -203,7 +201,7 @@ export default function Header() {
                           onClick={() => setSheetOpen(false)}
                         >
                           <User2 className="h-4 w-4" />
-                          <span className="truncate max-w-[10rem]">{auth?.name || "User"}</span>
+                          <span className="truncate max-w-[10rem]">{auth?.name || auth?.role || "User"}</span>
                         </Button>
                       </Link>
                       <Button
