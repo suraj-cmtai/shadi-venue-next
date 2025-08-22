@@ -263,7 +263,7 @@ export default function VendorEnquiryListPage() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push("/vendor/enquiries")}
+            onClick={() => router.push("/dashboard/vendor")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -285,7 +285,7 @@ export default function VendorEnquiryListPage() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push("/vendor/enquiries")}
+            onClick={() => router.push("/dashboard/vendor")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -330,8 +330,8 @@ export default function VendorEnquiryListPage() {
             <p className="text-muted-foreground mb-4">
               You have not received any enquiries yet.
             </p>
-            <Button onClick={() => router.push("/vendor/enquiries")}>
-              Go Back to Enquiries
+            <Button onClick={() => router.push("/dashboard/vendor")}>
+              Go Back to Dashboard
             </Button>
           </CardContent>
         </Card>
