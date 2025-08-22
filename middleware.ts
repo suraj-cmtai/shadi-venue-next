@@ -104,6 +104,18 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
+  // https://shadi-venue-next.vercel.app/api/routes/hotel-enquiry
+  {
+    pattern: /\/api\/routes\/hotel-enquiry$/,
+    methods: ["POST"],
+    isPublic: true,
+  },
+  //  /api/routes/vendor-enquiry
+  {
+    pattern: /\/api\/routes\/vendor-enquiry$/,
+    methods: ["POST"],
+    isPublic: true,
+  }, 
   {
     // This covers /api/routes/(published|active|login|signup|logout|public|auth) for any method
     pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,
