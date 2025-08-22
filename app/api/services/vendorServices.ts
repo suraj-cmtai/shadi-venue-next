@@ -188,6 +188,7 @@ class VendorService {
 
   static async getAllVendors(forceRefresh = true) {
     if (forceRefresh || !this.isInitialized) {
+      this.initVendors();
       const snapshot = await db.collection("vendors").orderBy("createdAt", "desc").get();
       this.vendors = snapshot.docs.map((doc: any) => {
         return this.convertToType(doc.id, doc.data());
@@ -223,7 +224,7 @@ class VendorService {
 
   static async getVendorById(id: string) {
     try {
-      const vendor = this.vendors.find((vendor) => vendor.id === id);
+      const vendor = this.vendors.find((vendor) => vendor.id == id);
       if (vendor) {
         return vendor;
       }
@@ -305,6 +306,24 @@ class VendorService {
       (vendor.about && vendor.about.toLowerCase().includes(searchTerm))
     );
   }
+
+  static async getPremiumVendors(forceRefresh = true, status: "active" | "inactive" = 'active') {
+    if (forceRefresh || !this.isInitialized) {
+        this.initVendors();
+        consoleManager.log("Force refreshing premium vendors from Firestore...");
+        const snapshot = await db
+            .collection("vendors")
+            .where("isPremium", "==", true)
+            .where("status", "==", status)
+            .orderBy("createdAt", "desc")
+            .get();
+        const premiumVendors = snapshot.docs.map((doc: any) => this.convertToType(doc.id, doc.data()));
+        return premiumVendors;
+    } else {
+        consoleManager.log("Returning cached premium vendors. No Firestore read.");
+        return this.vendors.filter(vendor => vendor.isPremium && vendor.status === status);
+    }
+}
 }
 
 export default VendorService;

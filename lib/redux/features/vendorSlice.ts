@@ -106,6 +106,7 @@ export interface Vendor {
 interface VendorState {
   vendors: Vendor[];
   activeVendors: Vendor[];
+  premiumVendors: Vendor[];
   loading: boolean;
   hasFetched: boolean;
   error: string | null;
@@ -123,6 +124,7 @@ interface VendorState {
 const initialState: VendorState = {
   vendors: [],
   activeVendors: [],
+  premiumVendors: [],
   loading: false,
   hasFetched: false,
   error: null,
@@ -166,6 +168,19 @@ export const fetchActiveVendors = createAsyncThunk<Vendor[]>(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get("/api/routes/vendor/active");
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+// Fetch premium vendors
+export const fetchPremiumVendor = createAsyncThunk<Vendor[]>(
+  "vendor/fetchPremiumVendor",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get("/api/routes/vendor/premium");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -283,6 +298,22 @@ const vendorSlice = createSlice({
         state.hasFetched = true;
       })
 
+      // Fetch Premium Vendors
+      .addCase(fetchPremiumVendor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPremiumVendor.fulfilled, (state, action: PayloadAction<Vendor[]>) => {
+        state.premiumVendors = action.payload;
+        state.loading = false;
+        state.hasFetched = true;
+      })
+      .addCase(fetchPremiumVendor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.hasFetched = true;
+      })  
+
       // Fetch Vendor by ID
       .addCase(fetchVendorById.pending, (state) => {
         state.loading = true;
@@ -363,6 +394,7 @@ export const {
 // Selectors
 export const selectVendors = (state: RootState) => state.vendor.vendors;
 export const selectActiveVendors = (state: RootState) => state.vendor.activeVendors;
+export const selectPremiumVendor = (state: RootState) => state.vendor.premiumVendors;
 export const selectVendorLoading = (state: RootState) => state.vendor.loading;
 export const selectVendorError = (state: RootState) => state.vendor.error;
 export const selectSelectedVendor = (state: RootState) => state.vendor.selectedVendor;
