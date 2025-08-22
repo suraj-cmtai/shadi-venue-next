@@ -29,12 +29,14 @@ export default function Hotels() {
 
   // Derive unique cities with a representative image and count
   const cityTiles = useMemo(() => {
-    if (!hotels || hotels.length === 0) return [] as { city: string; image: string; count: number }[];
+    if (!hotels || hotels.length === 0)
+      return [] as { city: string; image: string; count: number }[];
     const map = new Map<string, { image: string; count: number }>();
     for (const h of hotels) {
       const city = h?.location?.city?.trim();
       if (!city) continue;
-      const firstImage = (h.images && h.images[0]) || "/images/hotels-image.png";
+      const firstImage =
+        (h.images && h.images[0]) || "/images/hotels-image.png";
       if (!map.has(city)) {
         map.set(city, { image: firstImage, count: 1 });
       } else {
@@ -42,11 +44,15 @@ export default function Hotels() {
         entry.count += 1;
       }
     }
-    return Array.from(map.entries()).map(([city, { image, count }]) => ({ city, image, count }));
+    return Array.from(map.entries()).map(([city, { image, count }]) => ({
+      city,
+      image,
+      count,
+    }));
   }, [hotels]);
 
   return (
-    <section className="relative w-full bg-neutral-50 py-16 md:py-24">
+    <section className="relative w-full bg-neutral-50 py-16 md:py-24 overflow-hidden">
       {/* Decorative Vector (right, desktop only) */}
       <div className="hidden lg:block absolute right-0 top-0 h-full z-0">
         <img
@@ -80,52 +86,73 @@ export default function Hotels() {
           Find the Perfect Stay for Your Wedding Weekend
         </motion.h2>
 
-        {/* City Tiles Grid */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-10 md:mb-16">
+        {/* ✨ CHANGE HERE: Replaced grid with a horizontally scrollable flex container */}
+        <div
+          className="w-full flex flex-row gap-6 md:gap-8 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}
+        >
           {isLoading && (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">Loading hotels...</span>
+            <div className="w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">
+                Loading hotels...
+              </span>
             </div>
           )}
           {!isLoading && error && (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-red-500 font-cormorant text-lg">{error}</span>
+            <div className="w-full flex justify-center items-center min-h-32">
+              <span className="text-red-500 font-cormorant text-lg">
+                {error}
+              </span>
             </div>
           )}
           {!isLoading && !error && cityTiles.length === 0 && (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">No cities found.</span>
+            <div className="w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">
+                No cities found.
+              </span>
             </div>
           )}
 
-          {!isLoading && !error && cityTiles.slice(0, 8).map((tile, idx) => (
-            <motion.div
-              key={tile.city}
-              className="relative group overflow-hidden rounded-md border border-[#212d47]"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
-            >
-              <Link href={`/venue?search=${encodeURIComponent(tile.city)}`} className="block">
-                <div
-                  className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8]"
-                  style={{ backgroundImage: `url('${tile.image}')` }}
-                  aria-label={tile.city}
+          {!isLoading &&
+            !error &&
+            cityTiles.slice(0, 8).map((tile, idx) => (
+              // ✨ CHANGE HERE: Added shrink-0 and a fixed width to each card
+              <motion.div
+                key={tile.city}
+                className="relative group overflow-hidden rounded-md border border-[#212d47] shrink-0 w-64 sm:w-72"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
+              >
+                <Link
+                  href={`/venue?search=${encodeURIComponent(tile.city)}`}
+                  className="block"
                 >
-                  <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
-                </div>
-                <div className="absolute left-0 bottom-0 w-full">
-                  <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center justify-between">
-                    <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                      {tile.city}
-                    </p>
-                    <span className="text-white/80 text-sm">{tile.count}</span>
+                  <div
+                    className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8]"
+                    style={{ backgroundImage: `url('${tile.image}')` }}
+                    aria-label={tile.city}
+                  >
+                    <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                  <div className="absolute left-0 bottom-0 w-full">
+                    <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center justify-between">
+                      <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
+                        {tile.city}
+                      </p>
+                      <span className="text-white/80 text-sm">
+                        {tile.count}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
         </div>
 
         {/* CTA Button */}
@@ -136,9 +163,9 @@ export default function Hotels() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <Link href="/venue" passHref >
-                <GradientButton>EXPLORE MORE</GradientButton>
-            </Link>
+          <Link href="/venue" passHref>
+            <GradientButton>EXPLORE MORE</GradientButton>
+          </Link>
         </motion.div>
       </div>
     </section>
