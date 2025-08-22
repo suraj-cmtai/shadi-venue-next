@@ -13,16 +13,12 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  User,
   AlertCircle,
   Crown,
   Calendar,
-  Clock,
   CheckCircle,
   Circle,
-  Eye,
   MessageCircle,
-  Mail,
   Phone,
 } from "lucide-react";
 
@@ -58,7 +54,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function HotelEnquiryListPage() {
   const dispatch = useAppDispatch();
@@ -327,98 +330,115 @@ export default function HotelEnquiryListPage() {
 
       {/* No Enquiries */}
       {!isLoading && (!enquiries || enquiries.length === 0) && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
-            <p className="text-muted-foreground mb-4">
-              You have not received any hotel enquiries yet.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="w-full flex flex-col items-center justify-center py-12 border rounded-lg bg-muted">
+          <AlertCircle className="h-12 w-12 mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
+          <p className="text-muted-foreground mb-4">
+            You have not received any hotel enquiries yet.
+          </p>
+        </div>
       )}
 
-      {/* Enquiries List */}
+      {/* Enquiries Table */}
       {enquiries && enquiries.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid gap-6"
+          className="overflow-x-auto"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {enquiries.map((enquiry) => (
-              <Card key={enquiry.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[120px]">Name</TableHead>
+                <TableHead className="min-w-[180px]">Email</TableHead>
+                <TableHead className="min-w-[140px]">Phone</TableHead>
+                <TableHead className="min-w-[120px]">Status</TableHead>
+                <TableHead className="min-w-[180px]">Created At</TableHead>
+                <TableHead className="min-w-[220px]">Status Actions</TableHead>
+                <TableHead className="min-w-[160px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {enquiries.map((enquiry) => (
+                <TableRow key={enquiry.id} className="align-top">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
                       {getStatusIcon(enquiry.status)}
-                      <div>
-                        <CardTitle className="text-lg">{enquiry.name}</CardTitle>
-                        <CardDescription>{enquiry.email}</CardDescription>
-                      </div>
+                      <span className="font-medium">{enquiry.name}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-muted-foreground">{enquiry.email}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{enquiry.phoneNumber}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <Badge className={`${getStatusColor(enquiry.status)} px-3 py-1`}>
                       {enquiry.status}
                     </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{enquiry.phoneNumber}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(enquiry.createdAt), "MMM d, yyyy h:mm a")}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    {(["Pending", "Contacted", "Closed"] as const).map((status) => (
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(enquiry.createdAt), "MMM d, yyyy h:mm a")}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2 flex-wrap">
+                      {(["Pending", "Contacted", "Closed"] as const).map((status) => (
+                        <Button
+                          key={status}
+                          variant={enquiry.status === status ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleStatusUpdate(enquiry, status)}
+                          disabled={enquiry.status === status || isLoading}
+                          className="gap-2"
+                        >
+                          {getStatusIcon(status)}
+                          {status}
+                        </Button>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
                       <Button
-                        key={status}
-                        variant={enquiry.status === status ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleStatusUpdate(enquiry, status)}
-                        disabled={enquiry.status === status || isLoading}
+                        onClick={() => {
+                          setEditData(enquiry);
+                          setIsEditDialogOpen(true);
+                          setSelectedEnquiry(enquiry);
+                        }}
                         className="gap-2"
                       >
-                        {getStatusIcon(status)}
-                        {status}
+                        <Pencil className="w-4 h-4" />
+                        Edit
                       </Button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditData(enquiry);
-                        setIsEditDialogOpen(true);
-                        setSelectedEnquiry(enquiry);
-                      }}
-                      className="gap-2"
-                    >
-                      <Pencil className="w-4 h-4" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedEnquiry(enquiry);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                      className="gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedEnquiry(enquiry);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </motion.div>
       )}
 

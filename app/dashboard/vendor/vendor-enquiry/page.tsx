@@ -58,7 +58,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 
 export default function VendorEnquiryListPage() {
@@ -323,52 +330,71 @@ export default function VendorEnquiryListPage() {
 
       {/* No Enquiries */}
       {!isLoading && (!vendorEnquiries || vendorEnquiries.length === 0) && !error && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
-            <p className="text-muted-foreground mb-4">
-              You have not received any enquiries yet.
-            </p>
-            <Button onClick={() => router.push("/dashboard/vendor")}>
-              Go Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
+          <p className="text-muted-foreground mb-4">
+            You have not received any enquiries yet.
+          </p>
+          <Button onClick={() => router.push("/dashboard/vendor")}>
+            Go Back to Dashboard
+          </Button>
+        </div>
       )}
 
-      {/* Enquiries List and Details */}
+      {/* Enquiries Table and Details */}
       {vendorEnquiries && vendorEnquiries.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Enquiry List */}
-          <Card className="md:col-span-1 h-fit">
-            <CardHeader>
-              <CardTitle className="text-lg">All Enquiries</CardTitle>
-              <CardDescription>
-                Select an enquiry to view details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                {vendorEnquiries.map((enquiry) => (
-                  <Button
-                    key={enquiry.id}
-                    variant={selectedEnquiry && selectedEnquiry.id === enquiry.id ? "default" : "outline"}
-                    className="justify-between w-full"
-                    onClick={() => handleSelectEnquiry(enquiry)}
-                  >
-                    <span className="flex items-center gap-2">
-                      {getStatusIcon(enquiry.status)}
-                      {enquiry.name}
-                    </span>
-                    <Badge className={getStatusColor(enquiry.status)}>
-                      {enquiry.status}
-                    </Badge>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Enquiry Table */}
+          <div className="md:col-span-1 h-fit">
+            <div className="mb-2">
+              <h2 className="text-lg font-semibold">All Enquiries</h2>
+              <p className="text-muted-foreground text-sm">Select an enquiry to view details.</p>
+            </div>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {vendorEnquiries.map((enquiry) => (
+                    <TableRow
+                      key={enquiry.id}
+                      className={`cursor-pointer transition-colors ${
+                        selectedEnquiry && selectedEnquiry.id === enquiry.id
+                          ? "bg-primary/10"
+                          : "hover:bg-muted"
+                      }`}
+                      onClick={() => handleSelectEnquiry(enquiry)}
+                    >
+                      <TableCell>
+                        <Badge className={getStatusColor(enquiry.status)}>
+                          <span className="flex items-center gap-1">
+                            {getStatusIcon(enquiry.status)}
+                            {enquiry.status}
+                          </span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{enquiry.name}</TableCell>
+                      <TableCell>
+                        <a
+                          href={`mailto:${enquiry.email}`}
+                          className="hover:underline text-blue-700"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          {enquiry.email}
+                        </a>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
 
           {/* Enquiry Details */}
           <div className="md:col-span-2">
@@ -376,26 +402,26 @@ export default function VendorEnquiryListPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="grid gap-6"
+                className="space-y-6"
               >
                 {/* Status and Quick Actions */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(selectedEnquiry.status)}
-                        <div>
-                          <CardTitle className="text-lg">Status Management</CardTitle>
-                          <CardDescription>Current enquiry status and quick actions</CardDescription>
-                        </div>
+                <div className="rounded-md border bg-background">
+                  <div className="flex items-center justify-between px-6 py-4 border-b">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(selectedEnquiry.status)}
+                      <div>
+                        <h3 className="text-lg font-semibold">Status Management</h3>
+                        <p className="text-muted-foreground text-sm">
+                          Current enquiry status and quick actions
+                        </p>
                       </div>
-                      <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
-                        {selectedEnquiry.status}
-                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2">
+                    <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
+                      {selectedEnquiry.status}
+                    </Badge>
+                  </div>
+                  <div className="px-6 py-4">
+                    <div className="flex gap-2 flex-wrap">
                       {Object.values(VendorEnquiryStatus).map((status) => (
                         <Button
                           key={status}
@@ -410,41 +436,39 @@ export default function VendorEnquiryListPage() {
                         </Button>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Contact Information */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="w-5 h-5" />
-                        Contact Information
-                      </CardTitle>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setEditData(selectedEnquiry);
-                            setIsEditDialogOpen(true);
-                          }}
-                          className="gap-2"
-                        >
-                          <Pencil className="w-4 h-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          className="gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </Button>
-                      </div>
+                <div className="rounded-md border bg-background">
+                  <div className="flex items-center justify-between px-6 py-4 border-b">
+                    <div className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      <h3 className="text-lg font-semibold">Contact Information</h3>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditData(selectedEnquiry);
+                          setIsEditDialogOpen(true);
+                        }}
+                        className="gap-2"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setIsDeleteDialogOpen(true)}
+                        className="gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="px-6 py-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
@@ -478,18 +502,16 @@ export default function VendorEnquiryListPage() {
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Timeline Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      Timeline
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                <div className="rounded-md border bg-background">
+                  <div className="flex items-center gap-2 px-6 py-4 border-b">
+                    <Clock className="w-5 h-5" />
+                    <h3 className="text-lg font-semibold">Timeline</h3>
+                  </div>
+                  <div className="px-6 py-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="flex items-center gap-3">
                         <Calendar className="w-5 h-5 text-muted-foreground" />
@@ -510,19 +532,17 @@ export default function VendorEnquiryListPage() {
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </motion.div>
             ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">No Enquiry Selected</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Please select an enquiry from the list to view its details.
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Enquiry Selected</h3>
+                <p className="text-muted-foreground mb-4">
+                  Please select an enquiry from the list to view its details.
+                </p>
+              </div>
             )}
           </div>
         </div>
