@@ -62,13 +62,13 @@ const links = [
   },
   {
     name: "Vendor Enquiry",
-    href: "/dashboard/admin/vendorEnquiry",
+    href: "/dashboard/admin/vendor-enquiry",
     icon: MailCheck,
     badge: null,
   },
   {
     name: "Hotel Enquiry",
-    href: "/dashboard/admin/hotelEnquiry",
+    href: "/dashboard/admin/hotel-enquiry",
     icon: MailCheck,
     badge: null,
   },

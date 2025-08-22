@@ -28,7 +28,7 @@ import { selectAuth } from "@/lib/redux/features/authSlice"; // Adjust path to y
 // All possible links
 const allLinks = [
   { name: "Dashboard", href: "/dashboard/hotel", icon: LayoutDashboard, badge: null, requiredStatus: null,},
-  { name: "Hotel Enquiry", href: "/dashboard/hotel/hotelEnquiry", icon: BookOpenText, badge: null, requiredStatus: "isPremium",},
+  { name: "Hotel Enquiry", href: "/dashboard/hotel/hotel-enquiry", icon: BookOpenText, badge: null, requiredStatus: "isPremium",},
   // Add other links here with their required statuses if any
 ];
 
