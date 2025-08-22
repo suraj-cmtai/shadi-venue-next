@@ -31,6 +31,8 @@ export default function VendorsByCity() {
     dispatch(fetchActiveVendors());
   }, [dispatch]);
 
+  console.log("activeVendors", activeVendors);
+
   // The core logic, now adapted for the Vendor data structure
   const cityTiles = useMemo(() => {
     if (!activeVendors || activeVendors.length === 0)
@@ -81,7 +83,7 @@ export default function VendorsByCity() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          Explore Vendors By City
+          Explore Vendors Near You
         </motion.p>
 
         <motion.h2
@@ -91,7 +93,7 @@ export default function VendorsByCity() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Discover Professionals in Your City
+          Discover Professionals Near You
         </motion.h2>
 
         <div

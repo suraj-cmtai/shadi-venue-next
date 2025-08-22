@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
 import {
   // Imports from vendorSlice
-  fetchActiveVendors,
-  selectActiveVendors,
+  fetchPremiumVendor,
+  selectPremiumVendor,
   selectVendorLoading,
   selectVendorError,
 } from "@/lib/redux/features/vendorSlice"; // Changed from hotelSlice
@@ -22,18 +22,20 @@ export default function FeaturedVendors() {
   const dispatch = useDispatch<AppDispatch>();
 
   // Using selectors from vendorSlice
-  const activeVendors = useSelector(selectActiveVendors);
+  const activeVendors = useSelector(selectPremiumVendor);
   const isLoading = useSelector(selectVendorLoading);
   const error = useSelector(selectVendorError);
 
   useEffect(() => {
     // Dispatching action from vendorSlice
-    dispatch(fetchActiveVendors());
+    dispatch(fetchPremiumVendor());
   }, [dispatch]);
 
   // Filter for premium vendors on the client-side
   const displayedVendors =
     activeVendors?.filter((vendor) => vendor.isPremium) || [];
+
+    console.log("displayedVendors", displayedVendors);
 
   return (
     <section className="relative w-full bg-neutral-50 py-16 md:py-24 overflow-hidden">

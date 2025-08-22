@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import BookAnAppointmentButton from "@/components/ui/BookAnAppointmentButton";
 import GradientButton from "@/components/GradientButton";
 
 // Image URLs

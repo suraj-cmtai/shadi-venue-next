@@ -168,6 +168,13 @@ const API_ROUTES: RouteConfig[] = [
     isPublic: true,
   },
 
+  // /api/routes/vendor/premium - public, only GET
+  {
+    pattern: "/api/routes/vendor/premium",
+    methods: ["GET"],
+    isPublic: true,
+  },
+
   // /api/routes/vendor/[id] - admin and vendor, all methods
   {
     pattern: /^\/api\/routes\/vendor\/[^/]+$/,
