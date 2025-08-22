@@ -118,16 +118,16 @@ export async function PUT(
       'contactPersonName', 'designation', 'mobileNumber', 'mobileVerified', 
       'whatsappNumber', 'email', 'websiteOrSocial',
       // Location & Coverage
-      'address', 'city', 'state', 'pinCode', 'serviceAreas',
+      'address', 'city', 'state', 'pinCode',
       // Services / Venue Details
       'servicesOffered', 'startingPrice', 'guestCapacityMin', 'guestCapacityMax',
       'facilitiesAvailable', 'specialities',
       // Portfolio Upload
-      'logoUrl', 'coverImageUrl', 'portfolioImages', 'videoLinks',
+      'logoUrl', 'coverImageUrl',
       // Business Highlights
       'about', 'awards', 'notableClients',
       // Payment & Booking Terms
-      'advancePaymentPercent', 'refundPolicy', 'paymentModesAccepted',
+      'advancePaymentPercent', 'refundPolicy',
       // Account Setup
       'username', 'passwordHash', 'agreedToTerms',
       // System fields
