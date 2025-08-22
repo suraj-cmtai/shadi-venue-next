@@ -32,7 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const links = [
   { name: "Dashboard", href: "/dashboard/vendor", icon: LayoutDashboard, badge: null },
-  { name: "Vendor Enquiry", href: "/dashboard/vendor-enquiry", icon: ContactRound, badge: null },
+  { name: "Vendor Enquiry", href: "/dashboard/vendor/vendor-enquiry", icon: ContactRound, badge: null },
   // { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
   // { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
   // { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },

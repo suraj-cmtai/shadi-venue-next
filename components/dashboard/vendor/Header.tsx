@@ -55,6 +55,7 @@ interface HeaderProps {
 
 const searchSuggestions = [
   { label: "Dashboard", value: "dashboard", href: "/dashboard/vendor" },
+  { label: "Vendor Enquiry", value: "vendor-enquiry", href: "/dashboard/vendor/vendor-enquiry" },
   // { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
   // { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
   // { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
