@@ -956,7 +956,7 @@ export default function UserDashboard() {
       </Card>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="m-4 p-1">
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
           <TabsTrigger value="overview">
             <Settings className="w-4 h-4 mr-2" />
