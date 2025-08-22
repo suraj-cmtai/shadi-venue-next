@@ -38,11 +38,11 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!name || !email || !phoneNumber) {
+    if (!name || !phoneNumber) {
       return NextResponse.json(
         {
           success: false,
-          error: "name, email, and phoneNumber are required"
+          error: "name and phoneNumber are required"
         },
         { status: 400 }
       );
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     // Prepare enquiry data as per HotelEnquiry interface
     const enquiryData = {
       name,
-      email,
+      email : email || "", // Optional field
       phoneNumber,
       status: status || "Pending",
       authId

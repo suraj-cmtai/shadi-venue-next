@@ -27,11 +27,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, email, phoneNumber, status, authId } = body;
 
-    if (!name || !email || !phoneNumber || !authId) {
+    if (!name || !phoneNumber) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required fields: name, email, phoneNumber, and authId are required",
+          error: "Missing required fields:  email, phoneNumber, are required",
         },
         { status: 400 }
       );
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     const enquiryData = {
       name,
-      email,
+      email : email || "", // Optional field
       phoneNumber,
       status,
       authId,
