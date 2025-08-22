@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { useSelector } from "react-redux";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -13,8 +13,6 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  Building,
-  MapPin,
   User,
   AlertCircle,
   Crown,
@@ -29,10 +27,10 @@ import {
 } from "lucide-react";
 
 import {
-  fetchHotelEnquiryById,
+  fetchHotelEnquiriesByAuthId,
   updateHotelEnquiry,
   deleteHotelEnquiry,
-  selectSelectedHotelEnquiry,
+  selectHotelEnquiries,
   selectHotelEnquiryLoading,
   selectHotelEnquiryError,
   HotelEnquiry,
@@ -61,19 +59,17 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
-export default function HotelEnquirySinglePage() {
+export default function HotelEnquiryListPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const params = useParams();
-  const enquiryId = params?.id as string;
 
-  const selectedEnquiry = useAppSelector(selectSelectedHotelEnquiry);
+  const enquiries = useAppSelector(selectHotelEnquiries);
   const isLoading = useAppSelector(selectHotelEnquiryLoading);
   const error = useAppSelector(selectHotelEnquiryError);
   const auth = useSelector(selectAuth);
 
+  const [selectedEnquiry, setSelectedEnquiry] = useState<HotelEnquiry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editData, setEditData] = useState<HotelEnquiry | null>(null);
@@ -83,17 +79,10 @@ export default function HotelEnquirySinglePage() {
   const isHotel = auth?.data?.role === "hotel";
 
   useEffect(() => {
-    if (isHotel && authId && enquiryId) {
-      dispatch(fetchHotelEnquiryById(enquiryId));
+    if (isHotel && authId) {
+      dispatch(fetchHotelEnquiriesByAuthId(authId));
     }
-  }, [auth, authId, isHotel, enquiryId, dispatch]);
-
-  // Initialize edit data when enquiry loads
-  useEffect(() => {
-    if (selectedEnquiry) {
-      setEditData(selectedEnquiry);
-    }
-  }, [selectedEnquiry]);
+  }, [auth, authId, isHotel, dispatch]);
 
   // If not a hotel or no authId, show appropriate message
   if (!isHotel || !authId) {
@@ -153,6 +142,7 @@ export default function HotelEnquirySinglePage() {
       .then(() => {
         toast.success("Hotel enquiry updated successfully!");
         setIsEditDialogOpen(false);
+        setSelectedEnquiry(null);
       })
       .catch((err: unknown) =>
         toast.error(`Failed to update enquiry: ${getErrorMessage(err)}`)
@@ -165,24 +155,23 @@ export default function HotelEnquirySinglePage() {
       .unwrap()
       .then(() => {
         toast.success("Hotel enquiry deleted successfully!");
-        router.push("/hotel/enquiries");
+        setIsDeleteDialogOpen(false);
+        setSelectedEnquiry(null);
       })
       .catch((err: unknown) =>
         toast.error(`Failed to delete enquiry: ${getErrorMessage(err)}`)
       );
   };
 
-  const handleStatusUpdate = (newStatus: HotelEnquiry["status"]) => {
-    if (!selectedEnquiry) return;
-
+  const handleStatusUpdate = (enquiry: HotelEnquiry, newStatus: HotelEnquiry["status"]) => {
     const updateData = {
-      name: selectedEnquiry.name,
-      email: selectedEnquiry.email,
-      phoneNumber: selectedEnquiry.phoneNumber,
+      name: enquiry.name,
+      email: enquiry.email,
+      phoneNumber: enquiry.phoneNumber,
       status: newStatus,
     };
 
-    dispatch(updateHotelEnquiry({ id: selectedEnquiry.id, data: updateData }))
+    dispatch(updateHotelEnquiry({ id: enquiry.id, data: updateData }))
       .unwrap()
       .then(() => {
         toast.success(`Status updated to ${newStatus}!`);
@@ -278,7 +267,7 @@ export default function HotelEnquirySinglePage() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push("/hotel/enquiries")}
+            onClick={() => router.push("/dashboard")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -287,7 +276,7 @@ export default function HotelEnquirySinglePage() {
         </div>
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading enquiry details...</p>
+          <p className="text-muted-foreground">Loading hotel enquiries...</p>
         </div>
       </div>
     );
@@ -300,39 +289,19 @@ export default function HotelEnquirySinglePage() {
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push("/hotel/enquiries")}
+            onClick={() => router.push("/dashboard")}
             className="gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Hotel Enquiry Details</h1>
+            <h1 className="text-2xl font-bold">Hotel Enquiries</h1>
             <p className="text-muted-foreground">
-              {selectedEnquiry ? `Enquiry for ${selectedEnquiry.name}` : "View and manage hotel enquiry"}
+              View and manage all your hotel enquiries.
             </p>
           </div>
         </div>
-        {selectedEnquiry && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(true)}
-              className="gap-2"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Premium Access Error */}
@@ -356,185 +325,99 @@ export default function HotelEnquirySinglePage() {
         </Alert>
       )}
 
-      {/* Enquiry Not Found */}
-      {!isLoading && !selectedEnquiry && !error && (
+      {/* No Enquiries */}
+      {!isLoading && (!enquiries || enquiries.length === 0) && (
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Enquiry Not Found</h3>
+            <h3 className="text-lg font-semibold mb-2">No Enquiries Found</h3>
             <p className="text-muted-foreground mb-4">
-              The enquiry you're looking for doesn't exist or you don't have access to it.
+              You have not received any hotel enquiries yet.
             </p>
-            <Button onClick={() => router.push("/hotel/enquiries")}>
-              Go Back to Enquiries
-            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Enquiry Details */}
-      {selectedEnquiry && (
+      {/* Enquiries List */}
+      {enquiries && enquiries.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="grid gap-6"
         >
-          {/* Status and Quick Actions */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(selectedEnquiry.status)}
-                  <div>
-                    <CardTitle className="text-lg">Status Management</CardTitle>
-                    <CardDescription>Current enquiry status and quick actions</CardDescription>
-                  </div>
-                </div>
-                <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
-                  {selectedEnquiry.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                {(["Pending", "Contacted", "Closed"] as const).map((status) => (
-                  <Button
-                    key={status}
-                    variant={selectedEnquiry.status === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusUpdate(status)}
-                    disabled={selectedEnquiry.status === status || isLoading}
-                    className="gap-2"
-                  >
-                    {getStatusIcon(status)}
-                    {status}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Enquiry Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Enquiry Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                      <p className="text-base font-semibold">{selectedEnquiry.name}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {enquiries.map((enquiry) => (
+              <Card key={enquiry.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(enquiry.status)}
+                      <div>
+                        <CardTitle className="text-lg">{enquiry.name}</CardTitle>
+                        <CardDescription>{enquiry.email}</CardDescription>
+                      </div>
                     </div>
+                    <Badge className={`${getStatusColor(enquiry.status)} px-3 py-1`}>
+                      {enquiry.status}
+                    </Badge>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                      <p className="text-base">{selectedEnquiry.email}</p>
-                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">{enquiry.phoneNumber}</span>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Phone Number</Label>
-                      <p className="text-base">{selectedEnquiry.phoneNumber}</p>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(enquiry.createdAt), "MMM d, yyyy h:mm a")}
+                    </span>
                   </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                    <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Auth ID</Label>
-                      <code className="bg-muted px-2 py-1 rounded text-xs block mt-1">
-                        {selectedEnquiry.authId}
-                      </code>
-                    </div>
+                  <div className="flex gap-2 mt-2">
+                    {(["Pending", "Contacted", "Closed"] as const).map((status) => (
+                      <Button
+                        key={status}
+                        variant={enquiry.status === status ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleStatusUpdate(enquiry, status)}
+                        disabled={enquiry.status === status || isLoading}
+                        className="gap-2"
+                      >
+                        {getStatusIcon(status)}
+                        {status}
+                      </Button>
+                    ))}
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Timeline Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Created</Label>
-                    <p className="text-base font-semibold">
-                      {format(new Date(selectedEnquiry.createdAt), "MMMM d, yyyy 'at' h:mm a")}
-                    </p>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditData(enquiry);
+                        setIsEditDialogOpen(true);
+                        setSelectedEnquiry(enquiry);
+                      }}
+                      className="gap-2"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEnquiry(enquiry);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                      className="gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </Button>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
-                    <p className="text-base font-semibold">
-                      {format(new Date(selectedEnquiry.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Enquiry Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Eye className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <p className="text-lg font-semibold">{selectedEnquiry.status}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <User className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Name</p>
-                    <p className="text-lg font-semibold truncate">{selectedEnquiry.name}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Phone className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                    <p className="text-lg font-semibold">{selectedEnquiry.phoneNumber}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </motion.div>
       )}
