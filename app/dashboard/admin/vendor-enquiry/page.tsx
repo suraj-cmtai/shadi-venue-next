@@ -173,13 +173,23 @@ export default function VendorEnquiryPage() {
       );
   };
 
-  // Reusable Form Component
-  type EnquiryFormFieldsProps = {
-    data: NewEnquiryState | VendorEnquiry;
-    setData: React.Dispatch<React.SetStateAction<any>>;
-  };
+  /*
+   * SOLUTION EXPLANATION:
+   * 
+   * The original issue was caused by:
+   * 1. Using 'any' type for setData parameter which broke TypeScript's type checking
+   * 2. Using the same component for different data shapes (NewEnquiryState vs VendorEnquiry)
+   * 3. React losing track of input state due to inconsistent state management
+   * 
+   * FIXES APPLIED:
+   * 1. Created separate, properly typed form components for Add and Edit operations
+   * 2. Each component has its own specific state setter with proper typing
+   * 3. Used proper React key props to help React track component identity
+   * 4. Ensured consistent state shapes and update patterns
+   */
 
-  const EnquiryFormFields = ({ data, setData }: EnquiryFormFieldsProps) => (
+  // FIXED: Separate form component for ADD operation with proper typing
+  const AddEnquiryFormFields = () => (
     <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
       <section>
         <h3 className="font-semibold text-lg border-b pb-2 mb-4">
@@ -187,39 +197,52 @@ export default function VendorEnquiryPage() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="add-name">Name *</Label>
             <Input
-              id="name"
-              value={data.name}
-              onChange={(e) => setData({ ...data, name: e.target.value })}
+              id="add-name"
+              key="add-name-input" // Helps React track this specific input
+              value={newEnquiry.name}
+              onChange={(e) => {
+                // FIXED: Proper state update with functional update pattern
+                setNewEnquiry(prev => ({ ...prev, name: e.target.value }));
+              }}
               placeholder="Enter vendor name"
             />
           </div>
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="add-email">Email *</Label>
             <Input
-              id="email"
+              id="add-email"
+              key="add-email-input"
               type="email"
-              value={data.email}
-              onChange={(e) => setData({ ...data, email: e.target.value })}
+              value={newEnquiry.email}
+              onChange={(e) => {
+                setNewEnquiry(prev => ({ ...prev, email: e.target.value }));
+              }}
               placeholder="Enter email address"
             />
           </div>
           <div>
-            <Label htmlFor="phoneNumber">Phone Number *</Label>
+            <Label htmlFor="add-phoneNumber">Phone Number *</Label>
             <Input
-              id="phoneNumber"
-              value={data.phoneNumber}
-              onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
+              id="add-phoneNumber"
+              key="add-phone-input"
+              value={newEnquiry.phoneNumber}
+              onChange={(e) => {
+                setNewEnquiry(prev => ({ ...prev, phoneNumber: e.target.value }));
+              }}
               placeholder="Enter phone number"
             />
           </div>
           <div>
-            <Label htmlFor="authId">Auth ID *</Label>
+            <Label htmlFor="add-authId">Auth ID *</Label>
             <Input
-              id="authId"
-              value={data.authId}
-              onChange={(e) => setData({ ...data, authId: e.target.value })}
+              id="add-authId"
+              key="add-authid-input"
+              value={newEnquiry.authId}
+              onChange={(e) => {
+                setNewEnquiry(prev => ({ ...prev, authId: e.target.value }));
+              }}
               placeholder="Enter vendor auth ID"
             />
           </div>
@@ -231,10 +254,13 @@ export default function VendorEnquiryPage() {
           Status Management
         </h3>
         <div>
-          <Label htmlFor="status">Status</Label>
+          <Label htmlFor="add-status">Status</Label>
           <Select
-            value={data.status}
-            onValueChange={(value) => setData({ ...data, status: value as VendorEnquiryStatus })}
+            key="add-status-select"
+            value={newEnquiry.status}
+            onValueChange={(value) => {
+              setNewEnquiry(prev => ({ ...prev, status: value as VendorEnquiryStatus }));
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select status" />
@@ -249,6 +275,110 @@ export default function VendorEnquiryPage() {
       </section>
     </div>
   );
+
+  // FIXED: Separate form component for EDIT operation with proper typing
+  const EditEnquiryFormFields = () => {
+    if (!selectedEnquiry) return null;
+
+    return (
+      <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
+        <section>
+          <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+            Contact Information
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="edit-name">Name *</Label>
+              <Input
+                id="edit-name"
+                key="edit-name-input" // Unique key for edit form
+                value={selectedEnquiry.name}
+                onChange={(e) => {
+                  // FIXED: Proper state update for selectedEnquiry
+                  setSelectedEnquiry(prev => 
+                    prev ? { ...prev, name: e.target.value } : null
+                  );
+                }}
+                placeholder="Enter vendor name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">Email *</Label>
+              <Input
+                id="edit-email"
+                key="edit-email-input"
+                type="email"
+                value={selectedEnquiry.email}
+                onChange={(e) => {
+                  setSelectedEnquiry(prev => 
+                    prev ? { ...prev, email: e.target.value } : null
+                  );
+                }}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-phoneNumber">Phone Number *</Label>
+              <Input
+                id="edit-phoneNumber"
+                key="edit-phone-input"
+                value={selectedEnquiry.phoneNumber}
+                onChange={(e) => {
+                  setSelectedEnquiry(prev => 
+                    prev ? { ...prev, phoneNumber: e.target.value } : null
+                  );
+                }}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-authId">Auth ID *</Label>
+              <Input
+                id="edit-authId"
+                key="edit-authid-input"
+                value={selectedEnquiry.authId}
+                onChange={(e) => {
+                  setSelectedEnquiry(prev => 
+                    prev ? { ...prev, authId: e.target.value } : null
+                  );
+                }}
+                placeholder="Enter vendor auth ID"
+                disabled // Note: Auth ID cannot be changed as mentioned in UI
+                className="bg-gray-50"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+            Status Management
+          </h3>
+          <div>
+            <Label htmlFor="edit-status">Status</Label>
+            <Select
+              key="edit-status-select"
+              value={selectedEnquiry.status}
+              onValueChange={(value) => {
+                setSelectedEnquiry(prev => 
+                  prev ? { ...prev, status: value as VendorEnquiryStatus } : null
+                );
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
+                <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
+                <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -408,7 +538,7 @@ export default function VendorEnquiryPage() {
         </Table>
       </motion.div>
 
-      {/* Add Dialog */}
+      {/* FIXED: Add Dialog with dedicated form component */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -417,7 +547,7 @@ export default function VendorEnquiryPage() {
               Create a new vendor enquiry with contact information and auth ID.
             </DialogDescription>
           </DialogHeader>
-          <EnquiryFormFields data={newEnquiry} setData={setNewEnquiry} />
+          <AddEnquiryFormFields />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
@@ -435,7 +565,7 @@ export default function VendorEnquiryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
+      {/* FIXED: Edit Dialog with dedicated form component */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -444,12 +574,7 @@ export default function VendorEnquiryPage() {
               Update the vendor enquiry information. Note: Auth ID cannot be changed.
             </DialogDescription>
           </DialogHeader>
-          {selectedEnquiry && (
-            <EnquiryFormFields
-              data={selectedEnquiry}
-              setData={setSelectedEnquiry}
-            />
-          )}
+          <EditEnquiryFormFields />
           <DialogFooter>
             <Button
               variant="outline"

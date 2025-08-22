@@ -15,7 +15,7 @@ import {
   Car,
   Coffee,
   Dumbbell,
-  Waves,
+  Waves, 
   Utensils,
   ArrowLeft,
   Send,
