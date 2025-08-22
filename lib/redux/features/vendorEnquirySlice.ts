@@ -1,224 +1,262 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  PayloadAction,
-  AnyAction,
-} from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "../store";
 import { getErrorMessage } from "@/lib/utils";
 
-// --- TypeScript Interfaces (Aapke naye form ke anusaar) ---
-export type VendorCategory =
-  | "Venue"
-  | "Planner"
-  | "Photographer"
-  | "Decorator"
-  | "Caterer"
-  | "Makeup"
-  | "Entertainment"
-  | "Others";
-export type Designation = "Owner" | "Manager" | "Other";
-export type ServiceArea =
-  | "Local City"
-  | "Statewide"
-  | "Pan India"
-  | "International";
-export type PaymentMode = "UPI" | "Cash" | "Bank Transfer" | "Card" | "Other";
-export type Facility =
-  | "Rooms"
-  | "Parking"
-  | "Catering"
-  | "Decor"
-  | "DJ"
-  | "Liquor License"
-  | "Pool"
-  | "Other";
+// Define interfaces matching the service
+export enum VendorEnquiryStatus {
+  NEW = "New",
+  IN_PROGRESS = "In Progress",
+  COMPLETED = "Completed"
+}
 
 export interface VendorEnquiry {
   id: string;
-  businessName: string;
-  category: VendorCategory;
-  yearOfEstablishment?: string;
-  contactPersonName: string;
-  designation: Designation;
-  mobileNumber: string;
-  whatsappNumber?: string;
-  emailId: string;
-  websiteOrSocial?: string;
-  fullAddress: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  serviceAreas: ServiceArea;
-  servicesOffered: string[];
-  startingPrice: number;
-  guestCapacityMin?: number;
-  guestCapacityMax?: number;
-  facilitiesAvailable?: Facility[];
-  specialities?: string;
-  logoUrl?: string;
-  coverImageUrl?: string;
-  portfolioImageUrls?: string[];
-  videoLinks?: string[];
-  about?: string;
-  awards?: string;
-  notableClients?: string;
-  advancePaymentPercent?: number;
-  refundPolicy?: string;
-  paymentModesAccepted?: PaymentMode[];
-  status: "Pending" | "Approved" | "Rejected";
+  name: string;
+  email: string;
+  phoneNumber: string;
+  status: VendorEnquiryStatus;
   createdAt: string;
   updatedAt: string;
+  authId: string; // The authId of the vendor user
 }
 
 interface VendorEnquiryState {
   enquiries: VendorEnquiry[];
-  currentEnquiry: VendorEnquiry | null;
   loading: boolean;
   error: string | null;
+  selectedEnquiry: VendorEnquiry | null;
 }
 
 const initialState: VendorEnquiryState = {
   enquiries: [],
-  currentEnquiry: null,
   loading: false,
   error: null,
+  selectedEnquiry: null,
 };
 
-const API_URL = "/api/vendor-enquiries";
+// API URLs
+const API_URL = "/api/routes/vendor-enquiry";
 
-// --- Async Thunks ---
+// Async Thunks
 
-export const fetchEnquiries = createAsyncThunk<VendorEnquiry[]>(
-  "vendorEnquiry/fetchEnquiries",
+// Fetch all vendor enquiries (admin only)
+export const fetchVendorEnquiries = createAsyncThunk<VendorEnquiry[]>(
+  "vendorEnquiry/fetchVendorEnquiries",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(API_URL);
-      return response.data.enquiries;
-    } catch (error) {
+      return response.data.data;
+    } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-// ✨ BADLAAV: Ab yeh FormData ke bajaye ek saaf object lega ✨
-export const createEnquiry = createAsyncThunk<
+// Fetch vendor enquiry by ID
+export const fetchVendorEnquiryById = createAsyncThunk<VendorEnquiry, string>(
+  "vendorEnquiry/fetchVendorEnquiryById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/${id}`);
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+// Fetch vendor enquiries by authId (premium vendors only)
+export const fetchVendorEnquiriesByAuthId = createAsyncThunk<VendorEnquiry[], string>(
+  "vendorEnquiry/fetchVendorEnquiriesByAuthId",
+  async (authId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/vendor/${authId}`);
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+// Create a new vendor enquiry
+export const createVendorEnquiry = createAsyncThunk<
   VendorEnquiry,
   Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">
->("vendorEnquiry/createEnquiry", async (enquiryData, { rejectWithValue }) => {
-  try {
-    // Note: File uploads ab service mein handle honge
-    const response = await axios.post(API_URL, enquiryData);
-    return response.data.enquiry;
-  } catch (error) {
-    return rejectWithValue(getErrorMessage(error));
+>(
+  "vendorEnquiry/createVendorEnquiry",
+  async (enquiryData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(API_URL, enquiryData);
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
   }
-});
+);
 
-// ✨ BADLAAV: Ab yeh FormData ke bajaye ek saaf object lega ✨
-export const updateEnquiry = createAsyncThunk<
+// Update a vendor enquiry
+export const updateVendorEnquiry = createAsyncThunk<
   VendorEnquiry,
-  { id: string; data: Partial<VendorEnquiry> }
->("vendorEnquiry/updateEnquiry", async ({ id, data }, { rejectWithValue }) => {
-  try {
-    const response = await axios.put(`${API_URL}/${id}`, data);
-    return response.data.enquiry;
-  } catch (error) {
-    return rejectWithValue(getErrorMessage(error));
+  { 
+    id: string; 
+    data: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId">> 
   }
-});
+>(
+  "vendorEnquiry/updateVendorEnquiry",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${API_URL}/${id}`, data);
+      return response.data.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
 
-export const deleteEnquiry = createAsyncThunk<string, string>(
-  "vendorEnquiry/deleteEnquiry",
+// Delete a vendor enquiry
+export const deleteVendorEnquiry = createAsyncThunk<string, string>(
+  "vendorEnquiry/deleteVendorEnquiry",
   async (id, { rejectWithValue }) => {
     try {
       await axios.delete(`${API_URL}/${id}`);
       return id;
-    } catch (error) {
+    } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
-// --- Slice Definition ---
 const vendorEnquirySlice = createSlice({
   name: "vendorEnquiry",
   initialState,
   reducers: {
+    clearSelectedEnquiry: (state) => {
+      state.selectedEnquiry = null;
+    },
     clearError: (state) => {
       state.error = null;
     },
-    setCurrentEnquiry: (state, action: PayloadAction<VendorEnquiry | null>) => {
-      state.currentEnquiry = action.payload;
+    setSelectedEnquiry: (state, action: PayloadAction<VendorEnquiry | null>) => {
+      state.selectedEnquiry = action.payload;
     },
   },
   extraReducers: (builder) => {
-    const handlePending = (state: VendorEnquiryState) => {
-      state.loading = true;
-      state.error = null;
-    };
-    const handleRejected = (state: VendorEnquiryState, action: AnyAction) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    };
-
     builder
-      .addCase(fetchEnquiries.pending, handlePending)
-      .addCase(
-        fetchEnquiries.fulfilled,
-        (state, action: PayloadAction<VendorEnquiry[]>) => {
-          state.enquiries = action.payload;
-          state.loading = false;
+      // Fetch All Vendor Enquiries
+      .addCase(fetchVendorEnquiries.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendorEnquiries.fulfilled, (state, action: PayloadAction<VendorEnquiry[]>) => {
+        state.enquiries = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchVendorEnquiries.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Fetch Vendor Enquiry by ID
+      .addCase(fetchVendorEnquiryById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendorEnquiryById.fulfilled, (state, action: PayloadAction<VendorEnquiry>) => {
+        state.selectedEnquiry = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchVendorEnquiryById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Fetch Vendor Enquiries by AuthId
+      .addCase(fetchVendorEnquiriesByAuthId.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendorEnquiriesByAuthId.fulfilled, (state, action: PayloadAction<VendorEnquiry[]>) => {
+        state.enquiries = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchVendorEnquiriesByAuthId.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Create Vendor Enquiry
+      .addCase(createVendorEnquiry.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createVendorEnquiry.fulfilled, (state, action: PayloadAction<VendorEnquiry>) => {
+        state.enquiries.unshift(action.payload);
+        state.loading = false;
+      })
+      .addCase(createVendorEnquiry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Update Vendor Enquiry
+      .addCase(updateVendorEnquiry.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateVendorEnquiry.fulfilled, (state, action: PayloadAction<VendorEnquiry>) => {
+        const index = state.enquiries.findIndex(enquiry => enquiry.id === action.payload.id);
+        if (index !== -1) {
+          state.enquiries[index] = action.payload;
         }
-      )
-      .addCase(fetchEnquiries.rejected, handleRejected)
-      .addCase(createEnquiry.pending, handlePending)
-      .addCase(
-        createEnquiry.fulfilled,
-        (state, action: PayloadAction<VendorEnquiry>) => {
-          state.enquiries.unshift(action.payload);
-          state.loading = false;
+        // Also update selectedEnquiry if it's the same one
+        if (state.selectedEnquiry?.id === action.payload.id) {
+          state.selectedEnquiry = action.payload;
         }
-      )
-      .addCase(createEnquiry.rejected, handleRejected)
-      .addCase(updateEnquiry.pending, handlePending)
-      .addCase(
-        updateEnquiry.fulfilled,
-        (state, action: PayloadAction<VendorEnquiry>) => {
-          const index = state.enquiries.findIndex(
-            (e) => e.id === action.payload.id
-          );
-          if (index !== -1) {
-            state.enquiries[index] = action.payload;
-          }
-          state.loading = false;
+        state.loading = false;
+      })
+      .addCase(updateVendorEnquiry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Delete Vendor Enquiry
+      .addCase(deleteVendorEnquiry.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteVendorEnquiry.fulfilled, (state, action: PayloadAction<string>) => {
+        state.enquiries = state.enquiries.filter(enquiry => enquiry.id !== action.payload);
+        // Clear selectedEnquiry if it's the deleted one
+        if (state.selectedEnquiry?.id === action.payload) {
+          state.selectedEnquiry = null;
         }
-      )
-      .addCase(updateEnquiry.rejected, handleRejected)
-      .addCase(deleteEnquiry.pending, handlePending)
-      .addCase(
-        deleteEnquiry.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          state.enquiries = state.enquiries.filter(
-            (e) => e.id !== action.payload
-          );
-          state.loading = false;
-        }
-      )
-      .addCase(deleteEnquiry.rejected, handleRejected);
+        state.loading = false;
+      })
+      .addCase(deleteVendorEnquiry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
-export const { clearError, setCurrentEnquiry } = vendorEnquirySlice.actions;
+export const { 
+  clearSelectedEnquiry, 
+  clearError, 
+  setSelectedEnquiry 
+} = vendorEnquirySlice.actions;
 
-export const selectEnquiries = (state: RootState) =>
-  state.vendorEnquiry.enquiries;
-export const selectCurrentEnquiry = (state: RootState) =>
-  state.vendorEnquiry.currentEnquiry;
-export const selectEnquiryLoading = (state: RootState) =>
-  state.vendorEnquiry.loading;
-export const selectEnquiryError = (state: RootState) =>
-  state.vendorEnquiry.error;
+// Selectors
+export const selectVendorEnquiries = (state: RootState) => state.vendorEnquiry.enquiries;
+export const selectVendorEnquiryLoading = (state: RootState) => state.vendorEnquiry.loading;
+export const selectVendorEnquiryError = (state: RootState) => state.vendorEnquiry.error;
+export const selectSelectedVendorEnquiry = (state: RootState) => state.vendorEnquiry.selectedEnquiry;
+
+// Derived selectors
+export const selectVendorEnquiriesByStatus = (status: VendorEnquiryStatus) => (state: RootState) =>
+  state.vendorEnquiry.enquiries.filter(enquiry => enquiry.status === status);
+
+export const selectVendorEnquiryById = (id: string) => (state: RootState) =>
+  state.vendorEnquiry.enquiries.find(enquiry => enquiry.id === id);
 
 export default vendorEnquirySlice.reducer;

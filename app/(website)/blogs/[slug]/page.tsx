@@ -307,83 +307,8 @@ export default function BlogDetailsPage({
             ) : null}
           </article>
           {/* Sidebar */}
-          <aside className="md:col-span-4 space-y-6 sm:space-y-8 md:space-y-10 mt-8 md:mt-0 z-10">
-            {/* Search */}
-            <div>
-              <Input
-                type="text"
-                placeholder="Searching For..."
-                className="w-full border border-gray-400 px-2 sm:px-3 py-2 text-sm focus:outline-none"
-              />
-            </div>
-            {/* Subscribe Box */}
-            <div className="border p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 md:space-y-4 text-center rounded">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto">
-                <Image
-                  src="/images/wedding/mail.png"
-                  alt="Mail Icon"
-                  width={40}
-                  height={40}
-                  className="mx-auto"
-                />
-              </div>
-              <p className="text-xs sm:text-sm text-gray-700">
-                Subscribe to our newsletter for the latest news and updates!
-              </p>
-              <Input
-                type="email"
-                placeholder="EMAIL ADDRESS"
-                className="w-full border px-2 sm:px-3 py-2 text-sm text-gray-700"
-              />
-              <Button className="w-full bg-[#1a2238] text-white text-sm py-2 mt-2">
-                SUBSCRIBE NOW
-              </Button>
-            </div>
-            {/* Recent Posts */}
-            <div>
-              <h3 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2 sm:mb-3 md:mb-4 uppercase">Recent Posts</h3>
-              <ul className="space-y-3 sm:space-y-5 md:space-y-8 text-xs sm:text-sm">
-                {[
-                  "Mastering the Biggest New Trend in Industry...",
-                  "Unique Wedding Favor Ideas for Your Guests...",
-                  "Discover the Ideal Type of Wedding for You...",
-                  "Small Wedding Ideas for a Perfect Celebration...",
-                  "Small Wedding Ideas for a Perfect Celebration...",
-                ].map((title, i) => (
-                  <li key={i} className="flex gap-2 sm:gap-3 md:gap-4 items-start">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gray-200 rounded" />
-                    <div>
-                      <p className="text-[10px] sm:text-xs text-gray-400 mb-1">15 May 2024 8:30 Am</p>
-                      <p className="text-gray-700 leading-tight">{title}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* Instagram Posts */}
-            <div>
-              <h4 className="text-xs sm:text-sm font-semibold text-gray-800 uppercase mb-2 sm:mb-3 md:mb-4">Instagram Posts</h4>
-              <div className="grid grid-cols-3 gap-1 sm:gap-2">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="w-full aspect-square bg-gray-200 rounded" />
-                ))}
-              </div>
-            </div>
-            {/* Categories */}
-            <div>
-              <h4 className="text-xs sm:text-sm font-semibold text-gray-800 uppercase mb-2 sm:mb-3 md:mb-4">Categories</h4>
-              <div className="flex flex-wrap gap-x-2 sm:gap-x-3 md:gap-x-4 gap-y-2 sm:gap-y-3 md:gap-y-4 text-xs sm:text-sm text-gray-700">
-                {[
-                  "Bridal gloves", "Wedding cake", "Movie", "Top", "Jewelry", "Makeup Artist", "Adventure", "Art",
-                  "Photographer", "Lifestyle", "Music", "Travel", "Transportation", "Food", "Ceremony"
-                ].map((cat, i) => (
-                  <a key={i} href="#" className="hover:underline">
-                    {cat}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </aside>
+          
+          
         </div>
       </div>
       {/* Relevant Blogs Section */}

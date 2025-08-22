@@ -15,17 +15,19 @@ import {
   MoreHorizontal,
   Mail,
   Phone,
+  User,
 } from "lucide-react";
 
 import {
-  fetchEnquiries,
-  createEnquiry,
-  updateEnquiry,
-  deleteEnquiry,
-  selectEnquiries,
-  selectEnquiryLoading,
-  selectEnquiryError,
+  fetchVendorEnquiries,
+  createVendorEnquiry,
+  updateVendorEnquiry,
+  deleteVendorEnquiry,
+  selectVendorEnquiries,
+  selectVendorEnquiryLoading,
+  selectVendorEnquiryError,
   VendorEnquiry,
+  VendorEnquiryStatus,
 } from "@/lib/redux/features/vendorEnquirySlice";
 
 import { Button } from "@/components/ui/button";
@@ -67,44 +69,18 @@ import {
 type NewEnquiryState = Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">;
 
 const initialEnquiryState: NewEnquiryState = {
-  businessName: "",
-  category: "Others",
-  yearOfEstablishment: "",
-  contactPersonName: "",
-  designation: "Other",
-  mobileNumber: "",
-  whatsappNumber: "",
-  emailId: "",
-  websiteOrSocial: "",
-  fullAddress: "",
-  city: "",
-  state: "",
-  pinCode: "",
-  serviceAreas: "Local City",
-  servicesOffered: [],
-  startingPrice: 0,
-  guestCapacityMin: 0,
-  guestCapacityMax: 0,
-  facilitiesAvailable: [],
-  specialities: "",
-  logoUrl: "",
-  coverImageUrl: "",
-  portfolioImageUrls: [],
-  videoLinks: [],
-  about: "",
-  awards: "",
-  notableClients: "",
-  advancePaymentPercent: 0,
-  refundPolicy: "",
-  paymentModesAccepted: [],
-  status: "Pending",
+  name: "",
+  email: "",
+  phoneNumber: "",
+  status: VendorEnquiryStatus.NEW,
+  authId: "",
 };
 
 export default function VendorEnquiryPage() {
   const dispatch = useAppDispatch();
-  const enquiries = useAppSelector(selectEnquiries);
-  const isLoading = useAppSelector(selectEnquiryLoading);
-  const error = useAppSelector(selectEnquiryError);
+  const enquiries = useAppSelector(selectVendorEnquiries);
+  const isLoading = useAppSelector(selectVendorEnquiryLoading);
+  const error = useAppSelector(selectVendorEnquiryError);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -118,15 +94,15 @@ export default function VendorEnquiryPage() {
     useState<NewEnquiryState>(initialEnquiryState);
 
   useEffect(() => {
-    dispatch(fetchEnquiries());
+    dispatch(fetchVendorEnquiries());
   }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry: VendorEnquiry) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      enquiry.contactPersonName.toLowerCase().includes(searchLower) ||
-      enquiry.emailId.toLowerCase().includes(searchLower) ||
-      enquiry.city.toLowerCase().includes(searchLower);
+      enquiry.name.toLowerCase().includes(searchLower) ||
+      enquiry.email.toLowerCase().includes(searchLower) ||
+      enquiry.phoneNumber.toLowerCase().includes(searchLower);
     const matchesStatus =
       statusFilter === "all" || enquiry.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -134,23 +110,27 @@ export default function VendorEnquiryPage() {
 
   const getStatusColor = (status: VendorEnquiry["status"]) => {
     switch (status) {
-      case "Pending":
+      case VendorEnquiryStatus.NEW:
+        return "bg-blue-100 text-blue-800";
+      case VendorEnquiryStatus.IN_PROGRESS:
         return "bg-yellow-100 text-yellow-800";
-      case "Approved":
+      case VendorEnquiryStatus.COMPLETED:
         return "bg-green-100 text-green-800";
-      case "Rejected":
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
   const handleAdd = () => {
-    // Note: File uploads need to be handled separately. This assumes JSON data for now.
-    dispatch(createEnquiry(newEnquiry))
+    if (!newEnquiry.name || !newEnquiry.email || !newEnquiry.phoneNumber || !newEnquiry.authId) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    dispatch(createVendorEnquiry(newEnquiry))
       .unwrap()
       .then(() => {
-        toast.success("Enquiry added successfully!");
+        toast.success("Vendor enquiry added successfully!");
         setIsAddDialogOpen(false);
         setNewEnquiry(initialEnquiryState);
       })
@@ -161,10 +141,18 @@ export default function VendorEnquiryPage() {
 
   const handleUpdate = () => {
     if (!selectedEnquiry) return;
-    dispatch(updateEnquiry({ id: selectedEnquiry.id, data: selectedEnquiry }))
+    
+    const updateData = {
+      name: selectedEnquiry.name,
+      email: selectedEnquiry.email,
+      phoneNumber: selectedEnquiry.phoneNumber,
+      status: selectedEnquiry.status,
+    };
+
+    dispatch(updateVendorEnquiry({ id: selectedEnquiry.id, data: updateData }))
       .unwrap()
       .then(() => {
-        toast.success("Enquiry updated successfully!");
+        toast.success("Vendor enquiry updated successfully!");
         setIsEditDialogOpen(false);
       })
       .catch((err: unknown) =>
@@ -174,10 +162,10 @@ export default function VendorEnquiryPage() {
 
   const handleDelete = () => {
     if (!selectedEnquiry) return;
-    dispatch(deleteEnquiry(selectedEnquiry.id))
+    dispatch(deleteVendorEnquiry(selectedEnquiry.id))
       .unwrap()
       .then(() => {
-        toast.success("Enquiry deleted successfully!");
+        toast.success("Vendor enquiry deleted successfully!");
         setIsDeleteDialogOpen(false);
       })
       .catch((err: unknown) =>
@@ -190,70 +178,71 @@ export default function VendorEnquiryPage() {
     data: NewEnquiryState | VendorEnquiry;
     setData: React.Dispatch<React.SetStateAction<any>>;
   };
+
   const EnquiryFormFields = ({ data, setData }: EnquiryFormFieldsProps) => (
-    <div className="space-y-8 max-h-[70vh] overflow-y-auto p-1 pr-4">
-      {/* Step 1 & 2 */}
+    <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
       <section>
         <h3 className="font-semibold text-lg border-b pb-2 mb-4">
-          Business & Contact Info
+          Contact Information
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label>Business Name*</Label>
+            <Label htmlFor="name">Name *</Label>
             <Input
-              value={data.businessName}
-              onChange={(e) =>
-                setData({ ...data, businessName: e.target.value })
-              }
+              id="name"
+              value={data.name}
+              onChange={(e) => setData({ ...data, name: e.target.value })}
+              placeholder="Enter vendor name"
             />
           </div>
           <div>
-            <Label>Category*</Label>
-            <Select
-              value={data.category}
-              onValueChange={(value) => setData({ ...data, category: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>{/* ... options ... */}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Contact Person*</Label>
+            <Label htmlFor="email">Email *</Label>
             <Input
-              value={data.contactPersonName}
-              onChange={(e) =>
-                setData({ ...data, contactPersonName: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <Label>Email*</Label>
-            <Input
+              id="email"
               type="email"
-              value={data.emailId}
-              onChange={(e) => setData({ ...data, emailId: e.target.value })}
+              value={data.email}
+              onChange={(e) => setData({ ...data, email: e.target.value })}
+              placeholder="Enter email address"
+            />
+          </div>
+          <div>
+            <Label htmlFor="phoneNumber">Phone Number *</Label>
+            <Input
+              id="phoneNumber"
+              value={data.phoneNumber}
+              onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
+              placeholder="Enter phone number"
+            />
+          </div>
+          <div>
+            <Label htmlFor="authId">Auth ID *</Label>
+            <Input
+              id="authId"
+              value={data.authId}
+              onChange={(e) => setData({ ...data, authId: e.target.value })}
+              placeholder="Enter vendor auth ID"
             />
           </div>
         </div>
       </section>
-      {/* Add more sections for all form fields */}
+
       <section>
-        <h3 className="font-semibold text-lg border-b pb-2 mt-6">Management</h3>
+        <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+          Status Management
+        </h3>
         <div>
-          <Label>Status</Label>
+          <Label htmlFor="status">Status</Label>
           <Select
             value={data.status}
-            onValueChange={(value) => setData({ ...data, status: value })}
+            onValueChange={(value) => setData({ ...data, status: value as VendorEnquiryStatus })}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -264,16 +253,21 @@ export default function VendorEnquiryPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Vendor Enquiries</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Vendor Enquiries</h1>
+          <p className="text-muted-foreground">Manage vendor enquiries and their status</p>
+        </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Add Enquiry
         </Button>
       </div>
+
+      {/* Filters */}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2.5 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search..."
+            placeholder="Search by name, email, or phone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -281,30 +275,55 @@ export default function VendorEnquiryPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue />
+            <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
+            <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
+            <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
+            <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {/* Table */}
       <motion.div layout className="rounded-md border">
         <Table>
-          <TableHeader>{/* ... table header ... */}</TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Auth ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {isLoading && enquiries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  <p className="mt-2 text-muted-foreground">Loading enquiries...</p>
                 </TableCell>
               </TableRow>
             ) : filteredEnquiries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  No enquiries found
+                  <div className="text-muted-foreground">
+                    {searchQuery || statusFilter !== "all" 
+                      ? "No enquiries match your filters"
+                      : "No enquiries found"
+                    }
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -317,21 +336,40 @@ export default function VendorEnquiryPage() {
                   layout
                 >
                   <TableCell>
-                    <div className="font-medium">
-                      {enquiry.contactPersonName}
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div className="font-medium">{enquiry.name}</div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>{enquiry.emailId}</div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>{enquiry.email}</div>
+                    </div>
                   </TableCell>
-                  <TableCell>{enquiry.city}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>{enquiry.phoneNumber}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground font-mono">
+                      {enquiry.authId}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(enquiry.status)}>
                       {enquiry.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(enquiry.createdAt), "MMM d, yyyy")}
+                    <div className="text-sm">
+                      {format(new Date(enquiry.createdAt), "MMM d, yyyy")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(enquiry.createdAt), "h:mm a")}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -369,11 +407,15 @@ export default function VendorEnquiryPage() {
           </TableBody>
         </Table>
       </motion.div>
-      {/* Dialogs */}
+
+      {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New Vendor Enquiry</DialogTitle>
+            <DialogDescription>
+              Create a new vendor enquiry with contact information and auth ID.
+            </DialogDescription>
           </DialogHeader>
           <EnquiryFormFields data={newEnquiry} setData={setNewEnquiry} />
           <DialogFooter>
@@ -392,10 +434,15 @@ export default function VendorEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Vendor Enquiry</DialogTitle>
+            <DialogDescription>
+              Update the vendor enquiry information. Note: Auth ID cannot be changed.
+            </DialogDescription>
           </DialogHeader>
           {selectedEnquiry && (
             <EnquiryFormFields
@@ -422,12 +469,23 @@ export default function VendorEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Enquiry</DialogTitle>
-            <DialogDescription>Are you sure?</DialogDescription>
+            <DialogTitle>Delete Vendor Enquiry</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this enquiry? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
+          {selectedEnquiry && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <p><strong>Name:</strong> {selectedEnquiry.name}</p>
+              <p><strong>Email:</strong> {selectedEnquiry.email}</p>
+              <p><strong>Phone:</strong> {selectedEnquiry.phoneNumber}</p>
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
@@ -445,7 +503,7 @@ export default function VendorEnquiryPage() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
                 </>
               ) : (
-                "Delete"
+                "Delete Enquiry"
               )}
             </Button>
           </DialogFooter>

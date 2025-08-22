@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -22,11 +21,12 @@ import {
   clearError
 } from "@/lib/redux/features/vendorSlice"
 import {
-  createContact,
-  selectContactLoading,
-  selectContactError,
-  selectContacts
-} from "@/lib/redux/features/contactSlice"
+  createVendorEnquiry,
+  selectVendorEnquiryLoading,
+  selectVendorEnquiryError,
+  clearError as clearEnquiryError,
+  VendorEnquiryStatus
+} from "@/lib/redux/features/vendorEnquirySlice"
 
 // Default vendor images
 const DEFAULT_VENDOR_IMAGES = [
@@ -66,19 +66,10 @@ const getPaymentIcon = (mode: string) => {
   return paymentIconMap[mode] || CreditCard;
 }
 
-const toTitleCase = (value: string) =>
-  value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
-
-interface ContactFormData {
+interface EnquiryFormData {
   name: string
-  email: string
   phone: string
-  eventDate: string
-  eventType: string
-  guestCount: string
-  budget: string
-  services: string
-  message: string
+  email: string
 }
 
 export default function VendorDetailsPage() {
@@ -91,24 +82,17 @@ export default function VendorDetailsPage() {
     const loading = useAppSelector(selectVendorLoading)
     const error = useAppSelector(selectVendorError)
 
-    // Contact form redux state
-    const contactLoading = useAppSelector(selectContactLoading)
-    const contactError = useAppSelector(selectContactError)
-    const contacts = useAppSelector(selectContacts)
-    const [contactSuccess, setContactSuccess] = useState(false)
+    // Vendor enquiry redux state
+    const enquiryLoading = useAppSelector(selectVendorEnquiryLoading)
+    const enquiryError = useAppSelector(selectVendorEnquiryError)
+    const [enquirySuccess, setEnquirySuccess] = useState(false)
 
     // Local state
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-    const [formData, setFormData] = useState<ContactFormData>({
+    const [formData, setFormData] = useState<EnquiryFormData>({
       name: '',
-      email: '',
       phone: '',
-      eventDate: '',
-      eventType: 'Wedding',
-      guestCount: '100',
-      budget: '',
-      services: '',
-      message: ''
+      email: ''
     })
 
     // Fetch vendor data on mount
@@ -120,29 +104,12 @@ export default function VendorDetailsPage() {
         // Cleanup on unmount
         return () => {
             dispatch(clearSelectedVendor())
-            setContactSuccess(false)
+            setEnquirySuccess(false)
         }
     }, [params.id, dispatch])
 
-    // Set default services when vendor data loads
-    useEffect(() => {
-        if (vendor?.servicesOffered && vendor.servicesOffered.length > 0) {
-            setFormData(prev => ({ 
-                ...prev, 
-                services: vendor.servicesOffered.slice(0, 3).join(', ')
-            }));
-        }
-    }, [vendor])
-
-    // Watch contacts for success
-    useEffect(() => {
-        if (contacts && Array.isArray(contacts) && contacts.length > 0) {
-            setContactSuccess(true)
-        }
-    }, [contacts])
-
     // Handle form input changes
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
     }
@@ -151,61 +118,32 @@ export default function VendorDetailsPage() {
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Compose subject with vendor name and ID
-        const subject = `Service Inquiry: ${vendor?.businessName || "Vendor"} (ID: ${params.id})`
+        if (!vendor?.id) {
+            console.error('Vendor authId not found')
+            return
+        }
 
-        // Compose message with all details
-        const {
-            name,
-            email,
-            phone,
-            eventDate,
-            eventType,
-            guestCount,
-            budget,
-            services,
-            message: userMessage
-        } = formData
+        const enquiryData = {
+            name: formData.name,
+            email: formData.email || '', // Optional field
+            phoneNumber: formData.phone,
+            status: VendorEnquiryStatus.NEW,
+            authId: vendor.id // Vendor authId
+        }
 
-        const message = `Vendor Service Inquiry Details:
-
-Vendor Information:
-- Business Name: ${vendor?.businessName || 'N/A'}
-- Category: ${vendor?.category || 'N/A'}
-- Contact Person: ${vendor?.contactPersonName || 'N/A'}
-- Location: ${vendor?.city || 'N/A'}, ${vendor?.state || 'N/A'}
-- Established: ${vendor?.yearOfEstablishment || 'N/A'}
-- Starting Price: ₹${vendor?.startingPrice?.toLocaleString() || 'N/A'}
-
-Customer Information:
-- Name: ${name}
-- Email: ${email}
-- Phone: ${phone || 'Not provided'}
-
-Event Details:
-- Event Date: ${eventDate || 'Not specified'}
-- Event Type: ${eventType}
-- Number of Guests: ${guestCount}
-- Budget Range: ${budget || 'Not specified'}
-- Required Services: ${services || 'Not specified'}
-
-Customer Message:
-${userMessage || 'No additional message provided'}
-
----
-This inquiry was submitted on ${new Date().toLocaleString()}`
-
-        // Create FormData object for API
-        const data = new FormData()
-        data.append("name", name)
-        data.append("email", email)
-        data.append("phone", phone || "")
-        data.append("subject", subject)
-        data.append("message", message)
-
-        // Send the contact form data
-        dispatch(createContact(data))
-        setContactSuccess(false) // Reset, will be set true on contacts update
+        try {
+            await dispatch(createVendorEnquiry(enquiryData)).unwrap()
+            setEnquirySuccess(true)
+            // Reset form
+            setFormData({
+                name: '',
+                phone: '',
+                email: ''
+            })
+        } catch (error) {
+            // Error is handled by Redux
+            console.error('Failed to submit enquiry:', error)
+        }
     }
 
     // Handle retry on error
@@ -215,6 +153,11 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
         if (vendorId) {
             dispatch(fetchVendorById(vendorId))
         }
+    }
+
+    // Handle enquiry error clear
+    const handleClearEnquiryError = () => {
+        dispatch(clearEnquiryError())
     }
 
     // Loading skeleton
@@ -549,9 +492,9 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
                                     
                                     <Button 
                                         className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                                        onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+                                        onClick={() => document.getElementById('enquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
                                     >
-                                        Get Quote
+                                        Send Enquiry
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -637,25 +580,25 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
                     </div>
                 </div>
 
-                {/* Contact Form */}
+                {/* Enquiry Form */}
                 <motion.div
-                    id="contact-form"
+                    id="enquiry-form"
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.9, duration: 0.6 }}
                     className="mt-16"
                 >
-                    <Card className="max-w-4xl mx-auto">
+                    <Card className="max-w-2xl mx-auto">
                         <CardHeader>
                             <CardTitle className="text-2xl font-bold text-[#212D47] text-center">
-                                Request a Quote
+                                Send Enquiry
                             </CardTitle>
                             <p className="text-center text-gray-600">
-                                Fill out the form below and we'll get back to you within 24 hours
+                                Get in touch with {vendor?.businessName} directly
                             </p>
                         </CardHeader>
                         <CardContent className="p-6">
-                            {contactSuccess ? (
+                            {enquirySuccess ? (
                                 <motion.div
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
@@ -664,139 +607,81 @@ This inquiry was submitted on ${new Date().toLocaleString()}`
                                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <Send className="w-8 h-8 text-green-600" />
                                     </div>
-                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
-                                    <p className="text-gray-600 mb-6">Your inquiry has been submitted successfully. We'll contact you soon!</p>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Enquiry Sent!</h3>
+                                    <p className="text-gray-600 mb-6">Your enquiry has been sent to the vendor. They will contact you soon!</p>
                                     <Button 
                                         onClick={() => {
                                             setFormData({
                                                 name: '',
-                                                email: '',
                                                 phone: '',
-                                                eventDate: '',
-                                                eventType: 'Wedding',
-                                                guestCount: '100',
-                                                budget: '',
-                                                services: vendor?.servicesOffered?.slice(0, 3).join(', ') || '',
-                                                message: ''
+                                                email: ''
                                             })
-                                            setContactSuccess(false)
+                                            setEnquirySuccess(false)
                                         }}
                                         variant="outline"
                                     >
-                                        Submit Another Inquiry
+                                        Send Another Enquiry
                                     </Button>
                                 </motion.div>
                             ) : (
                                 <form onSubmit={handleFormSubmit} className="space-y-6">
-                                    {contactError && (
+                                    {enquiryError && (
                                         <Alert variant="destructive">
-                                            <AlertDescription>
-                                                {contactError}
+                                            <AlertDescription className="flex items-center justify-between">
+                                                {enquiryError}
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={handleClearEnquiryError}
+                                                    className="h-auto p-1 ml-2"
+                                                >
+                                                    ✕
+                                                </Button>
                                             </AlertDescription>
                                         </Alert>
                                     )}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <Label htmlFor="name">Name</Label>
+                                            <Label htmlFor="name">Name *</Label>
                                             <Input
                                                 id="name"
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleInputChange}
                                                 required
-                                                placeholder="Your Name"
+                                                placeholder="Your Full Name"
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="email">Email</Label>
+                                            <Label htmlFor="phone">Phone Number *</Label>
+                                            <Input
+                                                id="phone"
+                                                name="phone"
+                                                type="tel"
+                                                value={formData.phone}
+                                                onChange={handleInputChange}
+                                                required
+                                                placeholder="Your Phone Number"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <Label htmlFor="email">Email (Optional)</Label>
                                             <Input
                                                 id="email"
                                                 name="email"
                                                 type="email"
                                                 value={formData.email}
                                                 onChange={handleInputChange}
-                                                required
-                                                placeholder="you@email.com"
+                                                placeholder="your@email.com"
                                             />
                                         </div>
-                                        <div>
-                                            <Label htmlFor="phone">Phone</Label>
-                                            <Input
-                                                id="phone"
-                                                name="phone"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                                placeholder="Phone Number"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="eventDate">Event Date</Label>
-                                            <Input
-                                                id="eventDate"
-                                                name="eventDate"
-                                                type="date"
-                                                value={formData.eventDate}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="eventType">Event Type</Label>
-                                            <Input
-                                                id="eventType"
-                                                name="eventType"
-                                                value={formData.eventType}
-                                                onChange={handleInputChange}
-                                                placeholder="e.g. Wedding, Birthday"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="guestCount">Number of Guests</Label>
-                                            <Input
-                                                id="guestCount"
-                                                name="guestCount"
-                                                value={formData.guestCount}
-                                                onChange={handleInputChange}
-                                                placeholder="e.g. 100"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="budget">Budget Range</Label>
-                                            <Input
-                                                id="budget"
-                                                name="budget"
-                                                value={formData.budget}
-                                                onChange={handleInputChange}
-                                                placeholder="e.g. ₹1,00,000 - ₹2,00,000"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="services">Required Services</Label>
-                                            <Input
-                                                id="services"
-                                                name="services"
-                                                value={formData.services}
-                                                onChange={handleInputChange}
-                                                placeholder="e.g. Catering, Decor"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="message">Message</Label>
-                                        <Textarea
-                                            id="message"
-                                            name="message"
-                                            value={formData.message}
-                                            onChange={handleInputChange}
-                                            placeholder="Tell us more about your requirements"
-                                            rows={4}
-                                        />
                                     </div>
                                     <Button
                                         type="submit"
                                         className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                                        disabled={contactLoading}
+                                        disabled={enquiryLoading}
                                     >
-                                        {contactLoading ? "Submitting..." : "Submit Inquiry"}
+                                        {enquiryLoading ? "Sending..." : "Send Enquiry"}
                                     </Button>
                                 </form>
                             )}

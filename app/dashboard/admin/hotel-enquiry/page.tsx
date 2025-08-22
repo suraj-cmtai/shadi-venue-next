@@ -1,6 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/store";
+import {
+  fetchHotelEnquiries,
+  createHotelEnquiry,
+  updateHotelEnquiry,
+  deleteHotelEnquiry,
+  HotelEnquiry,
+} from "@/lib/redux/features/hotelEnquirySlice";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -11,15 +19,12 @@ import {
   Search,
   Loader2,
   MoreHorizontal,
-  Mail,
-  Phone,
-  Users,
-  Calendar,
+  Building,
+  MapPin,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,73 +57,101 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Hotel Enquiry ke liye data structure
-type HotelEnquiry = {
-  id: string;
-  hotelName: string;
-  city: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  eventType: string;
-  eventDate: string;
-  guestCount: number;
-  status: "Pending" | "Contacted" | "Booked" | "Cancelled";
-  createdAt: string;
-  updatedAt: string;
-};
-
-// Sample data (local database)
-const mockHotelEnquiries: HotelEnquiry[] = [
-  {
-    id: "1",
-    hotelName: "The Grand Palace",
-    city: "Jaipur",
-    contactName: "Anjali Verma",
-    contactEmail: "anjali.v@email.com",
-    contactPhone: "9988776655",
-    eventType: "Wedding",
-    eventDate: "2024-12-15",
-    guestCount: 300,
-    status: "Booked",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    hotelName: "Sea Breeze Resort",
-    city: "Goa",
-    contactName: "Sameer Khan",
-    contactEmail: "sameer.k@email.com",
-    contactPhone: "9112233445",
-    eventType: "Corporate Event",
-    eventDate: "2024-11-20",
-    guestCount: 150,
-    status: "Pending",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 const initialHotelEnquiryState: Omit<
   HotelEnquiry,
   "id" | "createdAt" | "updatedAt"
 > = {
   hotelName: "",
   city: "",
-  contactName: "",
-  contactEmail: "",
-  contactPhone: "",
-  eventType: "Wedding",
-  eventDate: "",
-  guestCount: 100,
+  authId: "",
   status: "Pending",
 };
 
+function getStatusColor(status: HotelEnquiry["status"]): string {
+  switch (status) {
+    case "Pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "Contacted":
+      return "bg-blue-100 text-blue-800";
+    case "Closed":
+      return "bg-gray-100 text-gray-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
+// Reusable Form Component for Hotel Enquiry
+type HotelEnquiryFormFieldsProps = {
+  data: HotelEnquiry | Omit<HotelEnquiry, "id" | "createdAt" | "updatedAt">;
+  setData: React.Dispatch<React.SetStateAction<any>>;
+  isEditing?: boolean;
+};
+
+const HotelEnquiryFormFields = ({
+  data,
+  setData,
+  isEditing = false,
+}: HotelEnquiryFormFieldsProps) => (
+  <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <Label htmlFor="hotelName">Hotel Name</Label>
+        <Input
+          id="hotelName"
+          value={data.hotelName}
+          onChange={(e) => setData({ ...data, hotelName: e.target.value })}
+          placeholder="Enter hotel name"
+        />
+      </div>
+      <div>
+        <Label htmlFor="city">City</Label>
+        <Input
+          id="city"
+          value={data.city}
+          onChange={(e) => setData({ ...data, city: e.target.value })}
+          placeholder="Enter city"
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 gap-4">
+      <div>
+        <Label htmlFor="authId">Hotel Auth ID</Label>
+        <Input
+          id="authId"
+          value={data.authId}
+          onChange={(e) => setData({ ...data, authId: e.target.value })}
+          placeholder="Enter hotel authentication ID"
+          disabled={isEditing} // Typically authId shouldn't be changed after creation
+        />
+        {isEditing && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Auth ID cannot be modified after creation
+          </p>
+        )}
+      </div>
+    </div>
+    <div>
+      <Label htmlFor="status">Status</Label>
+      <Select
+        value={data.status}
+        onValueChange={(value: string) => setData({ ...data, status: value })}
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Pending">Pending</SelectItem>
+          <SelectItem value="Contacted">Contacted</SelectItem>
+          <SelectItem value="Closed">Closed</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+);
+
 export default function HotelEnquiryPage() {
-  const [enquiries, setEnquiries] =
-    useState<HotelEnquiry[]>(mockHotelEnquiries);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
+  const { enquiries, loading } = useAppSelector((state) => state.hotelEnquiry);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedEnquiry, setSelectedEnquiry] = useState<HotelEnquiry | null>(
@@ -128,205 +161,144 @@ export default function HotelEnquiryPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
   const [newEnquiry, setNewEnquiry] = useState(initialHotelEnquiryState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchHotelEnquiries());
+  }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       enquiry.hotelName.toLowerCase().includes(searchLower) ||
-      enquiry.contactName.toLowerCase().includes(searchLower) ||
-      enquiry.city.toLowerCase().includes(searchLower);
+      enquiry.city.toLowerCase().includes(searchLower) ||
+      enquiry.authId.toLowerCase().includes(searchLower);
     const matchesStatus =
       statusFilter === "all" || enquiry.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: HotelEnquiry["status"]): string => {
-    switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Contacted":
-        return "bg-blue-100 text-blue-800";
-      case "Booked":
-        return "bg-green-100 text-green-800";
-      case "Cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const handleAdd = async () => {
+    if (!newEnquiry.hotelName.trim() || !newEnquiry.city.trim() || !newEnquiry.authId.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-  };
 
-  const handleAdd = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const newEntry = {
-        ...newEnquiry,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setEnquiries((prev) => [newEntry, ...prev]);
-      setIsLoading(false);
+    setIsSubmitting(true);
+    try {
+      await dispatch(createHotelEnquiry(newEnquiry)).unwrap();
       setIsAddDialogOpen(false);
       setNewEnquiry(initialHotelEnquiryState);
       toast.success("Hotel enquiry added successfully!");
-    }, 500);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to add enquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!selectedEnquiry) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setEnquiries((prev) =>
-        prev.map((e) =>
-          e.id === selectedEnquiry.id
-            ? { ...selectedEnquiry, updatedAt: new Date().toISOString() }
-            : e
-        )
-      );
-      setIsLoading(false);
+    
+    setIsSubmitting(true);
+    try {
+      const updateData = {
+        hotelName: selectedEnquiry.hotelName,
+        city: selectedEnquiry.city,
+        status: selectedEnquiry.status,
+      };
+      await dispatch(updateHotelEnquiry({ 
+        id: selectedEnquiry.id, 
+        data: updateData 
+      })).unwrap();
       setIsEditDialogOpen(false);
       toast.success("Hotel enquiry updated successfully!");
-    }, 500);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update enquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedEnquiry) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setEnquiries((prev) => prev.filter((e) => e.id !== selectedEnquiry.id));
-      setIsLoading(false);
+    setIsSubmitting(true);
+    try {
+      await dispatch(deleteHotelEnquiry(selectedEnquiry.id)).unwrap();
       setIsDeleteDialogOpen(false);
+      setSelectedEnquiry(null);
       toast.success("Hotel enquiry deleted successfully!");
-    }, 500);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete enquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Reusable Form Component for Hotel Enquiry
-  type HotelEnquiryFormFieldsProps = {
-    data: HotelEnquiry | Omit<HotelEnquiry, "id" | "createdAt" | "updatedAt">;
-    setData: React.Dispatch<React.SetStateAction<any>>;
+  const getStatusStats = () => {
+    const stats = {
+      total: enquiries.length,
+      pending: enquiries.filter(e => e.status === "Pending").length,
+      contacted: enquiries.filter(e => e.status === "Contacted").length,
+      closed: enquiries.filter(e => e.status === "Closed").length,
+    };
+    return stats;
   };
-  const HotelEnquiryFormFields = ({
-    data,
-    setData,
-  }: HotelEnquiryFormFieldsProps) => (
-    <div className="grid gap-6 py-4 max-h-[70vh] overflow-y-auto p-1 pr-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="hotelName">Hotel Name</Label>
-          <Input
-            id="hotelName"
-            value={data.hotelName}
-            onChange={(e) => setData({ ...data, hotelName: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            value={data.city}
-            onChange={(e) => setData({ ...data, city: e.target.value })}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="contactName">Contact Name</Label>
-          <Input
-            id="contactName"
-            value={data.contactName}
-            onChange={(e) => setData({ ...data, contactName: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="contactPhone">Contact Phone</Label>
-          <Input
-            id="contactPhone"
-            value={data.contactPhone}
-            onChange={(e) => setData({ ...data, contactPhone: e.target.value })}
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="contactEmail">Contact Email</Label>
-        <Input
-          id="contactEmail"
-          type="email"
-          value={data.contactEmail}
-          onChange={(e) => setData({ ...data, contactEmail: e.target.value })}
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="eventType">Event Type</Label>
-          <Select
-            value={data.eventType}
-            onValueChange={(value) => setData({ ...data, eventType: value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Wedding">Wedding</SelectItem>
-              <SelectItem value="Corporate Event">Corporate Event</SelectItem>
-              <SelectItem value="Birthday Party">Birthday Party</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="eventDate">Event Date</Label>
-          <Input
-            id="eventDate"
-            type="date"
-            value={data.eventDate}
-            onChange={(e) => setData({ ...data, eventDate: e.target.value })}
-          />
-        </div>
-        <div>
-          <Label htmlFor="guestCount">Guest Count</Label>
-          <Input
-            id="guestCount"
-            type="number"
-            value={data.guestCount}
-            onChange={(e) =>
-              setData({ ...data, guestCount: Number(e.target.value) })
-            }
-          />
-        </div>
-      </div>
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={data.status}
-          onValueChange={(value: string) => setData({ ...data, status: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Contacted">Contacted</SelectItem>
-            <SelectItem value="Booked">Booked</SelectItem>
-            <SelectItem value="Cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
+
+  const stats = getStatusStats();
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Hotel Enquiries</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Hotel Enquiries</h1>
+          <p className="text-muted-foreground">
+            Manage hotel enquiries and track their status
+          </p>
+        </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Add Enquiry
         </Button>
       </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <Building className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Total Enquiries</span>
+          </div>
+          <p className="text-2xl font-bold mt-2">{stats.total}</p>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-yellow-500" />
+            <span className="text-sm font-medium">Pending</span>
+          </div>
+          <p className="text-2xl font-bold mt-2">{stats.pending}</p>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="text-sm font-medium">Contacted</span>
+          </div>
+          <p className="text-2xl font-bold mt-2">{stats.contacted}</p>
+        </div>
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gray-500" />
+            <span className="text-sm font-medium">Closed</span>
+          </div>
+          <p className="text-2xl font-bold mt-2">{stats.closed}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search by hotel, contact name, city..."
+            placeholder="Search by hotel name, city, or auth ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -340,25 +312,26 @@ export default function HotelEnquiryPage() {
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="Pending">Pending</SelectItem>
             <SelectItem value="Contacted">Contacted</SelectItem>
-            <SelectItem value="Booked">Booked</SelectItem>
-            <SelectItem value="Cancelled">Cancelled</SelectItem>
+            <SelectItem value="Closed">Closed</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {/* Table */}
       <motion.div layout className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Hotel / City</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Event Details</TableHead>
+              <TableHead>Hotel Details</TableHead>
+              <TableHead>Auth ID</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Submitted On</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Last Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -367,7 +340,22 @@ export default function HotelEnquiryPage() {
             ) : filteredEnquiries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  No enquiries found
+                  <div className="flex flex-col items-center gap-2">
+                    <Building className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-muted-foreground">No enquiries found</p>
+                    {searchQuery || statusFilter !== "all" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                        }}
+                      >
+                        Clear filters
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -381,25 +369,15 @@ export default function HotelEnquiryPage() {
                 >
                   <TableCell>
                     <div className="font-medium">{enquiry.hotelName}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
                       {enquiry.city}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{enquiry.contactName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {enquiry.contactEmail}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      {format(new Date(enquiry.eventDate), "MMM d, yyyy")}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      {enquiry.guestCount} Guests
-                    </div>
+                    <code className="bg-muted px-2 py-1 rounded text-xs">
+                      {enquiry.authId}
+                    </code>
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(enquiry.status)}>
@@ -407,7 +385,14 @@ export default function HotelEnquiryPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(enquiry.createdAt), "MMM d, yyyy")}
+                    {enquiry.createdAt
+                      ? format(new Date(enquiry.createdAt), "MMM d, yyyy")
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {enquiry.updatedAt
+                      ? format(new Date(enquiry.updatedAt), "MMM d, yyyy")
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -445,18 +430,23 @@ export default function HotelEnquiryPage() {
           </TableBody>
         </Table>
       </motion.div>
+
+      {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New Hotel Enquiry</DialogTitle>
+            <DialogDescription>
+              Create a new hotel enquiry in the system. All fields are required.
+            </DialogDescription>
           </DialogHeader>
           <HotelEnquiryFormFields data={newEnquiry} setData={setNewEnquiry} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAdd} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={handleAdd} disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
                 </>
@@ -467,15 +457,21 @@ export default function HotelEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Hotel Enquiry</DialogTitle>
+            <DialogDescription>
+              Update the hotel enquiry details. Auth ID cannot be modified.
+            </DialogDescription>
           </DialogHeader>
           {selectedEnquiry && (
             <HotelEnquiryFormFields
               data={selectedEnquiry}
               setData={setSelectedEnquiry}
+              isEditing={true}
             />
           )}
           <DialogFooter>
@@ -485,8 +481,8 @@ export default function HotelEnquiryPage() {
             >
               Cancel
             </Button>
-            <Button onClick={handleUpdate} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={handleUpdate} disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>
@@ -497,15 +493,27 @@ export default function HotelEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Enquiry</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this enquiry? This action cannot
-              be undone.
+              Are you sure you want to delete this hotel enquiry? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          {selectedEnquiry && (
+            <div className="py-4">
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-medium">{selectedEnquiry.hotelName}</h4>
+                <p className="text-sm text-muted-foreground">{selectedEnquiry.city}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Auth ID: {selectedEnquiry.authId}
+                </p>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
@@ -516,9 +524,9 @@ export default function HotelEnquiryPage() {
             <Button
               variant="destructive"
               onClick={handleDelete}
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
                 </>

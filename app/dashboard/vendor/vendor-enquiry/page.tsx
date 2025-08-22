@@ -2,49 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { useSelector } from "react-redux";
+import { useParams, useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
-  Plus,
+  ArrowLeft,
   Pencil,
   Trash2,
-  Search,
   Loader2,
-  MoreHorizontal,
   Mail,
   Phone,
+  User,
+  AlertCircle,
+  Crown,
+  Calendar,
+  Clock,
+  CheckCircle,
+  Circle,
+  PlayCircle,
 } from "lucide-react";
 
 import {
-  fetchEnquiries,
-  createEnquiry,
-  updateEnquiry,
-  deleteEnquiry,
-  selectEnquiries,
-  selectEnquiryLoading,
-  selectEnquiryError,
+  fetchVendorEnquiryById,
+  updateVendorEnquiry,
+  deleteVendorEnquiry,
+  selectSelectedVendorEnquiry,
+  selectVendorEnquiryLoading,
+  selectVendorEnquiryError,
   VendorEnquiry,
+  VendorEnquiryStatus,
 } from "@/lib/redux/features/vendorEnquirySlice";
+
+import { selectAuth } from "@/lib/redux/features/authSlice";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -62,106 +57,96 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
-// This should match the Omit type in your slice
-type NewEnquiryState = Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">;
-
-const initialEnquiryState: NewEnquiryState = {
-  businessName: "",
-  category: "Others",
-  yearOfEstablishment: "",
-  contactPersonName: "",
-  designation: "Other",
-  mobileNumber: "",
-  whatsappNumber: "",
-  emailId: "",
-  websiteOrSocial: "",
-  fullAddress: "",
-  city: "",
-  state: "",
-  pinCode: "",
-  serviceAreas: "Local City",
-  servicesOffered: [],
-  startingPrice: 0,
-  guestCapacityMin: 0,
-  guestCapacityMax: 0,
-  facilitiesAvailable: [],
-  specialities: "",
-  logoUrl: "",
-  coverImageUrl: "",
-  portfolioImageUrls: [],
-  videoLinks: [],
-  about: "",
-  awards: "",
-  notableClients: "",
-  advancePaymentPercent: 0,
-  refundPolicy: "",
-  paymentModesAccepted: [],
-  status: "Pending",
-};
-
-export default function VendorEnquiryPage() {
+export default function VendorEnquirySinglePage() {
   const dispatch = useAppDispatch();
-  const enquiries = useAppSelector(selectEnquiries);
-  const isLoading = useAppSelector(selectEnquiryLoading);
-  const error = useAppSelector(selectEnquiryError);
+  const router = useRouter();
+  const params = useParams();
+  const enquiryId = params?.id as string;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedEnquiry, setSelectedEnquiry] = useState<VendorEnquiry | null>(
-    null
-  );
+  const selectedEnquiry = useAppSelector(selectSelectedVendorEnquiry);
+  const isLoading = useAppSelector(selectVendorEnquiryLoading);
+  const error = useAppSelector(selectVendorEnquiryError);
+  const auth = useSelector(selectAuth);
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newEnquiry, setNewEnquiry] =
-    useState<NewEnquiryState>(initialEnquiryState);
+  const [editData, setEditData] = useState<VendorEnquiry | null>(null);
+
+  // Get authId from auth slice
+  const authId = auth?.data?.roleId;
+  const isVendor = auth?.data?.role === "vendor";
 
   useEffect(() => {
-    dispatch(fetchEnquiries());
-  }, [dispatch]);
+    if (isVendor && authId && enquiryId) {
+      dispatch(fetchVendorEnquiryById(enquiryId));
+    }
+  }, [auth, authId, isVendor, enquiryId, dispatch]);
 
-  const filteredEnquiries = enquiries.filter((enquiry: VendorEnquiry) => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch =
-      enquiry.contactPersonName.toLowerCase().includes(searchLower) ||
-      enquiry.emailId.toLowerCase().includes(searchLower) ||
-      enquiry.city.toLowerCase().includes(searchLower);
-    const matchesStatus =
-      statusFilter === "all" || enquiry.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Initialize edit data when enquiry loads
+  useEffect(() => {
+    if (selectedEnquiry) {
+      setEditData(selectedEnquiry);
+    }
+  }, [selectedEnquiry]);
+
+  // If not a vendor or no authId, show appropriate message
+  if (!isVendor || !authId) {
+    return (
+      <div className="p-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Access denied. This page is only available for authenticated vendors.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Check if error is related to premium access
+  const isPremiumError = error?.includes("premium") || error?.includes("Premium");
 
   const getStatusColor = (status: VendorEnquiry["status"]) => {
     switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "Approved":
-        return "bg-green-100 text-green-800";
-      case "Rejected":
-        return "bg-red-100 text-red-800";
+      case VendorEnquiryStatus.NEW:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case VendorEnquiryStatus.IN_PROGRESS:
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case VendorEnquiryStatus.COMPLETED:
+        return "bg-green-100 text-green-800 border-green-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const handleAdd = () => {
-    // Note: File uploads need to be handled separately. This assumes JSON data for now.
-    dispatch(createEnquiry(newEnquiry))
-      .unwrap()
-      .then(() => {
-        toast.success("Enquiry added successfully!");
-        setIsAddDialogOpen(false);
-        setNewEnquiry(initialEnquiryState);
-      })
-      .catch((err: unknown) =>
-        toast.error(`Failed to add enquiry: ${getErrorMessage(err)}`)
-      );
+  const getStatusIcon = (status: VendorEnquiry["status"]) => {
+    switch (status) {
+      case VendorEnquiryStatus.NEW:
+        return <Circle className="w-4 h-4" />;
+      case VendorEnquiryStatus.IN_PROGRESS:
+        return <PlayCircle className="w-4 h-4" />;
+      case VendorEnquiryStatus.COMPLETED:
+        return <CheckCircle className="w-4 h-4" />;
+      default:
+        return <Circle className="w-4 h-4" />;
+    }
   };
 
   const handleUpdate = () => {
-    if (!selectedEnquiry) return;
-    dispatch(updateEnquiry({ id: selectedEnquiry.id, data: selectedEnquiry }))
+    if (!editData) return;
+    
+    const updateData = {
+      name: editData.name,
+      email: editData.email,
+      phoneNumber: editData.phoneNumber,
+      status: editData.status,
+    };
+
+    dispatch(updateVendorEnquiry({ id: editData.id, data: updateData }))
       .unwrap()
       .then(() => {
         toast.success("Enquiry updated successfully!");
@@ -174,86 +159,98 @@ export default function VendorEnquiryPage() {
 
   const handleDelete = () => {
     if (!selectedEnquiry) return;
-    dispatch(deleteEnquiry(selectedEnquiry.id))
+    dispatch(deleteVendorEnquiry(selectedEnquiry.id))
       .unwrap()
       .then(() => {
         toast.success("Enquiry deleted successfully!");
-        setIsDeleteDialogOpen(false);
+        router.push("/vendor/enquiries");
       })
       .catch((err: unknown) =>
         toast.error(`Failed to delete enquiry: ${getErrorMessage(err)}`)
       );
   };
 
+  const handleStatusUpdate = (newStatus: VendorEnquiryStatus) => {
+    if (!selectedEnquiry) return;
+
+    const updateData = {
+      name: selectedEnquiry.name,
+      email: selectedEnquiry.email,
+      phoneNumber: selectedEnquiry.phoneNumber,
+      status: newStatus,
+    };
+
+    dispatch(updateVendorEnquiry({ id: selectedEnquiry.id, data: updateData }))
+      .unwrap()
+      .then(() => {
+        toast.success(`Status updated to ${newStatus}!`);
+      })
+      .catch((err: unknown) =>
+        toast.error(`Failed to update status: ${getErrorMessage(err)}`)
+      );
+  };
+
   // Reusable Form Component
   type EnquiryFormFieldsProps = {
-    data: NewEnquiryState | VendorEnquiry;
-    setData: React.Dispatch<React.SetStateAction<any>>;
+    data: VendorEnquiry;
+    setData: React.Dispatch<React.SetStateAction<VendorEnquiry | null>>;
   };
+
   const EnquiryFormFields = ({ data, setData }: EnquiryFormFieldsProps) => (
-    <div className="space-y-8 max-h-[70vh] overflow-y-auto p-1 pr-4">
-      {/* Step 1 & 2 */}
+    <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
       <section>
         <h3 className="font-semibold text-lg border-b pb-2 mb-4">
-          Business & Contact Info
+          Contact Information
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label>Business Name*</Label>
+            <Label htmlFor="name">Name *</Label>
             <Input
-              value={data.businessName}
-              onChange={(e) =>
-                setData({ ...data, businessName: e.target.value })
-              }
+              id="name"
+              value={data.name}
+              onChange={(e) => setData(prev => prev ? { ...prev, name: e.target.value } : null)}
+              placeholder="Enter contact name"
             />
           </div>
           <div>
-            <Label>Category*</Label>
-            <Select
-              value={data.category}
-              onValueChange={(value) => setData({ ...data, category: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>{/* ... options ... */}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Contact Person*</Label>
+            <Label htmlFor="email">Email *</Label>
             <Input
-              value={data.contactPersonName}
-              onChange={(e) =>
-                setData({ ...data, contactPersonName: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <Label>Email*</Label>
-            <Input
+              id="email"
               type="email"
-              value={data.emailId}
-              onChange={(e) => setData({ ...data, emailId: e.target.value })}
+              value={data.email}
+              onChange={(e) => setData(prev => prev ? { ...prev, email: e.target.value } : null)}
+              placeholder="Enter email address"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="phoneNumber">Phone Number *</Label>
+            <Input
+              id="phoneNumber"
+              value={data.phoneNumber}
+              onChange={(e) => setData(prev => prev ? { ...prev, phoneNumber: e.target.value } : null)}
+              placeholder="Enter phone number"
             />
           </div>
         </div>
       </section>
-      {/* Add more sections for all form fields */}
+
       <section>
-        <h3 className="font-semibold text-lg border-b pb-2 mt-6">Management</h3>
+        <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+          Status Management
+        </h3>
         <div>
-          <Label>Status</Label>
+          <Label htmlFor="status">Status</Label>
           <Select
             value={data.status}
-            onValueChange={(value) => setData({ ...data, status: value })}
+            onValueChange={(value) => setData(prev => prev ? { ...prev, status: value as VendorEnquiryStatus } : null)}
           >
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -261,146 +258,240 @@ export default function VendorEnquiryPage() {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/vendor/enquiries")}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+        </div>
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading enquiry details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Vendor Enquiries</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Add Enquiry
-        </Button>
-      </div>
-      <div className="flex gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/vendor/enquiries")}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Enquiry Details</h1>
+            <p className="text-muted-foreground">
+              {selectedEnquiry ? `Enquiry from ${selectedEnquiry.name}` : "View and manage enquiry"}
+            </p>
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
+        {selectedEnquiry && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+              className="gap-2"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
-      <motion.div layout className="rounded-md border">
-        <Table>
-          <TableHeader>{/* ... table header ... */}</TableHeader>
-          <TableBody>
-            {isLoading && enquiries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                </TableCell>
-              </TableRow>
-            ) : filteredEnquiries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  No enquiries found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredEnquiries.map((enquiry: VendorEnquiry) => (
-                <motion.tr
-                  key={enquiry.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  layout
-                >
-                  <TableCell>
-                    <div className="font-medium">
-                      {enquiry.contactPersonName}
+
+      {/* Premium Access Error */}
+      {isPremiumError && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <Crown className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Premium Feature:</strong> Access to enquiries requires a premium subscription. 
+            Please upgrade your account to view and manage enquiries.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* General Error Display */}
+      {error && !isPremiumError && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Enquiry Not Found */}
+      {!isLoading && !selectedEnquiry && !error && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Enquiry Not Found</h3>
+            <p className="text-muted-foreground mb-4">
+              The enquiry you're looking for doesn't exist or you don't have access to it.
+            </p>
+            <Button onClick={() => router.push("/vendor/enquiries")}>
+              Go Back to Enquiries
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enquiry Details */}
+      {selectedEnquiry && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid gap-6"
+        >
+          {/* Status and Quick Actions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(selectedEnquiry.status)}
+                  <div>
+                    <CardTitle className="text-lg">Status Management</CardTitle>
+                    <CardDescription>Current enquiry status and quick actions</CardDescription>
+                  </div>
+                </div>
+                <Badge className={`${getStatusColor(selectedEnquiry.status)} px-3 py-1`}>
+                  {selectedEnquiry.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                {Object.values(VendorEnquiryStatus).map((status) => (
+                  <Button
+                    key={status}
+                    variant={selectedEnquiry.status === status ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleStatusUpdate(status)}
+                    disabled={selectedEnquiry.status === status || isLoading}
+                    className="gap-2"
+                  >
+                    {getStatusIcon(status)}
+                    {status}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <User className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Name</Label>
+                      <p className="text-base font-semibold">{selectedEnquiry.name}</p>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>{enquiry.emailId}</div>
-                  </TableCell>
-                  <TableCell>{enquiry.city}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(enquiry.status)}>
-                      {enquiry.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(enquiry.createdAt), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedEnquiry(enquiry);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setSelectedEnquiry(enquiry);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </motion.tr>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </motion.div>
-      {/* Dialogs */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Add New Vendor Enquiry</DialogTitle>
-          </DialogHeader>
-          <EnquiryFormFields data={newEnquiry} setData={setNewEnquiry} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAdd} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
-                </>
-              ) : (
-                "Add Enquiry"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+                      <p className="text-base">{selectedEnquiry.email}</p>
+                      <Button variant="link" className="p-0 h-auto font-normal" asChild>
+                        <a href={`mailto:${selectedEnquiry.email}`}>Send Email</a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-5 h-5 mt-0.5 text-muted-foreground" />
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">Phone Number</Label>
+                      <p className="text-base">{selectedEnquiry.phoneNumber}</p>
+                      <Button variant="link" className="p-0 h-auto font-normal" asChild>
+                        <a href={`tel:${selectedEnquiry.phoneNumber}`}>Call Now</a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Created</Label>
+                    <p className="text-base font-semibold">
+                      {format(new Date(selectedEnquiry.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">Last Updated</Label>
+                    <p className="text-base font-semibold">
+                      {format(new Date(selectedEnquiry.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Vendor Enquiry</DialogTitle>
+            <DialogTitle>Edit Enquiry</DialogTitle>
+            <DialogDescription>
+              Update the enquiry information and status.
+            </DialogDescription>
           </DialogHeader>
-          {selectedEnquiry && (
+          {editData && (
             <EnquiryFormFields
-              data={selectedEnquiry}
-              setData={setSelectedEnquiry}
+              data={editData}
+              setData={setEditData}
             />
           )}
           <DialogFooter>
@@ -422,12 +513,24 @@ export default function VendorEnquiryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Enquiry</DialogTitle>
-            <DialogDescription>Are you sure?</DialogDescription>
+            <DialogDescription>
+              Are you sure you want to delete this enquiry? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
+          {selectedEnquiry && (
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <p><strong>Name:</strong> {selectedEnquiry.name}</p>
+              <p><strong>Email:</strong> {selectedEnquiry.email}</p>
+              <p><strong>Phone:</strong> {selectedEnquiry.phoneNumber}</p>
+              <p><strong>Status:</strong> {selectedEnquiry.status}</p>
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
@@ -445,7 +548,7 @@ export default function VendorEnquiryPage() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
                 </>
               ) : (
-                "Delete"
+                "Delete Enquiry"
               )}
             </Button>
           </DialogFooter>

@@ -1,70 +1,27 @@
-import { db } from "../config/firebase"; // Adjust path to your Firebase config
-import consoleManager from "../utils/consoleManager"; // Adjust path to your console manager
+import { db } from "../config/firebase";
+import consoleManager from "../utils/consoleManager";
 import admin from "firebase-admin";
+import VendorService from "./vendorServices";
 
-// Define all the types based on your form
-export type VendorCategory =
-  | "Venue"
-  | "Planner"
-  | "Photographer"
-  | "Decorator"
-  | "Caterer"
-  | "Makeup"
-  | "Entertainment"
-  | "Others";
-export type Designation = "Owner" | "Manager" | "Other";
-export type ServiceArea =
-  | "Local City"
-  | "Statewide"
-  | "Pan India"
-  | "International";
-export type PaymentMode = "UPI" | "Cash" | "Bank Transfer" | "Card" | "Other";
-export type Facility =
-  | "Rooms"
-  | "Parking"
-  | "Catering"
-  | "Decor"
-  | "DJ"
-  | "Liquor License"
-  | "Pool"
-  | "Other";
+/**
+ * VendorEnquiry interface (extended)
+ * Includes name, email, phoneNumber, status, and authId.
+ */
+export enum VendorEnquiryStatus {
+  NEW = "New",
+  IN_PROGRESS = "In Progress",
+  COMPLETED = "Completed"
+}
 
-// The main interface for a vendor enquiry
 export interface VendorEnquiry {
   id: string;
-  businessName: string;
-  category: VendorCategory;
-  yearOfEstablishment?: string;
-  contactPersonName: string;
-  designation: Designation;
-  mobileNumber: string;
-  whatsappNumber?: string;
-  emailId: string;
-  websiteOrSocial?: string;
-  fullAddress: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  serviceAreas: ServiceArea;
-  servicesOffered: string[];
-  startingPrice: number;
-  guestCapacityMin?: number;
-  guestCapacityMax?: number;
-  facilitiesAvailable?: Facility[];
-  specialities?: string;
-  logoUrl?: string;
-  coverImageUrl?: string;
-  portfolioImageUrls?: string[];
-  videoLinks?: string[];
-  about?: string;
-  awards?: string;
-  notableClients?: string;
-  advancePaymentPercent?: number;
-  refundPolicy?: string;
-  paymentModesAccepted?: PaymentMode[];
-  status: "Pending" | "Approved" | "Rejected";
+  name: string;
+  email: string;
+  phoneNumber: string;
+  status: VendorEnquiryStatus;
   createdAt: string;
   updatedAt: string;
+  authId: string; // The authId of the vendor user
 }
 
 class VendorEnquiryService {
@@ -80,55 +37,30 @@ class VendorEnquiryService {
   private static convertToType(id: string, data: any): VendorEnquiry {
     return {
       id,
-      businessName: data.businessName || "",
-      category: data.category || "Others",
-      yearOfEstablishment: data.yearOfEstablishment || "",
-      contactPersonName: data.contactPersonName || "",
-      designation: data.designation || "Other",
-      mobileNumber: data.mobileNumber || "",
-      whatsappNumber: data.whatsappNumber || "",
-      emailId: data.emailId || "",
-      websiteOrSocial: data.websiteOrSocial || "",
-      fullAddress: data.fullAddress || "",
-      city: data.city || "",
-      state: data.state || "",
-      pinCode: data.pinCode || "",
-      serviceAreas: data.serviceAreas || "Local City",
-      servicesOffered: data.servicesOffered || [],
-      startingPrice: Number(data.startingPrice || 0),
-      guestCapacityMin: data.guestCapacityMin
-        ? Number(data.guestCapacityMin)
-        : undefined,
-      guestCapacityMax: data.guestCapacityMax
-        ? Number(data.guestCapacityMax)
-        : undefined,
-      facilitiesAvailable: data.facilitiesAvailable || [],
-      specialities: data.specialities || "",
-      logoUrl: data.logoUrl || "",
-      coverImageUrl: data.coverImageUrl || "",
-      portfolioImageUrls: data.portfolioImageUrls || [],
-      videoLinks: data.videoLinks || [],
-      about: data.about || "",
-      awards: data.awards || "",
-      notableClients: data.notableClients || "",
-      advancePaymentPercent: data.advancePaymentPercent
-        ? Number(data.advancePaymentPercent)
-        : undefined,
-      refundPolicy: data.refundPolicy || "",
-      paymentModesAccepted: data.paymentModesAccepted || [],
-      status: data.status || "Pending",
+      name: data.name || "",
+      email: data.email || "",
+      phoneNumber: data.phoneNumber || "",
+      status: (data.status as VendorEnquiryStatus) || VendorEnquiryStatus.NEW,
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
+      authId: data.authId || "",
     };
   }
 
+  /**
+   * Create a new vendor enquiry. Requires authId in enquiryData.
+   */
   static async createEnquiry(
     enquiryData: Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">
   ): Promise<VendorEnquiry> {
     try {
+      if (!enquiryData.authId) {
+        throw new Error("authId is required to create a vendor enquiry.");
+      }
       const timestamp = admin.firestore.FieldValue.serverTimestamp();
       const newEnquiryRef = await db.collection(this.collectionName).add({
         ...enquiryData,
+        status: enquiryData.status || VendorEnquiryStatus.NEW,
         createdAt: timestamp,
         updatedAt: timestamp,
       });
@@ -147,12 +79,13 @@ class VendorEnquiryService {
     }
   }
 
+  /**
+   * Get all vendor enquiries. Returns all enquiries, ignoring authId.
+   */
   static async getAllEnquiries(): Promise<VendorEnquiry[]> {
     try {
-      const snapshot = await db
-        .collection(this.collectionName)
-        .orderBy("createdAt", "desc")
-        .get();
+      const query = db.collection(this.collectionName).orderBy("createdAt", "desc");
+      const snapshot = await query.get();
       const enquiries = snapshot.docs.map((doc: any) =>
         this.convertToType(doc.id, doc.data())
       );
@@ -162,19 +95,42 @@ class VendorEnquiryService {
       );
       return enquiries;
     } catch (error: any) {
-      consoleManager.error("Error fetching all vendor enquiries:", error);
+      consoleManager.error("Error fetching vendor enquiries:", error);
       throw error;
     }
   }
 
+  /**
+   * Get a single vendor enquiry by its ID.
+   */
+  static async getEnquiryById(id: string): Promise<VendorEnquiry | null> {
+    try {
+      const doc = await db.collection(this.collectionName).doc(id).get();
+      if (!doc.exists) {
+        consoleManager.log(`Firestore Read: No vendor enquiry found with ID: ${id}`);
+        return null;
+      }
+      consoleManager.log(`Firestore Read: Fetched vendor enquiry with ID: ${id}`);
+      return this.convertToType(doc.id, doc.data());
+    } catch (error: any) {
+      consoleManager.error(`Error fetching vendor enquiry by id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a vendor enquiry by ID. authId cannot be changed.
+   */
   static async updateEnquiry(
     id: string,
-    updateData: Partial<Omit<VendorEnquiry, "id" | "createdAt">>
+    updateData: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId">>
   ): Promise<VendorEnquiry> {
     try {
       const enquiryRef = db.collection(this.collectionName).doc(id);
+      // Prevent authId from being updated
+      const { authId, ...restUpdate } = updateData as any;
       await enquiryRef.update({
-        ...updateData,
+        ...restUpdate,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       const updatedDoc = await enquiryRef.get();
@@ -202,6 +158,51 @@ class VendorEnquiryService {
       return { id };
     } catch (error: any) {
       consoleManager.error(`Error deleting vendor enquiry ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get vendor enquiries by authId, but only if the vendor isPremium is true.
+   * Uses VendorService.getVendorById to fetch the vendor.
+   * Throws error if vendor is not found or not premium.
+   */
+  static async getEnquiryByAuthId(authId: string): Promise<VendorEnquiry[]> {
+    try {
+      if (!authId) {
+        throw new Error("authId is required.");
+      }
+
+      // Use VendorService.getVendorById to get the vendor (ensures consistent conversion)
+      const vendor = await VendorService.getVendorById(authId);
+
+      if (!vendor) {
+        throw new Error("Vendor not found for the provided authId.");
+      }
+
+      if (!vendor.isPremium) {
+        throw new Error("Access denied: Vendor is not premium.");
+      }
+
+      // If premium, fetch vendor enquiries for this authId
+      let query = db
+        .collection(this.collectionName)
+        .where("authId", "==", authId)
+        .orderBy("createdAt", "desc");
+
+      const snapshot = await query.get();
+      const enquiries = snapshot.docs.map((doc: any) =>
+        this.convertToType(doc.id, doc.data())
+      );
+
+      consoleManager.log(
+        "Firestore Read: Fetched vendor enquiries for premium vendor, count:",
+        enquiries.length,
+        `(authId: ${authId})`
+      );
+      return enquiries;
+    } catch (error: any) {
+      consoleManager.error("Error fetching vendor enquiries by authId (premium only):", error);
       throw error;
     }
   }
