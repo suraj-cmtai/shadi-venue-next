@@ -18,6 +18,11 @@ const VECTOR3_IMG = "/images/blog-decorative-vector-left.svg";
 const VECTOR4_IMG = "/images/blog-decorative-vector-right.svg";
 const VECTOR07_IMG = "/images/blog-flower-shadow-vector-top-left.svg";
 
+/**
+ * Blog section with horizontally scrollable cards.
+ * Uses Framer Motion for animation and shadcn GradientButton for CTAs.
+ * Fully responsive and accessible.
+ */
 export default function Blog() {
   const dispatch = useDispatch<AppDispatch>();
   const blogs = useSelector(selectPublishedBlogs);
@@ -72,31 +77,31 @@ export default function Blog() {
           Check Out These Fresh New Ideas
         </motion.h2>
 
-        {/* Blog Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {isLoading ? (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">Loading blogs...</span>
-            </div>
-          ) : error ? (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-red-500 font-cormorant text-lg">{error}</span>
-            </div>
-          ) : displayedBlogs.length === 0 ? (
-            <div className="col-span-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-400 font-cormorant text-lg">No blog posts found.</span>
-            </div>
-          ) : (
-            <div
-              className="flex flex-nowrap gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 w-full"
-              aria-label="Blog posts horizontal scroll"
-              tabIndex={0}
-              role="region"
-            >
-              {displayedBlogs.map((post, index) => (
+        {/* Blog Posts Horizontal Scroll */}
+        <div className="w-full">
+          <div
+            className="flex gap-6 md:gap-8 overflow-x-auto scrollbar-hide pb-4"
+            tabIndex={0}
+            aria-label="Blog posts horizontal scroll"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {isLoading ? (
+              <div className="flex justify-center items-center min-h-32 w-full">
+                <span className="text-neutral-500 font-cormorant text-lg">Loading blogs...</span>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center min-h-32 w-full">
+                <span className="text-red-500 font-cormorant text-lg">{error}</span>
+              </div>
+            ) : displayedBlogs.length === 0 ? (
+              <div className="flex justify-center items-center min-h-32 w-full">
+                <span className="text-neutral-400 font-cormorant text-lg">No blog posts found.</span>
+              </div>
+            ) : (
+              displayedBlogs.map((post, index) => (
                 <motion.div
                   key={post.id}
-                  className="relative group shrink-0 w-72 sm:w-80 md:w-96 h-80 md:h-[400px]"
+                  className="relative group flex-shrink-0 w-72 sm:w-80 md:w-96 h-80 md:h-[400px]"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -124,7 +129,7 @@ export default function Blog() {
                         {post.title}
                       </h3>
                       {/* CTA Button */}
-                      <Link href={`/blogs/${post.slug}`} tabIndex={-1} aria-label={`Read blog: ${post.title}`} className="flex w-full justify-center items-center">
+                      <Link href={`/blogs/${post.slug}`} tabIndex={-1} aria-label={`Read blog: ${post.title}`}>
                         <GradientButton>
                           Get Inspired
                         </GradientButton>
@@ -132,18 +137,19 @@ export default function Blog() {
                     </div>
                   </div>
                 </motion.div>
-              ))}
-              <style jsx>{`
-                .scrollbar-hide {
-                  scrollbar-width: none;
-                  -ms-overflow-style: none;
-                }
-                .scrollbar-hide::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-            </div>
-          )}
+              ))
+            )}
+          </div>
+          {/* Hide scrollbar for horizontal scroll */}
+          <style jsx>{`
+            .scrollbar-hide {
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
 
         {/* View All Button */}
