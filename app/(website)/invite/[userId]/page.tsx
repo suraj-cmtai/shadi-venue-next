@@ -429,34 +429,35 @@ const InvitePage = ({ params }: InvitePageProps) => {
             </motion.h2>
 
             {/* Desktop Layout - Enhanced - Images Touching Corners */}
-            <div className="relative w-full max-w-7xl mx-auto hidden lg:flex items-center justify-center min-h-[32rem]">
-              {/* Groom Section */}
-              <motion.div
-                className="flex flex-col items-center z-20"
+                        {/* Desktop Layout - Enhanced */}
+                        <div className="relative max-w-7xl mx-auto hidden lg:flex justify-between items-start">
+              {/* Groom Section - Enhanced */}
+              <motion.div 
+                className="flex flex-col items-center w-[300px]"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
-                style={{ width: '18rem' }} // w-72
               >
-                <div className="relative w-72 h-[22rem] shadow-2xl rounded-lg overflow-hidden group">
-                  <Image
-                    src={safeAbout.groom.image}
-                    alt={safeAbout.groom.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                <div className="w-[300px] h-[380px] relative shadow-2xl ml-80 rounded-lg overflow-hidden group">
+                  <Image 
+                    src={safeAbout.groom.image} 
+                    alt={safeAbout.groom.name} 
+                    fill 
+                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
-                <div className="mt-6 text-left max-w-sm">
+                
+                <div className="absolute left-[480px] top-[1px] text-left max-w-sm">
                   <h3 className="text-2xl font-semibold italic mb-3" style={{ color: safeTheme.nameColor }}>
                     {safeAbout.groom.name}
                   </h3>
                   <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.groom.description}</p>
                   <div className="flex gap-4 text-gray-500">
                     {safeAbout.groom.socials.instagram && (
-                      <motion.a
-                        href={safeAbout.groom.socials.instagram}
-                        target="_blank"
+                      <motion.a 
+                        href={safeAbout.groom.socials.instagram} 
+                        target="_blank" 
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                         transition={{ duration: 0.2 }}
@@ -465,9 +466,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </motion.a>
                     )}
                     {safeAbout.groom.socials.facebook && (
-                      <motion.a
-                        href={safeAbout.groom.socials.facebook}
-                        target="_blank"
+                      <motion.a 
+                        href={safeAbout.groom.socials.facebook} 
+                        target="_blank" 
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                         transition={{ duration: 0.2 }}
@@ -476,9 +477,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </motion.a>
                     )}
                     {safeAbout.groom.socials.twitter && (
-                      <motion.a
-                        href={safeAbout.groom.socials.twitter}
-                        target="_blank"
+                      <motion.a 
+                        href={safeAbout.groom.socials.twitter} 
+                        target="_blank" 
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                         transition={{ duration: 0.2 }}
@@ -490,12 +491,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 </div>
               </motion.div>
 
-              {/* Couple Center Image - Large, Touching Corners */}
+              {/* Couple Center Image - Enhanced */}
               <motion.div
-                className="absolute left-1/2 top-1/2 z-30"
+                className="absolute w-[350px] h-[260px] shadow-2xl border-4 border-white z-10 bg-white rounded-lg overflow-hidden"
                 style={{
-                  width: '28rem', // w-112
-                  height: '24rem', // h-96
+                  top: `calc(98% + -30px)`,
+                  left: `calc(50% + -50px)`,
                   transform: 'translate(-50%, -50%)',
                 }}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -503,101 +504,88 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <div className="relative w-full h-full shadow-2xl border-4 border-white bg-white rounded-lg overflow-hidden">
-                  <Image
-                    src={safeAbout.coupleImage}
-                    alt="Couple"
-                    fill
-                    className="object-cover transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
+                <Image 
+                  src={safeAbout.coupleImage} 
+                  alt="Couple" 
+                  fill 
+                  className="object-cover transition-transform duration-300" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               </motion.div>
-
-              {/* Bride Section */}
-              <motion.div
-                className="flex flex-col items-center z-20"
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-                style={{ width: '18rem' }} // w-72
-              >
-                <div className="relative w-72 h-[22rem] shadow-2xl rounded-lg overflow-hidden group">
-                  <Image
-                    src={safeAbout.bride.image}
-                    alt={safeAbout.bride.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-                <div className="mt-6 text-left max-w-sm">
-                  <h3 className="text-2xl font-semibold italic text-right mr-3 mb-3" style={{ color: safeTheme.nameColor }}>
-                    {safeAbout.bride.name}
-                  </h3>
-                  <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.bride.description}</p>
-                  <div className="w-full flex justify-end gap-4 mr-3 text-gray-500">
-                    {safeAbout.bride.socials.instagram && (
-                      <motion.a
-                        href={safeAbout.bride.socials.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Instagram className="w-6 h-6" />
-                      </motion.a>
-                    )}
-                    {safeAbout.bride.socials.facebook && (
-                      <motion.a
-                        href={safeAbout.bride.socials.facebook}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Facebook className="w-6 h-6" />
-                      </motion.a>
-                    )}
-                    {safeAbout.bride.socials.twitter && (
-                      <motion.a
-                        href={safeAbout.bride.socials.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Twitter className="w-6 h-6" />
-                      </motion.a>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Positioning for touching corners */}
-              {/* Groom: left, Couple: center, Bride: right */}
-              <style jsx>{`
-                @media (min-width: 1024px) {
-                  .relative.max-w-7xl > :nth-child(1) {
-                    position: absolute;
-                    left: 0;
-                    bottom: 0;
-                    /* Groom bottom right touches Couple top left */
-                    transform: translateY(2rem);
-                  }
-                  .relative.max-w-7xl > :nth-child(2) {
-                    /* Couple is already centered by left-1/2 top-1/2 */
-                  }
-                  .relative.max-w-7xl > :nth-child(3) {
-                    position: absolute;
-                    right: 0;
-                    top: 0;
-                    /* Couple bottom right touches Bride top left */
-                    transform: translateY(-2rem);
-                  }
-                }
-              `}</style>
             </div>
+
+            {/* Bride Section - Enhanced */}
+            <motion.div
+              className="hidden lg:flex flex-col items-center w-[300px] mx-auto mt-40 relative"
+              style={{
+                top: `calc(55% + -20px)`,
+                left: `calc(30% + -50px)`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="w-[300px] h-[380px] relative shadow-2xl rounded-lg overflow-hidden group">
+                <Image 
+                  src={safeAbout.bride.image} 
+                  alt={safeAbout.bride.name} 
+                  fill 
+                  className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              
+              <div
+                className="absolute text-left max-w-sm"
+                style={{
+                  top: `calc(55% + 40px)`,
+                  left: `calc(50% + 0px - 350px)`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <h3 className="text-2xl font-semibold italic text-right mr-3 mb-3" style={{ color: safeTheme.nameColor }}>
+                  {safeAbout.bride.name}
+                </h3>
+                <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.bride.description}</p>
+                <div className="w-full flex justify-end gap-4 mr-3 text-gray-500">
+                  {safeAbout.bride.socials.instagram && (
+                    <motion.a 
+                      href={safeAbout.bride.socials.instagram} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Instagram className="w-6 h-6" />
+                    </motion.a>
+                  )}
+                  {safeAbout.bride.socials.facebook && (
+                    <motion.a 
+                      href={safeAbout.bride.socials.facebook} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Facebook className="w-6 h-6" />
+                    </motion.a>
+                  )}
+                  {safeAbout.bride.socials.twitter && (
+                    <motion.a 
+                      href={safeAbout.bride.socials.twitter} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Twitter className="w-6 h-6" />
+                    </motion.a>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
 
             {/* Enhanced Mobile Layout */}
             <div className="flex flex-col gap-20 items-center lg:hidden">
