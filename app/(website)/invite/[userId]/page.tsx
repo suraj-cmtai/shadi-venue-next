@@ -309,7 +309,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
     : null;
 
   return (
-    <section style={{ backgroundColor: safeTheme.backgroundColor, color: safeTheme.textColor }}>
+    <section
+      style={{
+        backgroundColor: safeTheme.backgroundColor,
+        color: safeTheme.textColor,
+      }}
+    >
       {/* ENHANCED HERO SECTION */}
       {safeInvitation && (
         <section
@@ -317,17 +322,24 @@ const InvitePage = ({ params }: InvitePageProps) => {
           style={{ backgroundImage: `url(${safeInvitation.backgroundImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/30" />
-          
+
           {/* Floating hearts animation */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {[...Array(6)].map((_, i) => (
               <motion.div
                 key={i}
                 className="absolute text-white/20"
-                initial={{ y: "100vh", x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920) }}
+                initial={{
+                  y: "100vh",
+                  x:
+                    Math.random() *
+                    (typeof window !== "undefined" ? window.innerWidth : 1920),
+                }}
                 animate={{
                   y: "-10vh",
-                  x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1920),
+                  x:
+                    Math.random() *
+                    (typeof window !== "undefined" ? window.innerWidth : 1920),
                 }}
                 transition={{
                   duration: Math.random() * 3 + 5,
@@ -341,27 +353,27 @@ const InvitePage = ({ params }: InvitePageProps) => {
           </div>
 
           <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
-            <motion.h2 
-              className="font-dancing-script text-6xl md:text-8xl mb-6 text-white drop-shadow-lg" 
+            <motion.h2
+              className="font-dancing-script text-6xl md:text-8xl mb-6 text-white drop-shadow-lg"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
             >
               {safeInvitation.heading}
             </motion.h2>
-            
-            <motion.p 
-              className="text-xl md:text-2xl text-white/90 mb-4 drop-shadow-md" 
+
+            <motion.p
+              className="text-xl md:text-2xl text-white/90 mb-4 drop-shadow-md"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.8 }}
             >
               {safeInvitation.subheading}
             </motion.p>
-            
+
             {safeAbout && (
-              <motion.p 
-                className="text-lg md:text-xl text-white/80 mb-8 drop-shadow-md font-light" 
+              <motion.p
+                className="text-lg md:text-xl text-white/80 mb-8 drop-shadow-md font-light"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 1.1 }}
@@ -370,8 +382,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </motion.p>
             )}
 
-            <motion.p 
-              className="text-md text-white/70 max-w-2xl leading-relaxed drop-shadow-sm" 
+            <motion.p
+              className="text-md text-white/70 max-w-2xl leading-relaxed drop-shadow-sm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 1.4 }}
@@ -380,13 +392,13 @@ const InvitePage = ({ params }: InvitePageProps) => {
             </motion.p>
 
             {/* Scroll indicator */}
-            <motion.div 
+            <motion.div
               className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2 }}
             >
-              <motion.div 
+              <motion.div
                 className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -403,13 +415,19 @@ const InvitePage = ({ params }: InvitePageProps) => {
         <section className="bg-white py-20 px-6 md:px-20 text-center relative overflow-hidden">
           {/* Background decorative elements */}
           <div className="absolute inset-0 opacity-5">
-            <div className="absolute top-10 left-10 w-32 h-32 rounded-full" style={{ backgroundColor: safeTheme.primaryColor }}></div>
-            <div className="absolute bottom-10 right-10 w-24 h-24 rounded-full" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
+            <div
+              className="absolute top-10 left-10 w-32 h-32 rounded-full"
+              style={{ backgroundColor: safeTheme.primaryColor }}
+            ></div>
+            <div
+              className="absolute bottom-10 right-10 w-24 h-24 rounded-full"
+              style={{ backgroundColor: safeTheme.secondaryColor }}
+            ></div>
           </div>
 
           <div className="relative z-10">
-            <motion.h4 
-              className="italic text-lg mb-2" 
+            <motion.h4
+              className="italic text-lg mb-2"
               style={{ color: safeTheme.titleColor }}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -417,9 +435,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
             >
               {safeAbout.subtitle}
             </motion.h4>
-            
-            <motion.h2 
-              className="text-4xl md:text-5xl font-bold mb-32" 
+
+            <motion.h2
+              className="text-4xl md:text-5xl font-bold mb-32"
               style={{ color: safeTheme.titleColor }}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -429,59 +447,73 @@ const InvitePage = ({ params }: InvitePageProps) => {
             </motion.h2>
 
             {/* Desktop Layout - Enhanced - Images Touching Corners */}
-                        {/* Desktop Layout - Enhanced */}
-                        <div className="relative max-w-7xl mx-auto hidden lg:flex justify-between items-start">
+            {/* Desktop Layout - Enhanced */}
+            <div className="relative max-w-7xl mx-auto hidden lg:flex justify-between items-start">
               {/* Groom Section - Enhanced */}
-              <motion.div 
+              <motion.div
                 className="flex flex-col items-center w-[300px]"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
               >
                 <div className="w-[300px] h-[380px] relative shadow-2xl ml-80 rounded-lg overflow-hidden group">
-                  <Image 
-                    src={safeAbout.groom.image} 
-                    alt={safeAbout.groom.name} 
-                    fill 
-                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                  <Image
+                    src={safeAbout.groom.image}
+                    alt={safeAbout.groom.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
-                
+
                 <div className="absolute left-[480px] top-[1px] text-left max-w-sm">
-                  <h3 className="text-2xl font-semibold italic mb-3" style={{ color: safeTheme.nameColor }}>
+                  <h3
+                    className="text-2xl font-semibold italic mb-3"
+                    style={{ color: safeTheme.nameColor }}
+                  >
                     {safeAbout.groom.name}
                   </h3>
-                  <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.groom.description}</p>
+                  <p className="text-gray-600 text-base leading-relaxed mb-6">
+                    {safeAbout.groom.description}
+                  </p>
                   <div className="flex gap-4 text-gray-500">
                     {safeAbout.groom.socials.instagram && (
-                      <motion.a 
-                        href={safeAbout.groom.socials.instagram} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.groom.socials.instagram}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                        whileHover={{
+                          scale: 1.2,
+                          color: safeTheme.primaryColor,
+                        }}
                         transition={{ duration: 0.2 }}
                       >
                         <Instagram className="w-6 h-6" />
                       </motion.a>
                     )}
                     {safeAbout.groom.socials.facebook && (
-                      <motion.a 
-                        href={safeAbout.groom.socials.facebook} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.groom.socials.facebook}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                        whileHover={{
+                          scale: 1.2,
+                          color: safeTheme.primaryColor,
+                        }}
                         transition={{ duration: 0.2 }}
                       >
                         <Facebook className="w-6 h-6" />
                       </motion.a>
                     )}
                     {safeAbout.groom.socials.twitter && (
-                      <motion.a 
-                        href={safeAbout.groom.socials.twitter} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.groom.socials.twitter}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
+                        whileHover={{
+                          scale: 1.2,
+                          color: safeTheme.primaryColor,
+                        }}
                         transition={{ duration: 0.2 }}
                       >
                         <Twitter className="w-6 h-6" />
@@ -497,18 +529,18 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 style={{
                   top: `calc(98% + -30px)`,
                   left: `calc(50% + -50px)`,
-                  transform: 'translate(-50%, -50%)',
+                  transform: "translate(-50%, -50%)",
                 }}
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Image 
-                  src={safeAbout.coupleImage} 
-                  alt="Couple" 
-                  fill 
-                  className="object-cover transition-transform duration-300" 
+                <Image
+                  src={safeAbout.coupleImage}
+                  alt="Couple"
+                  fill
+                  className="object-cover transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
               </motion.div>
@@ -520,39 +552,44 @@ const InvitePage = ({ params }: InvitePageProps) => {
               style={{
                 top: `calc(55% + -20px)`,
                 left: `calc(30% + -50px)`,
-                transform: 'translate(-50%, -50%)',
+                transform: "translate(-50%, -50%)",
               }}
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <div className="w-[300px] h-[380px] relative shadow-2xl rounded-lg overflow-hidden group">
-                <Image 
-                  src={safeAbout.bride.image} 
-                  alt={safeAbout.bride.name} 
-                  fill 
-                  className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                <Image
+                  src={safeAbout.bride.image}
+                  alt={safeAbout.bride.name}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              
+
               <div
                 className="absolute text-left max-w-sm"
                 style={{
                   top: `calc(55% + 40px)`,
                   left: `calc(50% + 0px - 350px)`,
-                  transform: 'translate(-50%, -50%)',
+                  transform: "translate(-50%, -50%)",
                 }}
               >
-                <h3 className="text-2xl font-semibold italic text-right mr-3 mb-3" style={{ color: safeTheme.nameColor }}>
+                <h3
+                  className="text-2xl font-semibold italic text-right mr-3 mb-3"
+                  style={{ color: safeTheme.nameColor }}
+                >
                   {safeAbout.bride.name}
                 </h3>
-                <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.bride.description}</p>
+                <p className="text-gray-600 text-base leading-relaxed mb-6">
+                  {safeAbout.bride.description}
+                </p>
                 <div className="w-full flex justify-end gap-4 mr-3 text-gray-500">
                   {safeAbout.bride.socials.instagram && (
-                    <motion.a 
-                      href={safeAbout.bride.socials.instagram} 
-                      target="_blank" 
+                    <motion.a
+                      href={safeAbout.bride.socials.instagram}
+                      target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                       transition={{ duration: 0.2 }}
@@ -561,9 +598,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     </motion.a>
                   )}
                   {safeAbout.bride.socials.facebook && (
-                    <motion.a 
-                      href={safeAbout.bride.socials.facebook} 
-                      target="_blank" 
+                    <motion.a
+                      href={safeAbout.bride.socials.facebook}
+                      target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                       transition={{ duration: 0.2 }}
@@ -572,9 +609,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     </motion.a>
                   )}
                   {safeAbout.bride.socials.twitter && (
-                    <motion.a 
-                      href={safeAbout.bride.socials.twitter} 
-                      target="_blank" 
+                    <motion.a
+                      href={safeAbout.bride.socials.twitter}
+                      target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.2, color: safeTheme.primaryColor }}
                       transition={{ duration: 0.2 }}
@@ -586,34 +623,38 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </div>
             </motion.div>
 
-
             {/* Enhanced Mobile Layout */}
             <div className="flex flex-col gap-20 items-center lg:hidden">
               {/* Groom */}
-              <motion.div 
+              <motion.div
                 className="flex flex-col items-center w-full max-w-sm mx-auto"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
                 <div className="w-[280px] h-[360px] relative shadow-2xl mx-auto rounded-lg overflow-hidden group">
-                  <Image 
-                    src={safeAbout.groom.image} 
-                    alt={safeAbout.groom.name} 
-                    fill 
-                    className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                  <Image
+                    src={safeAbout.groom.image}
+                    alt={safeAbout.groom.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="mt-8 text-center max-w-sm">
-                  <h3 className="text-2xl font-semibold italic mb-3" style={{ color: safeTheme.nameColor }}>
+                  <h3
+                    className="text-2xl font-semibold italic mb-3"
+                    style={{ color: safeTheme.nameColor }}
+                  >
                     {safeAbout.groom.name}
                   </h3>
-                  <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.groom.description}</p>
+                  <p className="text-gray-600 text-base leading-relaxed mb-6">
+                    {safeAbout.groom.description}
+                  </p>
                   <div className="flex justify-center gap-4 text-gray-500">
                     {safeAbout.groom.socials.instagram && (
-                      <motion.a 
-                        href={safeAbout.groom.socials.instagram} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.groom.socials.instagram}
+                        target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2 }}
                       >
@@ -621,9 +662,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </motion.a>
                     )}
                     {safeAbout.groom.socials.facebook && (
-                      <motion.a 
-                        href={safeAbout.groom.socials.facebook} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.groom.socials.facebook}
+                        target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2 }}
                       >
@@ -635,46 +676,51 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </motion.div>
 
               {/* Couple Image */}
-              <motion.div 
+              <motion.div
                 className="w-[300px] h-[220px] shadow-2xl border-4 border-white bg-white rounded-lg mx-auto relative overflow-hidden"
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Image 
-                  src={safeAbout.coupleImage} 
-                  alt="Couple" 
-                  fill 
-                  className="object-cover" 
+                <Image
+                  src={safeAbout.coupleImage}
+                  alt="Couple"
+                  fill
+                  className="object-cover"
                 />
               </motion.div>
 
               {/* Bride */}
-              <motion.div 
+              <motion.div
                 className="flex flex-col items-center w-full max-w-sm mx-auto"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <div className="w-[280px] h-[360px] relative shadow-2xl mx-auto rounded-lg overflow-hidden group">
-                  <Image 
-                    src={safeAbout.bride.image} 
-                    alt={safeAbout.bride.name} 
-                    fill 
-                    className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                  <Image
+                    src={safeAbout.bride.image}
+                    alt={safeAbout.bride.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 <div className="mt-8 text-center max-w-sm">
-                  <h3 className="text-2xl font-semibold italic mb-3" style={{ color: safeTheme.nameColor }}>
+                  <h3
+                    className="text-2xl font-semibold italic mb-3"
+                    style={{ color: safeTheme.nameColor }}
+                  >
                     {safeAbout.bride.name}
                   </h3>
-                  <p className="text-gray-600 text-base leading-relaxed mb-6">{safeAbout.bride.description}</p>
+                  <p className="text-gray-600 text-base leading-relaxed mb-6">
+                    {safeAbout.bride.description}
+                  </p>
                   <div className="flex justify-center gap-4 text-gray-500">
                     {safeAbout.bride.socials.instagram && (
-                      <motion.a 
-                        href={safeAbout.bride.socials.instagram} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.bride.socials.instagram}
+                        target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2 }}
                       >
@@ -682,9 +728,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </motion.a>
                     )}
                     {safeAbout.bride.socials.facebook && (
-                      <motion.a 
-                        href={safeAbout.bride.socials.facebook} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.bride.socials.facebook}
+                        target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2 }}
                       >
@@ -692,9 +738,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </motion.a>
                     )}
                     {safeAbout.bride.socials.twitter && (
-                      <motion.a 
-                        href={safeAbout.bride.socials.twitter} 
-                        target="_blank" 
+                      <motion.a
+                        href={safeAbout.bride.socials.twitter}
+                        target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.2 }}
                       >
@@ -716,7 +762,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
             className="absolute top-0 left-0 w-full h-[40%] z-0"
             style={{ backgroundColor: safeTheme.buttonColor }}
           />
-          
+
           {/* Event Navigation */}
           {safeWeddingEvents.length > 1 && (
             <div className="relative z-10 flex justify-center pt-8 gap-4">
@@ -724,9 +770,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 <motion.button
                   key={index}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedEventIndex === index 
-                      ? 'bg-white text-gray-800 shadow-lg' 
-                      : 'bg-white/20 text-white hover:bg-white/30'
+                    selectedEventIndex === index
+                      ? "bg-white text-gray-800 shadow-lg"
+                      : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                   onClick={() => setSelectedEventIndex(index)}
                   whileHover={{ scale: 1.05 }}
@@ -757,7 +803,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   >
                     Save the Date
                   </motion.h3>
-                  
+
                   <motion.h2
                     className="font-dancing-script text-5xl md:text-5xl text-white mb-20 text-center md:text-left ml-24"
                     initial={{ opacity: 0, y: 20 }}
@@ -780,7 +826,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
                         whileHover={{ scale: 1.05, y: -15 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <div className="font-outfit font-bold text-3xl sm:text-4xl mb-2" style={{ color: safeTheme.primaryColor }}>
+                        <div
+                          className="font-outfit font-bold text-3xl sm:text-4xl mb-2"
+                          style={{ color: safeTheme.primaryColor }}
+                        >
                           {value.toString().padStart(2, "0")}
                         </div>
                         <div className="font-cinzel font-black text-sm sm:text-base text-gray-600 uppercase">
@@ -812,7 +861,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </div>
 
               {/* Enhanced Event Details */}
-              <motion.div 
+              <motion.div
                 className="mt-12 bg-white/90 backdrop-blur-sm rounded-2xl p-8 mx-4 shadow-xl"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -820,32 +869,74 @@ const InvitePage = ({ params }: InvitePageProps) => {
               >
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
                   <div className="flex flex-col items-center">
-                    <Calendar className="w-8 h-8 mb-2" style={{ color: safeTheme.primaryColor }} />
-                    <h4 className="font-semibold text-lg mb-1" style={{ color: safeTheme.titleColor }}>Date</h4>
-                    <p className="text-gray-600">{new Date(safeWeddingEvents[selectedEventIndex].date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}</p>
+                    <Calendar
+                      className="w-8 h-8 mb-2"
+                      style={{ color: safeTheme.primaryColor }}
+                    />
+                    <h4
+                      className="font-semibold text-lg mb-1"
+                      style={{ color: safeTheme.titleColor }}
+                    >
+                      Date
+                    </h4>
+                    <p className="text-gray-600">
+                      {new Date(
+                        safeWeddingEvents[selectedEventIndex].date
+                      ).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
                   </div>
-                  
+
                   <div className="flex flex-col items-center">
-                    <Clock className="w-8 h-8 mb-2" style={{ color: safeTheme.primaryColor }} />
-                    <h4 className="font-semibold text-lg mb-1" style={{ color: safeTheme.titleColor }}>Time</h4>
-                    <p className="text-gray-600">{safeWeddingEvents[selectedEventIndex].time}</p>
+                    <Clock
+                      className="w-8 h-8 mb-2"
+                      style={{ color: safeTheme.primaryColor }}
+                    />
+                    <h4
+                      className="font-semibold text-lg mb-1"
+                      style={{ color: safeTheme.titleColor }}
+                    >
+                      Time
+                    </h4>
+                    <p className="text-gray-600">
+                      {safeWeddingEvents[selectedEventIndex].time}
+                    </p>
                   </div>
-                  
+
                   <div className="flex flex-col items-center">
-                    <MapPin className="w-8 h-8 mb-2" style={{ color: safeTheme.primaryColor }} />
-                    <h4 className="font-semibold text-lg mb-1" style={{ color: safeTheme.titleColor }}>Venue</h4>
-                    <p className="text-gray-600">{safeWeddingEvents[selectedEventIndex].venue}</p>
+                    <MapPin
+                      className="w-8 h-8 mb-2"
+                      style={{ color: safeTheme.primaryColor }}
+                    />
+                    <h4
+                      className="font-semibold text-lg mb-1"
+                      style={{ color: safeTheme.titleColor }}
+                    >
+                      Venue
+                    </h4>
+                    <p className="text-gray-600">
+                      {safeWeddingEvents[selectedEventIndex].venue}
+                    </p>
                   </div>
-                  
+
                   <div className="flex flex-col items-center">
-                    <Star className="w-8 h-8 mb-2" style={{ color: safeTheme.primaryColor }} />
-                    <h4 className="font-semibold text-lg mb-1" style={{ color: safeTheme.titleColor }}>Details</h4>
-                    <p className="text-gray-600 text-sm">{safeWeddingEvents[selectedEventIndex].description}</p>
+                    <Star
+                      className="w-8 h-8 mb-2"
+                      style={{ color: safeTheme.primaryColor }}
+                    />
+                    <h4
+                      className="font-semibold text-lg mb-1"
+                      style={{ color: safeTheme.titleColor }}
+                    >
+                      Details
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      {safeWeddingEvents[selectedEventIndex].description}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -854,8 +945,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
               <div className="md:hidden space-y-8 mt-8">
                 <div className="text-center text-white">
                   <h3 className="text-lg mb-2">Save the Date</h3>
-                  <h2 className="font-dancing-script text-4xl mb-8">{safeWeddingEvents[selectedEventIndex].title}</h2>
-                  
+                  <h2 className="font-dancing-script text-4xl mb-8">
+                    {safeWeddingEvents[selectedEventIndex].title}
+                  </h2>
+
                   <div className="grid grid-cols-2 gap-4 px-4">
                     {countdownItems.map(({ label, value }) => (
                       <motion.div
@@ -863,15 +956,20 @@ const InvitePage = ({ params }: InvitePageProps) => {
                         className="bg-white rounded-xl shadow-xl p-4 text-center"
                         whileHover={{ scale: 1.05 }}
                       >
-                        <div className="font-bold text-2xl mb-1" style={{ color: safeTheme.primaryColor }}>
+                        <div
+                          className="font-bold text-2xl mb-1"
+                          style={{ color: safeTheme.primaryColor }}
+                        >
                           {value.toString().padStart(2, "0")}
                         </div>
-                        <div className="text-sm text-gray-600 uppercase">{label}</div>
+                        <div className="text-sm text-gray-600 uppercase">
+                          {label}
+                        </div>
                       </motion.div>
                     ))}
                   </div>
                 </div>
-                
+
                 {safeWeddingEvents[selectedEventIndex].image && (
                   <div className="px-4">
                     <div className="relative h-64 rounded-lg overflow-hidden shadow-xl">
@@ -895,8 +993,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
         <section className="relative w-full bg-white py-20 overflow-hidden">
           {/* Background decorative elements */}
           <div className="absolute inset-0">
-            <div className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5" style={{ backgroundColor: safeTheme.primaryColor }}></div>
-            <div className="absolute bottom-20 right-10 w-48 h-48 rounded-full opacity-5" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
+            <div
+              className="absolute top-20 left-10 w-64 h-64 rounded-full opacity-5"
+              style={{ backgroundColor: safeTheme.primaryColor }}
+            ></div>
+            <div
+              className="absolute bottom-20 right-10 w-48 h-48 rounded-full opacity-5"
+              style={{ backgroundColor: safeTheme.secondaryColor }}
+            ></div>
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -931,30 +1035,50 @@ const InvitePage = ({ params }: InvitePageProps) => {
             {/* Timeline Layout for Love Story */}
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full rounded-full hidden lg:block" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
-              
+              <div
+                className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full rounded-full hidden lg:block"
+                style={{ backgroundColor: safeTheme.secondaryColor }}
+              ></div>
+
               <div className="space-y-16">
                 {safeLoveStory.map((milestone, index) => (
                   <motion.div
                     key={milestone.id}
-                    className={`relative flex items-center ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} flex-col lg:gap-16 gap-8`}
+                    className={`relative flex items-center ${
+                      index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
+                    } flex-col lg:gap-16 gap-8`}
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: index * 0.1 }}
                   >
                     {/* Timeline dot */}
-                    <div className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full border-4 border-white shadow-lg z-10 hidden lg:block" style={{ backgroundColor: safeTheme.primaryColor }}></div>
-                    
+                    <div
+                      className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full border-4 border-white shadow-lg z-10 hidden lg:block"
+                      style={{ backgroundColor: safeTheme.primaryColor }}
+                    ></div>
+
                     {/* Content */}
-                    <div className={`flex-1 ${index % 2 === 0 ? 'lg:text-right lg:pr-8' : 'lg:text-left lg:pl-8'} text-center lg:text-left`}>
+                    <div
+                      className={`flex-1 ${
+                        index % 2 === 0
+                          ? "lg:text-right lg:pr-8"
+                          : "lg:text-left lg:pl-8"
+                      } text-center lg:text-left`}
+                    >
                       <motion.div
                         className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
-                        style={{ backgroundColor: safeTheme.secondaryColor + '20', color: safeTheme.primaryColor }}
+                        style={{
+                          backgroundColor: safeTheme.secondaryColor + "20",
+                          color: safeTheme.primaryColor,
+                        }}
                         whileHover={{ scale: 1.05 }}
                       >
                         {milestone.date}
                       </motion.div>
-                      <h3 className="text-3xl font-bold mb-4" style={{ color: safeTheme.titleColor }}>
+                      <h3
+                        className="text-3xl font-bold mb-4"
+                        style={{ color: safeTheme.titleColor }}
+                      >
                         {milestone.title}
                       </h3>
                       <p className="text-lg text-gray-600 leading-relaxed mb-6">
@@ -991,7 +1115,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <h4 className="text-2xl font-semibold mb-8" style={{ color: safeTheme.titleColor }}>
+                <h4
+                  className="text-2xl font-semibold mb-8"
+                  style={{ color: safeTheme.titleColor }}
+                >
                   Our Memory Gallery
                 </h4>
                 <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
@@ -1067,12 +1194,19 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   <h3 className="font-cormorant text-2xl sm:text-3xl lg:text-4xl text-gray-600 mb-2 uppercase tracking-wide">
                     Wedding Planning
                   </h3>
-                  <h2 className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl mb-4" style={{ color: safeTheme.primaryColor }}>
+                  <h2
+                    className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl mb-4"
+                    style={{ color: safeTheme.primaryColor }}
+                  >
                     Our Journey
                   </h2>
-                  <div className="w-24 h-1 rounded-full mx-auto lg:mx-0" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
+                  <div
+                    className="w-24 h-1 rounded-full mx-auto lg:mx-0"
+                    style={{ backgroundColor: safeTheme.secondaryColor }}
+                  ></div>
                   <p className="text-gray-600 mt-6 text-lg leading-relaxed">
-                    Follow our wedding planning journey and see how everything comes together for our special day.
+                    Follow our wedding planning journey and see how everything
+                    comes together for our special day.
                   </p>
                 </motion.div>
 
@@ -1087,7 +1221,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       whileHover={{ y: -5 }}
                     >
                       <div className="flex items-start gap-4">
-                        <div className="relative h-14 w-14 rounded-full overflow-hidden flex-shrink-0" style={{ backgroundColor: safeTheme.primaryColor }}>
+                        <div
+                          className="relative h-14 w-14 rounded-full overflow-hidden flex-shrink-0"
+                          style={{ backgroundColor: safeTheme.primaryColor }}
+                        >
                           <Image
                             src={event.icon}
                             alt={event.type}
@@ -1098,7 +1235,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-bold text-lg" style={{ color: safeTheme.primaryColor }}>
+                            <h3
+                              className="font-bold text-lg"
+                              style={{ color: safeTheme.primaryColor }}
+                            >
                               {event.type}
                             </h3>
                             {event.completed && (
@@ -1107,7 +1247,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="space-y-2 text-sm text-gray-600">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
@@ -1144,15 +1284,28 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   {/* Mock map interface */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
-                      <MapPin className="w-12 h-12 mx-auto mb-4" style={{ color: safeTheme.primaryColor }} />
-                      <p className="text-gray-600 text-lg font-medium">Interactive Map</p>
-                      <p className="text-gray-500 text-sm mt-2">Wedding venue location will be displayed here</p>
+                      <MapPin
+                        className="w-12 h-12 mx-auto mb-4"
+                        style={{ color: safeTheme.primaryColor }}
+                      />
+                      <p className="text-gray-600 text-lg font-medium">
+                        Interactive Map
+                      </p>
+                      <p className="text-gray-500 text-sm mt-2">
+                        Wedding venue location will be displayed here
+                      </p>
                     </div>
                   </div>
-                  
+
                   {/* Mock map pins */}
-                  <div className="absolute top-1/4 left-1/3 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-pulse" style={{ backgroundColor: safeTheme.primaryColor }}></div>
-                  <div className="absolute top-3/4 right-1/4 w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
+                  <div
+                    className="absolute top-1/4 left-1/3 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-pulse"
+                    style={{ backgroundColor: safeTheme.primaryColor }}
+                  ></div>
+                  <div
+                    className="absolute top-3/4 right-1/4 w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse"
+                    style={{ backgroundColor: safeTheme.secondaryColor }}
+                  ></div>
                 </div>
               </motion.div>
             </div>
@@ -1163,26 +1316,37 @@ const InvitePage = ({ params }: InvitePageProps) => {
       {/* ENHANCED RSVP SECTION */}
       <section
         className="relative w-full min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
-        style={{ backgroundImage: `url('${safeInvitation?.backgroundImage || '/api/placeholder/1920/800'}')` }}
+        style={{
+          backgroundImage: `url('${
+            safeInvitation?.backgroundImage || "/api/placeholder/1920/800"
+          }')`,
+        }}
       >
         <div className="absolute inset-0 bg-black/40" />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <motion.div 
+          <motion.div
             className="bg-white/95 backdrop-blur-sm p-8 lg:p-12 rounded-3xl shadow-2xl"
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
             <div className="mb-8">
-              <h4 className="font-dancing-script text-2xl mb-2 italic" style={{ color: safeTheme.secondaryColor }}>
+              <h4
+                className="font-dancing-script text-2xl mb-2 italic"
+                style={{ color: safeTheme.secondaryColor }}
+              >
                 Invitation
               </h4>
-              <h2 className="text-4xl lg:text-5xl font-bold mb-4" style={{ color: safeTheme.primaryColor }}>
+              <h2
+                className="text-4xl lg:text-5xl font-bold mb-4"
+                style={{ color: safeTheme.primaryColor }}
+              >
                 Will You Attend?
               </h2>
               <p className="text-gray-600 text-lg">
-                Your presence would make our special day even more memorable. Please let us know if you can join us.
+                Your presence would make our special day even more memorable.
+                Please let us know if you can join us.
               </p>
             </div>
 
@@ -1192,7 +1356,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   type="text"
                   placeholder="Your Full Name *"
                   value={rsvpFormData.name}
-                  onChange={(e) => handleRSVPInputChange('name', e.target.value)}
+                  onChange={(e) =>
+                    handleRSVPInputChange("name", e.target.value)
+                  }
                   required
                   className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
                   whileFocus={{ scale: 1.02 }}
@@ -1201,7 +1367,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   type="email"
                   placeholder="Email Address *"
                   value={rsvpFormData.email}
-                  onChange={(e) => handleRSVPInputChange('email', e.target.value)}
+                  onChange={(e) =>
+                    handleRSVPInputChange("email", e.target.value)
+                  }
                   required
                   className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
                   whileFocus={{ scale: 1.02 }}
@@ -1209,9 +1377,11 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </div>
 
               <div className="bg-gray-50 rounded-xl p-6">
-                <p className="font-medium text-gray-800 mb-4">Will you be attending?</p>
+                <p className="font-medium text-gray-800 mb-4">
+                  Will you be attending?
+                </p>
                 <div className="flex gap-6">
-                  <motion.label 
+                  <motion.label
                     className="flex items-center gap-3 cursor-pointer"
                     whileHover={{ scale: 1.05 }}
                   >
@@ -1220,12 +1390,16 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       name="attendance"
                       value="yes"
                       checked={rsvpFormData.attendance === "yes"}
-                      onChange={(e) => handleRSVPInputChange('attendance', e.target.value)}
+                      onChange={(e) =>
+                        handleRSVPInputChange("attendance", e.target.value)
+                      }
                       className="w-5 h-5"
                     />
-                    <span className="text-gray-700 font-medium">✨ Yes, I'll be there!</span>
+                    <span className="text-gray-700 font-medium">
+                      ✨ Yes, I'll be there!
+                    </span>
                   </motion.label>
-                  <motion.label 
+                  <motion.label
                     className="flex items-center gap-3 cursor-pointer"
                     whileHover={{ scale: 1.05 }}
                   >
@@ -1234,16 +1408,20 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       name="attendance"
                       value="no"
                       checked={rsvpFormData.attendance === "no"}
-                      onChange={(e) => handleRSVPInputChange('attendance', e.target.value)}
+                      onChange={(e) =>
+                        handleRSVPInputChange("attendance", e.target.value)
+                      }
                       className="w-5 h-5"
                     />
-                    <span className="text-gray-700 font-medium">💔 Sorry, can't make it</span>
+                    <span className="text-gray-700 font-medium">
+                      💔 Sorry, can't make it
+                    </span>
                   </motion.label>
                 </div>
               </div>
 
               {rsvpFormData.attendance === "yes" && (
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -1253,7 +1431,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     type="number"
                     placeholder="Number of Guests *"
                     value={rsvpFormData.numberOfGuests}
-                    onChange={(e) => handleRSVPInputChange('numberOfGuests', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleRSVPInputChange(
+                        "numberOfGuests",
+                        parseInt(e.target.value)
+                      )
+                    }
                     min="1"
                     max="10"
                     className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
@@ -1262,7 +1445,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     type="tel"
                     placeholder="Phone Number (Optional)"
                     value={rsvpFormData.phone}
-                    onChange={(e) => handleRSVPInputChange('phone', e.target.value)}
+                    onChange={(e) =>
+                      handleRSVPInputChange("phone", e.target.value)
+                    }
                     className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
                   />
                 </motion.div>
@@ -1271,7 +1456,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
               <textarea
                 placeholder="Special message for the couple (Optional)"
                 value={rsvpFormData.message}
-                onChange={(e) => handleRSVPInputChange('message', e.target.value)}
+                onChange={(e) =>
+                  handleRSVPInputChange("message", e.target.value)
+                }
                 className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors resize-none h-32"
                 rows={4}
               />
@@ -1279,9 +1466,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
               <motion.button
                 type="submit"
                 className="w-full py-4 px-6 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
+                style={{
                   backgroundColor: safeTheme.buttonColor,
-                  backgroundImage: `linear-gradient(45deg, ${safeTheme.buttonColor}, ${safeTheme.buttonHoverColor})`
+                  backgroundImage: `linear-gradient(45deg, ${safeTheme.buttonColor}, ${safeTheme.buttonHoverColor})`,
                 }}
                 disabled={isSubmittingRSVP}
                 whileHover={{ scale: 1.02, y: -2 }}
@@ -1301,13 +1488,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </motion.button>
 
               <p className="text-sm text-gray-500 text-center">
-                * Required fields. We'll send you a confirmation email once received.
+                * Required fields. We'll send you a confirmation email once
+                received.
               </p>
             </form>
           </motion.div>
 
           {/* Right side - Wedding details */}
-          <motion.div 
+          <motion.div
             className="text-white space-y-8"
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -1315,34 +1503,43 @@ const InvitePage = ({ params }: InvitePageProps) => {
           >
             <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8">
               <h3 className="text-3xl font-bold mb-6">Event Details</h3>
-              
+
               {safeWeddingEvents.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
                     <Calendar className="w-6 h-6 text-white/80" />
                     <div>
-                      <p className="font-semibold">{new Date(safeWeddingEvents[0].date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}</p>
+                      <p className="font-semibold">
+                        {new Date(safeWeddingEvents[0].date).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
                       <p className="text-white/80 text-sm">Wedding Date</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <Clock className="w-6 h-6 text-white/80" />
                     <div>
-                      <p className="font-semibold">{safeWeddingEvents[0].time}</p>
+                      <p className="font-semibold">
+                        {safeWeddingEvents[0].time}
+                      </p>
                       <p className="text-white/80 text-sm">Ceremony Time</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <MapPin className="w-6 h-6 text-white/80" />
                     <div>
-                      <p className="font-semibold">{safeWeddingEvents[0].venue}</p>
+                      <p className="font-semibold">
+                        {safeWeddingEvents[0].venue}
+                      </p>
                       <p className="text-white/80 text-sm">Venue</p>
                     </div>
                   </div>
@@ -1353,7 +1550,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
             {/* Countdown display */}
             {safeWeddingEvents.length > 0 && (
               <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8">
-                <h4 className="text-2xl font-bold mb-6 text-center">Time Until Our Big Day</h4>
+                <h4 className="text-2xl font-bold mb-6 text-center">
+                  Time Until Our Big Day
+                </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {countdownItems.map(({ label, value }) => (
                     <div key={label} className="text-center">
@@ -1375,18 +1574,19 @@ const InvitePage = ({ params }: InvitePageProps) => {
             <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8">
               <h4 className="text-xl font-bold mb-4">Need Help?</h4>
               <p className="text-white/80 mb-4">
-                If you have any questions about the wedding or need assistance with your RSVP, please don't hesitate to reach out.
+                If you have any questions about the wedding or need assistance
+                with your RSVP, please don't hesitate to reach out.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <a 
-                  href="mailto:wedding@example.com" 
+                <a
+                  href="mailto:wedding@example.com"
                   className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
                 >
                   <span className="bg-white/20 p-2 rounded-full">📧</span>
                   wedding@example.com
                 </a>
-                <a 
-                  href="tel:+1234567890" 
+                <a
+                  href="tel:+1234567890"
                   className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
                 >
                   <span className="bg-white/20 p-2 rounded-full">📞</span>
@@ -1411,8 +1611,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
           </div>
 
           {/* Decorative elements */}
-          <div className="absolute top-8 left-8 w-32 h-32 rounded-full opacity-5" style={{ backgroundColor: safeTheme.primaryColor }}></div>
-          <div className="absolute bottom-8 right-8 w-24 h-24 rounded-full opacity-5" style={{ backgroundColor: safeTheme.secondaryColor }}></div>
+          <div
+            className="absolute top-8 left-8 w-32 h-32 rounded-full opacity-5"
+            style={{ backgroundColor: safeTheme.primaryColor }}
+          ></div>
+          <div
+            className="absolute bottom-8 right-8 w-24 h-24 rounded-full opacity-5"
+            style={{ backgroundColor: safeTheme.secondaryColor }}
+          ></div>
 
           <div className="relative z-10 max-w-4xl mx-auto">
             <motion.div
@@ -1420,7 +1626,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h2 className="font-dancing-script text-5xl sm:text-6xl mb-2" style={{ color: safeTheme.primaryColor }}>
+              <h2
+                className="font-dancing-script text-5xl sm:text-6xl mb-2"
+                style={{ color: safeTheme.primaryColor }}
+              >
                 {`${safeAbout.groom.name} & ${safeAbout.bride.name}`}
               </h2>
               <p className="text-lg text-gray-600 italic mb-8">
@@ -1431,14 +1640,23 @@ const InvitePage = ({ params }: InvitePageProps) => {
               {safeWeddingEvents.length > 0 && (
                 <div className="bg-gray-50 rounded-2xl p-6 mb-8 inline-block">
                   <div className="flex items-center justify-center gap-4">
-                    <Calendar className="w-6 h-6" style={{ color: safeTheme.primaryColor }} />
-                    <span className="text-xl font-semibold" style={{ color: safeTheme.titleColor }}>
-                      {new Date(safeWeddingEvents[0].date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
+                    <Calendar
+                      className="w-6 h-6"
+                      style={{ color: safeTheme.primaryColor }}
+                    />
+                    <span
+                      className="text-xl font-semibold"
+                      style={{ color: safeTheme.titleColor }}
+                    >
+                      {new Date(safeWeddingEvents[0].date).toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1448,12 +1666,17 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
               {/* Social media links */}
               <div className="flex justify-center items-center gap-6 mb-8 text-2xl">
-                {(safeAbout.groom.socials.instagram || safeAbout.bride.socials.instagram) && (
-                  <motion.a 
-                    href={safeAbout.groom.socials.instagram || safeAbout.bride.socials.instagram || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    aria-label="Instagram" 
+                {(safeAbout.groom.socials.instagram ||
+                  safeAbout.bride.socials.instagram) && (
+                  <motion.a
+                    href={
+                      safeAbout.groom.socials.instagram ||
+                      safeAbout.bride.socials.instagram ||
+                      "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
                     className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-pink-100"
                     style={{ color: safeTheme.primaryColor }}
                     whileHover={{ scale: 1.2, rotate: 5 }}
@@ -1461,12 +1684,17 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <FaInstagram />
                   </motion.a>
                 )}
-                {(safeAbout.groom.socials.twitter || safeAbout.bride.socials.twitter) && (
-                  <motion.a 
-                    href={safeAbout.groom.socials.twitter || safeAbout.bride.socials.twitter || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    aria-label="Twitter" 
+                {(safeAbout.groom.socials.twitter ||
+                  safeAbout.bride.socials.twitter) && (
+                  <motion.a
+                    href={
+                      safeAbout.groom.socials.twitter ||
+                      safeAbout.bride.socials.twitter ||
+                      "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Twitter"
                     className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
                     style={{ color: safeTheme.primaryColor }}
                     whileHover={{ scale: 1.2, rotate: -5 }}
@@ -1474,12 +1702,17 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <FaTwitter />
                   </motion.a>
                 )}
-                {(safeAbout.groom.socials.facebook || safeAbout.bride.socials.facebook) && (
-                  <motion.a 
-                    href={safeAbout.groom.socials.facebook || safeAbout.bride.socials.facebook || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    aria-label="Facebook" 
+                {(safeAbout.groom.socials.facebook ||
+                  safeAbout.bride.socials.facebook) && (
+                  <motion.a
+                    href={
+                      safeAbout.groom.socials.facebook ||
+                      safeAbout.bride.socials.facebook ||
+                      "#"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
                     className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
                     style={{ color: safeTheme.primaryColor }}
                     whileHover={{ scale: 1.2, rotate: 5 }}
@@ -1495,16 +1728,22 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
-                <Heart className="w-8 h-8 mx-auto mb-4" style={{ color: safeTheme.primaryColor }} />
+                <Heart
+                  className="w-8 h-8 mx-auto mb-4"
+                  style={{ color: safeTheme.primaryColor }}
+                />
                 <p className="text-lg text-gray-700 leading-relaxed">
-                  Thank you for being part of our love story. Your presence and support mean the world to us as we begin this beautiful journey together.
+                  Thank you for being part of our love story. Your presence and
+                  support mean the world to us as we begin this beautiful
+                  journey together.
                 </p>
               </motion.div>
 
               {/* Copyright */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  © 2024 Wedding Invitation. Made with ❤️ for {safeAbout.groom.name} & {safeAbout.bride.name}
+                  © 2024 Wedding Invitation. Made with ❤️ for{" "}
+                  {safeAbout.groom.name} & {safeAbout.bride.name}
                 </p>
               </div>
             </motion.div>
@@ -1515,7 +1754,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
       {/* Fallback message with enhanced design */}
       {!safeInvitation && !safeAbout && (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-          <motion.div 
+          <motion.div
             className="text-center bg-white p-12 rounded-3xl shadow-2xl max-w-md mx-4"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1524,9 +1763,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
               <Heart className="w-10 h-10 text-pink-500" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">Wedding Invitation</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
+              Wedding Invitation
+            </h1>
             <p className="text-gray-600 text-lg leading-relaxed mb-6">
-              This beautiful invitation is being prepared with love and care. Please check back soon!
+              This beautiful invitation is being prepared with love and care.
+              Please check back soon!
             </p>
             <div className="flex justify-center">
               <div className="animate-pulse flex space-x-2">

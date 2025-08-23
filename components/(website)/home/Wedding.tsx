@@ -54,7 +54,7 @@ export default function Wedding() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            wedding theme
+            Inspirations
           </motion.p>
           <motion.h2
             className={`font-cormorant font-bold text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl ${textColor} text-center leading-tight px-2 sm:px-4`}
@@ -77,7 +77,7 @@ export default function Wedding() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center min-h-32">
-            <span className="text-neutral-500 font-cormorant text-lg">Loading themes...</span>
+            <span className="text-neutral-500 font-cormorant text-lg">Loading inspirations...</span>
           </div>
         )}
 

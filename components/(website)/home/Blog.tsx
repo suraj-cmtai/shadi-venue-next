@@ -52,7 +52,7 @@ export default function Blog() {
               <img src={VECTOR3_IMG} alt="Decorative" className="w-8 h-2" />
             </span>
             <span className="uppercase tracking-[0.15em] text-lg md:text-xl font-cormorant text-black font-medium">
-              Find Inspiration
+              Blogs
             </span>
             {/* Decorative right vector */}
             <span className="hidden md:inline-block">
@@ -87,46 +87,62 @@ export default function Blog() {
               <span className="text-neutral-400 font-cormorant text-lg">No blog posts found.</span>
             </div>
           ) : (
-            displayedBlogs.map((post, index) => (
-              <motion.div
-                key={post.id}
-                className="relative group"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-              >
-                {/* Card */}
-                <div className="relative h-80 md:h-[400px] rounded-xs overflow-hidden shadow-lg">
-                  {/* Background Image */}
-                  <div
-                    className="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105"
-                    style={{
-                      backgroundImage: post.image
-                        ? `url('${post.image}')`
-                        : "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
-                    }}
-                  />
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/5 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300" />
-                  {/* Border */}
-                  <div className="absolute inset-4 border-2 border-white rounded-xs pointer-events-none" />
-                  {/* Content */}
-                  <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
-                    {/* Title */}
-                    <h3 className="font-cormorant font-bold text-center text-xl md:text-xl text-white uppercase mb-4 drop-shadow">
-                      {post.title}
-                    </h3>
-                    {/* CTA Button */}
-                    <Link href={`/blogs/${post.slug}`} tabIndex={-1} aria-label={`Read blog: ${post.title}`}>
-                      <GradientButton>
-                        Get Inspired
-                      </GradientButton>
-                    </Link>
+            <div
+              className="flex flex-nowrap gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 w-full"
+              aria-label="Blog posts horizontal scroll"
+              tabIndex={0}
+              role="region"
+            >
+              {displayedBlogs.map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  className="relative group shrink-0 w-72 sm:w-80 md:w-96 h-80 md:h-[400px]"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+                >
+                  {/* Card */}
+                  <div className="relative w-full h-full rounded-xs overflow-hidden shadow-lg">
+                    {/* Background Image */}
+                    <div
+                      className="absolute inset-0 bg-center bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-105"
+                      style={{
+                        backgroundImage: post.image
+                          ? `url('${post.image}')`
+                          : "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+                      }}
+                    />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/5 bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300" />
+                    {/* Border */}
+                    <div className="absolute inset-4 border-2 border-white rounded-xs pointer-events-none" />
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-6 z-10">
+                      {/* Title */}
+                      <h3 className="font-cormorant font-bold text-center text-xl md:text-xl text-white uppercase mb-4 drop-shadow">
+                        {post.title}
+                      </h3>
+                      {/* CTA Button */}
+                      <Link href={`/blogs/${post.slug}`} tabIndex={-1} aria-label={`Read blog: ${post.title}`} className="flex w-full justify-center items-center">
+                        <GradientButton>
+                          Get Inspired
+                        </GradientButton>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              ))}
+              <style jsx>{`
+                .scrollbar-hide {
+                  scrollbar-width: none;
+                  -ms-overflow-style: none;
+                }
+                .scrollbar-hide::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+            </div>
           )}
         </div>
 
