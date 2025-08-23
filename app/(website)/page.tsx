@@ -26,7 +26,7 @@ const HomePage = () => {
     <Suspense fallback={<Loading />}>
       <Hero />
       <HeroExtension />
-      <AllLogos />
+      {/* <AllLogos /> */}
       <HotelByCity />
       <VendorsByCity />
       <About />
