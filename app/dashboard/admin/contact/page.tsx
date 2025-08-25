@@ -295,32 +295,32 @@ export default function ContactPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Contact</TableHead>
+              <TableHead>Email / Phone</TableHead>
               <TableHead>Subject</TableHead>
               <TableHead>Message</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Guests</TableHead>
-              <TableHead>When</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>Contact Time</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
+              <TableHead>Preferred Date</TableHead>
+              <TableHead>Location Preference</TableHead>
+              <TableHead>Venue/Service Type</TableHead>
+              <TableHead>Budget Range</TableHead>
+              <TableHead>Contact Time Preference</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead>Updated At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={15} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
             ) : filteredContacts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={15} className="text-center py-8">
                   No contacts found
                 </TableCell>
               </TableRow>
@@ -354,12 +354,6 @@ export default function ContactPage() {
                       {contact.message}
                     </div>
                   </TableCell>
-                  <TableCell>{typeof contact.guests !== 'undefined' ? contact.guests : '-'}</TableCell>
-                  <TableCell>{contact.preferredDate || '-'}</TableCell>
-                  <TableCell>{contact.locationPreference || '-'}</TableCell>
-                  <TableCell>{contact.venueServiceType || '-'}</TableCell>
-                  <TableCell>{contact.budgetRange || '-'}</TableCell>
-                  <TableCell>{contact.contactTimePreference || '-'}</TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(contact.status)}>
                       {contact.status}
@@ -370,8 +364,14 @@ export default function ContactPage() {
                       {contact.priority}
                     </Badge>
                   </TableCell>
-                  <TableCell>{format(new Date(contact.createdAt), "MMM d, yyyy")}</TableCell>
-                  <TableCell>{format(new Date(contact.updatedAt), "MMM d, yyyy")}</TableCell>
+                  <TableCell>{typeof contact.guests !== 'undefined' ? contact.guests : '-'}</TableCell>
+                  <TableCell>{contact.preferredDate || '-'}</TableCell>
+                  <TableCell>{contact.locationPreference || '-'}</TableCell>
+                  <TableCell>{contact.venueServiceType || '-'}</TableCell>
+                  <TableCell>{contact.budgetRange || '-'}</TableCell>
+                  <TableCell>{contact.contactTimePreference || '-'}</TableCell>
+                  <TableCell>{contact.createdAt ? format(new Date(contact.createdAt), "MMM d, yyyy") : '-'}</TableCell>
+                  <TableCell>{contact.updatedAt ? format(new Date(contact.updatedAt), "MMM d, yyyy") : '-'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -411,307 +411,128 @@ export default function ContactPage() {
 
       {/* Add Contact Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg w-full">
           <DialogHeader>
             <DialogTitle>Add New Contact</DialogTitle>
             <DialogDescription>
               Add a new contact to your list.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={newContact.name}
-                onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newContact.email}
-                onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={newContact.phone}
-                onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={newContact.subject}
-                onChange={(e) => setNewContact({ ...newContact, subject: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="message">Message</Label>
-              <Input
-                id="message"
-                value={newContact.message}
-                onChange={(e) => setNewContact({ ...newContact, message: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          <div className="max-h-[70vh] overflow-y-auto">
+            <form
+              className="grid gap-4 py-4"
+              onSubmit={e => {
+                e.preventDefault()
+                handleAdd()
+              }}
+            >
               <div className="grid gap-2">
-                <Label htmlFor="preferredDate">Preferred Date</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
-                  id="preferredDate"
-                  type="date"
-                  value={newContact.preferredDate}
-                  onChange={(e) => setNewContact({ ...newContact, preferredDate: e.target.value })}
+                  id="name"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="guests">Guests</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="guests"
-                  type="number"
-                  value={newContact.guests as any}
-                  onChange={(e) => setNewContact({ ...newContact, guests: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="locationPreference">Location Preference</Label>
-                <Input
-                  id="locationPreference"
-                  value={newContact.locationPreference}
-                  onChange={(e) => setNewContact({ ...newContact, locationPreference: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="venueServiceType">Venue/Service Type</Label>
-                <Input
-                  id="venueServiceType"
-                  value={newContact.venueServiceType}
-                  onChange={(e) => setNewContact({ ...newContact, venueServiceType: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="budgetRange">Budget Range</Label>
-                <Input
-                  id="budgetRange"
-                  value={newContact.budgetRange}
-                  onChange={(e) => setNewContact({ ...newContact, budgetRange: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="contactTimePreference">Contact Time Preference</Label>
-                <Input
-                  id="contactTimePreference"
-                  value={newContact.contactTimePreference}
-                  onChange={(e) => setNewContact({ ...newContact, contactTimePreference: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={newContact.status}
-                  onValueChange={(value: Contact['status']) =>
-                    setNewContact({ ...newContact, status: value })
-                  }
-                >
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="New">New</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={newContact.priority}
-                  onValueChange={(value: Contact['priority']) =>
-                    setNewContact({ ...newContact, priority: value })
-                  }
-                >
-                  <SelectTrigger id="priority">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAdd} disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Contact"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Contact Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
-            <DialogDescription>
-              Make changes to the contact information.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedContact && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-name">Name</Label>
-                <Input
-                  id="edit-name"
-                  value={selectedContact.name}
-                  onChange={(e) =>
-                    setSelectedContact({
-                      ...selectedContact,
-                      name: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
+                  id="email"
                   type="email"
-                  value={selectedContact.email}
-                  onChange={(e) =>
-                    setSelectedContact({
-                      ...selectedContact,
-                      email: e.target.value,
-                    })
-                  }
+                  value={newContact.email}
+                  onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-phone">Phone</Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
-                  id="edit-phone"
-                  value={selectedContact.phone}
-                  onChange={(e) =>
-                    setSelectedContact({
-                      ...selectedContact,
-                      phone: e.target.value,
-                    })
-                  }
+                  id="phone"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-subject">Subject</Label>
+                <Label htmlFor="subject">Subject</Label>
                 <Input
-                  id="edit-subject"
-                  value={selectedContact.subject}
-                  onChange={(e) =>
-                    setSelectedContact({
-                      ...selectedContact,
-                      subject: e.target.value,
-                    })
-                  }
+                  id="subject"
+                  value={newContact.subject}
+                  onChange={(e) => setNewContact({ ...newContact, subject: e.target.value })}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-message">Message</Label>
+                <Label htmlFor="message">Message</Label>
                 <Input
-                  id="edit-message"
-                  value={selectedContact.message}
-                  onChange={(e) =>
-                    setSelectedContact({
-                      ...selectedContact,
-                      message: e.target.value,
-                    })
-                  }
+                  id="message"
+                  value={newContact.message}
+                  onChange={(e) => setNewContact({ ...newContact, message: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-preferredDate">Preferred Date</Label>
+                  <Label htmlFor="preferredDate">Preferred Date</Label>
                   <Input
-                    id="edit-preferredDate"
+                    id="preferredDate"
                     type="date"
-                    value={selectedContact.preferredDate || ''}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, preferredDate: e.target.value })}
+                    value={newContact.preferredDate}
+                    onChange={(e) => setNewContact({ ...newContact, preferredDate: e.target.value })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-guests">Guests</Label>
+                  <Label htmlFor="guests">Guests</Label>
                   <Input
-                    id="edit-guests"
+                    id="guests"
                     type="number"
-                    value={typeof selectedContact.guests === 'undefined' ? '' : String(selectedContact.guests)}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, guests: Number(e.target.value) })}
+                    value={newContact.guests as any}
+                    onChange={(e) => setNewContact({ ...newContact, guests: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-locationPreference">Location Preference</Label>
+                  <Label htmlFor="locationPreference">Location Preference</Label>
                   <Input
-                    id="edit-locationPreference"
-                    value={selectedContact.locationPreference || ''}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, locationPreference: e.target.value })}
+                    id="locationPreference"
+                    value={newContact.locationPreference}
+                    onChange={(e) => setNewContact({ ...newContact, locationPreference: e.target.value })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-venueServiceType">Venue/Service Type</Label>
+                  <Label htmlFor="venueServiceType">Venue/Service Type</Label>
                   <Input
-                    id="edit-venueServiceType"
-                    value={selectedContact.venueServiceType || ''}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, venueServiceType: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-budgetRange">Budget Range</Label>
-                  <Input
-                    id="edit-budgetRange"
-                    value={selectedContact.budgetRange || ''}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, budgetRange: e.target.value })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-contactTimePreference">Contact Time Preference</Label>
-                  <Input
-                    id="edit-contactTimePreference"
-                    value={selectedContact.contactTimePreference || ''}
-                    onChange={(e) => setSelectedContact({ ...selectedContact, contactTimePreference: e.target.value })}
+                    id="venueServiceType"
+                    value={newContact.venueServiceType}
+                    onChange={(e) => setNewContact({ ...newContact, venueServiceType: e.target.value })}
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-status">Status</Label>
+                  <Label htmlFor="budgetRange">Budget Range</Label>
+                  <Input
+                    id="budgetRange"
+                    value={newContact.budgetRange}
+                    onChange={(e) => setNewContact({ ...newContact, budgetRange: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="contactTimePreference">Contact Time Preference</Label>
+                  <Input
+                    id="contactTimePreference"
+                    value={newContact.contactTimePreference}
+                    onChange={(e) => setNewContact({ ...newContact, contactTimePreference: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="status">Status</Label>
                   <Select
-                    value={selectedContact.status}
+                    value={newContact.status}
                     onValueChange={(value: Contact['status']) =>
-                      setSelectedContact({
-                        ...selectedContact,
-                        status: value,
-                      })
+                      setNewContact({ ...newContact, status: value })
                     }
                   >
-                    <SelectTrigger id="edit-status">
+                    <SelectTrigger id="status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -722,17 +543,14 @@ export default function ContactPage() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Label htmlFor="priority">Priority</Label>
                   <Select
-                    value={selectedContact.priority}
+                    value={newContact.priority}
                     onValueChange={(value: Contact['priority']) =>
-                      setSelectedContact({
-                        ...selectedContact,
-                        priority: value,
-                      })
+                      setNewContact({ ...newContact, priority: value })
                     }
                   >
-                    <SelectTrigger id="edit-priority">
+                    <SelectTrigger id="priority">
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
@@ -743,16 +561,214 @@ export default function ContactPage() {
                   </Select>
                 </div>
               </div>
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Adding..." : "Add Contact"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg w-full">
+          <DialogHeader>
+            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogDescription>
+              Make changes to the contact information.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedContact && (
+            <div className="max-h-[70vh] overflow-y-auto">
+              <form
+                className="grid gap-4 py-4"
+                onSubmit={e => {
+                  e.preventDefault()
+                  handleUpdate()
+                }}
+              >
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={selectedContact.name}
+                    onChange={(e) =>
+                      setSelectedContact({
+                        ...selectedContact,
+                        name: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={selectedContact.email}
+                    onChange={(e) =>
+                      setSelectedContact({
+                        ...selectedContact,
+                        email: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Input
+                    id="edit-phone"
+                    value={selectedContact.phone}
+                    onChange={(e) =>
+                      setSelectedContact({
+                        ...selectedContact,
+                        phone: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-subject">Subject</Label>
+                  <Input
+                    id="edit-subject"
+                    value={selectedContact.subject}
+                    onChange={(e) =>
+                      setSelectedContact({
+                        ...selectedContact,
+                        subject: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-message">Message</Label>
+                  <Input
+                    id="edit-message"
+                    value={selectedContact.message}
+                    onChange={(e) =>
+                      setSelectedContact({
+                        ...selectedContact,
+                        message: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-preferredDate">Preferred Date</Label>
+                    <Input
+                      id="edit-preferredDate"
+                      type="date"
+                      value={selectedContact.preferredDate || ''}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, preferredDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-guests">Guests</Label>
+                    <Input
+                      id="edit-guests"
+                      type="number"
+                      value={typeof selectedContact.guests === 'undefined' ? '' : String(selectedContact.guests)}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, guests: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-locationPreference">Location Preference</Label>
+                    <Input
+                      id="edit-locationPreference"
+                      value={selectedContact.locationPreference || ''}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, locationPreference: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-venueServiceType">Venue/Service Type</Label>
+                    <Input
+                      id="edit-venueServiceType"
+                      value={selectedContact.venueServiceType || ''}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, venueServiceType: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-budgetRange">Budget Range</Label>
+                    <Input
+                      id="edit-budgetRange"
+                      value={selectedContact.budgetRange || ''}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, budgetRange: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-contactTimePreference">Contact Time Preference</Label>
+                    <Input
+                      id="edit-contactTimePreference"
+                      value={selectedContact.contactTimePreference || ''}
+                      onChange={(e) => setSelectedContact({ ...selectedContact, contactTimePreference: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <Select
+                      value={selectedContact.status}
+                      onValueChange={(value: Contact['status']) =>
+                        setSelectedContact({
+                          ...selectedContact,
+                          status: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger id="edit-status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="New">New</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-priority">Priority</Label>
+                    <Select
+                      value={selectedContact.priority}
+                      onValueChange={(value: Contact['priority']) =>
+                        setSelectedContact({
+                          ...selectedContact,
+                          priority: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger id="edit-priority">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" type="button" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </form>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate} disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
