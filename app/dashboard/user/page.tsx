@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { uploadImageClient, replaceImageClient } from '@/lib/firebase-client';
 import {
   Check,
-  Image,
   Palette,
   Share2,
   Type,
@@ -2118,8 +2117,9 @@ export default function UserDashboard() {
                         <div className="space-y-2">
                           <Label htmlFor={`eventVenue${index}`}>Venue</Label>
                           <Select onValueChange={(value) => {
-                            const newEvents = [...eventsForm];
-                            newEvents[index].venue = value;
+                            const newEvents = eventsForm.map((ev, i) => (
+                              i === index ? { ...ev, venue: value } : ev
+                            ));
                             setEventsForm(newEvents);
                             setUnsavedChanges(true);
                           }}>
