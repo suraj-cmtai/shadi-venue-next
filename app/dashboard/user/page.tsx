@@ -956,42 +956,32 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="m-4 p-1">
-        <TabsList
-          className="
-            grid w-full 
-            grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 
-            gap-2 
-            p-2 md:p-4 
-            mb-4 md:mb-6
-            rounded-lg
-            bg-background
-            "
-        >
-          <TabsTrigger value="overview" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+          <TabsTrigger value="overview">
             <Settings className="w-4 h-4 mr-2" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="profile">
             <User className="w-4 h-4 mr-2" />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="theme" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="theme">
             <Palette className="w-4 h-4 mr-2" />
             Theme
           </TabsTrigger>
-          <TabsTrigger value="content" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="content">
             <Type className="w-4 h-4 mr-2" />
             Content
           </TabsTrigger>
-          <TabsTrigger value="events" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="events">
             <Calendar className="w-4 h-4 mr-2" />
             Events
           </TabsTrigger>
-          <TabsTrigger value="story" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="story">
             <Heart className="w-4 h-4 mr-2" />
             Love Story
           </TabsTrigger>
-          <TabsTrigger value="rsvp" className="flex items-center px-2 py-2 md:px-4 md:py-3">
+          <TabsTrigger value="rsvp">
             <Users className="w-4 h-4 mr-2" />
             RSVP ({rsvpResponses?.length || 0})
           </TabsTrigger>
