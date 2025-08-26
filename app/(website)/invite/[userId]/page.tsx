@@ -1520,65 +1520,37 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 </motion.div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full">
-                  {safePlanning.map((event, index) => (
-                    <motion.div
-                      key={event.id}
-                      className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.8, delay: index * 0.1 }}
-                      whileHover={{ y: -5 }}
+                  {/* Venue Details Card */}
+                {(safeWeddingEvents[selectedEventIndex]?.venueName ||
+                  safeWeddingEvents[selectedEventIndex]?.address) && (
+                  <motion.div
+                    className="mt-6 bg-white rounded-2xl p-6 shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                  >
+                    <h4
+                      className="text-xl font-bold mb-4"
+                      style={{ color: safeTheme.primaryColor }}
                     >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className="relative h-14 w-14 rounded-full overflow-hidden flex-shrink-0"
-                          style={{ backgroundColor: safeTheme.primaryColor }}
-                        >
-                          <Image
-                            src={event.icon}
-                            alt={event.type}
-                            fill
-                            className="object-contain p-2"
-                          />
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3
-                              className="font-bold text-lg"
-                              style={{ color: safeTheme.primaryColor }}
-                            >
-                              {event.type}
-                            </h3>
-                            {event.completed && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                ✓ Completed
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="space-y-2 text-sm text-gray-600">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4" />
-                              <span>{event.date}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              <span>{event.time}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" />
-                              <span>{event.venue}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4" />
-                              <span>{event.phone}</span>
-                            </div>
-                          </div>
+                      {safeWeddingEvents[selectedEventIndex].venueName}
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <MapPin
+                          className="w-5 h-5 mt-1"
+                          style={{ color: safeTheme.secondaryColor }}
+                        />
+                        <div>
+                          <p className="font-medium text-gray-800">Address</p>
+                          <p className="text-gray-600 text-sm">
+                            {safeWeddingEvents[selectedEventIndex].address}
+                          </p>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
+                    </div>
+                  </motion.div>
+                )}
                 </div>
               </div>
 
@@ -1649,37 +1621,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     </div>
                   )}
                 </div>
-                {/* Venue Details Card */}
-                {(safeWeddingEvents[selectedEventIndex]?.venueName ||
-                  safeWeddingEvents[selectedEventIndex]?.address) && (
-                  <motion.div
-                    className="mt-6 bg-white rounded-2xl p-6 shadow-lg"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
-                  >
-                    <h4
-                      className="text-xl font-bold mb-4"
-                      style={{ color: safeTheme.primaryColor }}
-                    >
-                      {safeWeddingEvents[selectedEventIndex].venueName}
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <MapPin
-                          className="w-5 h-5 mt-1"
-                          style={{ color: safeTheme.secondaryColor }}
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">Address</p>
-                          <p className="text-gray-600 text-sm">
-                            {safeWeddingEvents[selectedEventIndex].address}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+                
               </motion.div>
             </div>
           </div>
