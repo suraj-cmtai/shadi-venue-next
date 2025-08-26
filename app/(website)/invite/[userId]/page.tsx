@@ -252,11 +252,11 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
     // Calculate the distance using the user's local time in "en-IN" (India Standard Time)
     const targetDate = new Date(
-      new Date(user.invite.weddingEvents[selectedEventIndex].date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      new Date(user.invite.weddingEvents[selectedEventIndex].date)
     );
     const timer = setInterval(() => {
       const now = new Date(
-        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+        new Date().toLocaleString("en-IN")
       ).getTime();
       const distance = targetDate.getTime() - now;
 
