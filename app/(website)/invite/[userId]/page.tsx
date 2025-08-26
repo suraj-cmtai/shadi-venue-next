@@ -250,9 +250,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
     )
       return;
 
-    const targetDate = new Date(user.invite.weddingEvents[selectedEventIndex].date);
+    // Calculate the distance using the user's local time in "en-IN" (India Standard Time)
+    const targetDate = new Date(
+      new Date(user.invite.weddingEvents[selectedEventIndex].date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+    );
     const timer = setInterval(() => {
-      const now = new Date().getTime();
+      const now = new Date(
+        new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+      ).getTime();
       const distance = targetDate.getTime() - now;
 
       if (distance > 0) {
