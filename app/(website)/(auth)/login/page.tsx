@@ -36,7 +36,10 @@ const LoginPage = () => {
       }
       else if (result.data.role === "vendor") {
         router.push("/dashboard/vendor");
-      } else {
+      } else if(result.data.role === "user") {
+        router.push("/dashboard/user");
+      }
+      else {
         router.push("/dashboard/user");
       }
     } catch (error: any) {
