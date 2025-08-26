@@ -986,7 +986,7 @@ export default function UserDashboard() {
             RSVP ({rsvpResponses?.length || 0})
           </TabsTrigger>
         </TabsList>
-
+<hr className="my-4" />
         {/* Overview Tab */}
         <TabsContent value="overview">
           <div className="space-y-6">
