@@ -956,34 +956,48 @@ export default function UserDashboard() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="m-4 p-1">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
-          <TabsTrigger value="overview">
-            <Settings className="w-4 h-4 mr-2" />
-            Overview
+        <TabsList
+          className="
+            w-full
+            grid
+            grid-cols-2
+            sm:grid-cols-3
+            md:grid-cols-4
+            lg:grid-cols-7
+            gap-2
+            rounded-lg
+            bg-muted
+            p-1
+          "
+        >
+          <TabsTrigger value="overview" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Settings className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="profile">
-            <User className="w-4 h-4 mr-2" />
-            Profile
+          <TabsTrigger value="profile" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <User className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Profile</span>
           </TabsTrigger>
-          <TabsTrigger value="theme">
-            <Palette className="w-4 h-4 mr-2" />
-            Theme
+          <TabsTrigger value="theme" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Palette className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Theme</span>
           </TabsTrigger>
-          <TabsTrigger value="content">
-            <Type className="w-4 h-4 mr-2" />
-            Content
+          <TabsTrigger value="content" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Type className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Content</span>
           </TabsTrigger>
-          <TabsTrigger value="events">
-            <Calendar className="w-4 h-4 mr-2" />
-            Events
+          <TabsTrigger value="events" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Calendar className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Events</span>
           </TabsTrigger>
-          <TabsTrigger value="story">
-            <Heart className="w-4 h-4 mr-2" />
-            Love Story
+          <TabsTrigger value="story" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Heart className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">Love Story</span>
           </TabsTrigger>
-          <TabsTrigger value="rsvp">
-            <Users className="w-4 h-4 mr-2" />
-            RSVP ({rsvpResponses?.length || 0})
+          <TabsTrigger value="rsvp" className="flex items-center justify-center gap-2 py-2 px-1 text-xs md:text-sm">
+            <Users className="w-4 h-4 mr-1 md:mr-2" />
+            <span className="hidden xs:inline">RSVP</span>
+            <span className="ml-1 text-muted-foreground">({rsvpResponses?.length || 0})</span>
           </TabsTrigger>
         </TabsList>
 
