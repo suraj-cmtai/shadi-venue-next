@@ -1,32 +1,117 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/lib/redux/store';
-import { notFound } from 'next/navigation';
-import { fetchUserById } from '@/lib/redux/features/userSlice';
-import { submitRSVP } from '@/lib/redux/features/rsvpSlice';
-import { toast } from 'sonner';
-import Image from 'next/image';
-import { Instagram, Facebook, Twitter, MapPin, Calendar, Clock, Phone, Heart, Star } from 'lucide-react';
-import { FaInstagram, FaTwitter, FaFacebookF } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/lib/redux/store";
+import { notFound } from "next/navigation";
+import { fetchUserById } from "@/lib/redux/features/userSlice";
+import { fetchHotelById } from "@/lib/redux/features/hotelSlice";
+
+import { submitRSVP } from "@/lib/redux/features/rsvpSlice";
+import { toast } from "sonner";
+import Image from "next/image";
+import {
+  Instagram,
+  Facebook,
+  Twitter,
+  MapPin,
+  Calendar,
+  Clock,
+  Phone,
+  Heart,
+  Star,
+} from "lucide-react";
+import { FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+
+// --- Hotel interface for venue details ---
+export interface Hotel {
+  id: string;
+  name: string;
+  category: string;
+  location: {
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    zipCode: string;
+  };
+  priceRange: {
+    startingPrice: number;
+    currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
+  };
+  rating: number;
+  status: 'active' | 'draft' | 'archived';
+  description: string;
+  amenities: string[];
+  rooms: {
+    type: string;
+    capacity: number;
+    pricePerNight: number;
+    available: number;
+  }[];
+  images: string[];
+  contactInfo: {
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  policies: {
+    checkIn: string;
+    checkOut: string;
+    cancellation: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  googleLocation?: string;
+  isPremium?: boolean;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  venueType?: string;
+  position?: string;
+  websiteLink?: string;
+  offerWeddingPackages?: 'Yes' | 'No';
+  resortCategory?: string;
+  weddingPackagePrice?: string;
+  servicesOffered?: string[];
+  maxGuestCapacity?: string;
+  numberOfRooms?: string;
+  venueAvailability?: string;
+  allInclusivePackages?: ('Yes' | 'No' | 'Partially')[];
+  staffAccommodation?: ('Yes' | 'No' | 'Limited')[];
+  diningOptions?: string[];
+  otherAmenities?: string[];
+  bookingLeadTime?: string;
+  preferredContactMethod?: string[];
+  weddingDepositRequired?: string;
+  refundPolicy?: string;
+  referralSource?: string;
+  partnershipInterest?: string;
+  uploadResortPhotos?: string[];
+  uploadMarriagePhotos?: string[];
+  uploadWeddingBrochure?: string[];
+  uploadCancelledCheque?: string[];
+  agreeToTerms?: boolean;
+  agreeToPrivacy?: boolean;
+  signature?: string;
+}
 
 // Helper to check if a string is a valid absolute or root-relative URL for Next.js Image
 function getSafeImageUrl(url: string | undefined, fallback: string): string {
-  if (!url || typeof url !== 'string') return fallback;
+  if (!url || typeof url !== "string") return fallback;
   // Accept root-relative, protocol-relative, or absolute URLs
   if (
-    url.startsWith('/') ||
-    url.startsWith('http://') ||
-    url.startsWith('https://') ||
-    url.startsWith('data:image')
+    url.startsWith("/") ||
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("data:image")
   ) {
     return url;
   }
   // If it's a relative path (e.g. "images/foo.jpg"), prepend slash
-  if (!url.startsWith('/')) {
-    return '/' + url;
+  if (!url.startsWith("/")) {
+    return "/" + url;
   }
   // Fallback
   return fallback;
@@ -38,13 +123,23 @@ interface InvitePageProps {
   }>;
 }
 
+// --- VenueDetails type for local state ---
+type VenueDetails = {
+  address?: string;
+  googleLocation?: string;
+  name?: string;
+};
+
 const InvitePage = ({ params }: InvitePageProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.user.selectedUser);
   const loading = useSelector((state: RootState) => state.user.loading);
   const error = useSelector((state: RootState) => state.user.error);
 
-  const [userId, setUserId] = useState<string>('');
+  // Venue details for each event
+  const [venueDetails, setVenueDetails] = useState<VenueDetails[]>([]);
+
+  const [userId, setUserId] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
 
   // RSVP Form State
@@ -54,7 +149,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
     attendance: "yes",
     numberOfGuests: 1,
     message: "",
-    phone: ""
+    phone: "",
+    selectedEvents: [] as number[], // store event indices
   });
   const [isSubmittingRSVP, setIsSubmittingRSVP] = useState(false);
 
@@ -71,6 +167,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
   // Gallery State
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
 
+  // Fetch user and wedding event venue details
   useEffect(() => {
     const getUserId = async () => {
       try {
@@ -80,7 +177,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
         await dispatch(fetchUserById(paramUserId));
         setIsInitialized(true);
       } catch (error) {
-        console.error('Error resolving params:', error);
+        console.error("Error resolving params:", error);
         setIsInitialized(true);
       }
     };
@@ -88,9 +185,70 @@ const InvitePage = ({ params }: InvitePageProps) => {
     getUserId();
   }, [dispatch, params]);
 
+  // Fetch venue details for each event
+  useEffect(() => {
+    const fetchVenues = async () => {
+      if (
+        user &&
+        user.invite &&
+        Array.isArray(user.invite.weddingEvents) &&
+        user.invite.weddingEvents.length > 0
+      ) {
+        const venues: VenueDetails[] = await Promise.all(
+          user.invite.weddingEvents.map(async (event) => {
+            // If event.venue is an id, fetch details, else if it's an object, use directly
+            if (typeof event.venue === "string" && event.venue) {
+              try {
+                // fetchHotelById returns a thunk, so we need to dispatch and get the result
+                const result = await dispatch(fetchHotelById(event.venue));
+                // result.payload should have the hotel details
+                const hotel: Hotel | undefined = (result as any).payload;
+                if (hotel) {
+                  return {
+                    address: hotel.location?.address || "",
+                    googleLocation: hotel.googleLocation || "",
+                    name: hotel.name || "",
+                  };
+                }
+              } catch (e) {
+                return { address: "", googleLocation: "", name: "" };
+              }
+            } else if (
+              typeof event.venue === "object" &&
+              event.venue !== null
+            ) {
+              // Defensive: event.venue may not be Hotel, but try to extract
+              return {
+                address:
+                  (event.venue as any).address ||
+                  (event.venue as any).location?.address ||
+                  "",
+                googleLocation: (event.venue as any).googleLocation || "",
+                name: (event.venue as any).name || "",
+              };
+            }
+            return { address: "", googleLocation: "", name: "" };
+          })
+        );
+        setVenueDetails(venues);
+      } else {
+        setVenueDetails([]);
+      }
+    };
+    fetchVenues();
+    // Only run when user.invite.weddingEvents changes
+  }, [dispatch, user?.invite?.weddingEvents]);
+
   // Countdown timer effect
   useEffect(() => {
-    if (!user?.invite?.weddingEvents?.[selectedEventIndex]?.date) return;
+    if (
+      !user ||
+      !user.invite ||
+      !Array.isArray(user.invite.weddingEvents) ||
+      !user.invite.weddingEvents[selectedEventIndex] ||
+      !user.invite.weddingEvents[selectedEventIndex].date
+    )
+      return;
 
     const targetDate = new Date(user.invite.weddingEvents[selectedEventIndex].date);
     const timer = setInterval(() => {
@@ -99,7 +257,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
       if (distance > 0) {
         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const hours = Math.floor(
+          (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
@@ -110,15 +270,15 @@ const InvitePage = ({ params }: InvitePageProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [user?.invite?.weddingEvents, selectedEventIndex]);
+  }, [user?.invite?.weddingEvents, selectedEventIndex, user]);
 
   // Auto-rotate gallery images
   useEffect(() => {
     if (!user?.invite?.loveStory?.length) return;
-    
+
     const interval = setInterval(() => {
-      setSelectedImageIndex((prev) => 
-        (prev + 1) % (user?.invite?.loveStory?.length || 1)
+      setSelectedImageIndex(
+        (prev) => (prev + 1) % (user?.invite?.loveStory?.length || 1)
       );
     }, 5000);
 
@@ -126,27 +286,58 @@ const InvitePage = ({ params }: InvitePageProps) => {
   }, [user?.invite?.loveStory]);
 
   // RSVP Form Handlers
-  const handleRSVPInputChange = (field: string, value: string | number) => {
-    setRsvpFormData(prev => ({
+  const handleRSVPInputChange = (field: string, value: string | number | number[]) => {
+    setRsvpFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
+  };
+
+  // Handle event selection for RSVP
+  const handleEventCheckboxChange = (eventIndex: number) => {
+    setRsvpFormData((prev) => {
+      const selected = prev.selectedEvents.includes(eventIndex)
+        ? prev.selectedEvents.filter((i) => i !== eventIndex)
+        : [...prev.selectedEvents, eventIndex];
+      return { ...prev, selectedEvents: selected };
+    });
   };
 
   const handleRSVPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingRSVP(true);
     try {
-      await dispatch(submitRSVP({ 
-        inviteId: userId,
-        userId: userId,
-        name: rsvpFormData.name,
-        email: rsvpFormData.email,
-        numberOfGuests: rsvpFormData.numberOfGuests,
-        message: rsvpFormData.message || undefined,
-        attending: rsvpFormData.attendance === "yes",
-        phone: rsvpFormData.phone
-      }));
+      // Compose message with selected events
+      let eventMsg = "";
+      if (
+        Array.isArray(rsvpFormData.selectedEvents) &&
+        rsvpFormData.selectedEvents.length > 0 &&
+        Array.isArray(user?.invite?.weddingEvents)
+      ) {
+        eventMsg =
+          "\nEvents to attend: " +
+          rsvpFormData.selectedEvents
+            .map(
+              (idx) =>
+                user.invite!.weddingEvents[idx]?.title ||
+                `Event ${idx + 1}`
+            )
+            .join(", ");
+      }
+      await dispatch(
+        submitRSVP({
+          inviteId: userId,
+          userId: userId,
+          name: rsvpFormData.name,
+          email: rsvpFormData.email,
+          numberOfGuests: rsvpFormData.numberOfGuests,
+          message:
+            (rsvpFormData.message ? rsvpFormData.message + "\n" : "") +
+            eventMsg,
+          attending: rsvpFormData.attendance === "yes",
+          phone: rsvpFormData.phone,
+        })
+      );
       toast.success("RSVP submitted successfully!");
       setRsvpFormData({
         name: "",
@@ -154,7 +345,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
         attendance: "yes",
         numberOfGuests: 1,
         message: "",
-        phone: ""
+        phone: "",
+        selectedEvents: [],
       });
     } catch (error) {
       toast.error("Failed to submit RSVP. Please try again.");
@@ -169,7 +361,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-rose-500 mx-auto mb-4"></div>
-          <div className="text-gray-700 text-xl">Loading wedding invitation...</div>
+          <div className="text-gray-700 text-xl">
+            Loading wedding invitation...
+          </div>
         </div>
       </div>
     );
@@ -180,7 +374,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50">
         <div className="text-center">
-          <div className="text-red-500 text-xl mb-4">⚠️ Error loading invitation</div>
+          <div className="text-red-500 text-xl mb-4">
+            ⚠️ Error loading invitation
+          </div>
           <div className="text-red-400">{error}</div>
         </div>
       </div>
@@ -204,8 +400,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <div className="text-gray-500 text-xl">💒 Wedding invitation not set up yet</div>
-          <p className="text-gray-400 mt-2">The couple is still preparing their invitation</p>
+          <div className="text-gray-500 text-xl">
+            💒 Wedding invitation not set up yet
+          </div>
+          <p className="text-gray-400 mt-2">
+            The couple is still preparing their invitation
+          </p>
         </div>
       </div>
     );
@@ -217,84 +417,139 @@ const InvitePage = ({ params }: InvitePageProps) => {
     return null;
   }
 
-  const { theme, about, weddingEvents, loveStory, planning, invitation } = user.invite;
+  const { theme, about, weddingEvents, loveStory, planning, invitation } =
+    user.invite;
 
   // Enhanced theme with fallbacks
   const safeTheme = {
-    primaryColor: theme?.primaryColor || '#2c5282',
-    secondaryColor: theme?.secondaryColor || '#63b3ed', 
-    titleColor: theme?.titleColor || theme?.primaryColor || '#2c5282',
-    nameColor: theme?.nameColor || theme?.secondaryColor || '#63b3ed',
-    backgroundColor: theme?.backgroundColor || '#ffffff',
-    textColor: theme?.textColor || '#2d3748',
-    buttonColor: theme?.primaryColor || '#2c5282',
-    buttonHoverColor: theme?.secondaryColor || '#63b3ed',
+    primaryColor: theme?.primaryColor || "#2c5282",
+    secondaryColor: theme?.secondaryColor || "#63b3ed",
+    titleColor: theme?.titleColor || theme?.primaryColor || "#2c5282",
+    nameColor: theme?.nameColor || theme?.secondaryColor || "#63b3ed",
+    backgroundColor: theme?.backgroundColor || "#ffffff",
+    textColor: theme?.textColor || "#2d3748",
+    buttonColor: theme?.primaryColor || "#2c5282",
+    buttonHoverColor: theme?.secondaryColor || "#63b3ed",
   };
 
   // Enhanced safe data with more comprehensive fallbacks
-  const safeAbout = about ? {
-    title: about.title || 'About Us',
-    subtitle: about.subtitle || 'Our Story',
-    groom: {
-      name: about.groom?.name || 'Groom',
-      description: about.groom?.description || 'The amazing groom who brings joy and laughter to every moment.',
-      image: getSafeImageUrl(about.groom?.image, '/api/placeholder/280/360'),
-      socials: {
-        instagram: about.groom?.socials?.instagram || '',
-        facebook: about.groom?.socials?.facebook || '',
-        twitter: about.groom?.socials?.twitter || ''
+  const safeAbout = about
+    ? {
+        title: about.title || "About Us",
+        subtitle: about.subtitle || "Our Story",
+        groom: {
+          name: about.groom?.name || "Groom",
+          description:
+            about.groom?.description ||
+            "The amazing groom who brings joy and laughter to every moment.",
+          image: getSafeImageUrl(
+            about.groom?.image,
+            "/api/placeholder/280/360"
+          ),
+          socials: {
+            instagram: about.groom?.socials?.instagram || "",
+            facebook: about.groom?.socials?.facebook || "",
+            twitter: about.groom?.socials?.twitter || "",
+          },
+        },
+        bride: {
+          name: about.bride?.name || "Bride",
+          description:
+            about.bride?.description ||
+            "The beautiful bride who lights up every room with her presence.",
+          image: getSafeImageUrl(
+            about.bride?.image,
+            "/api/placeholder/280/360"
+          ),
+          socials: {
+            instagram: about.bride?.socials?.instagram || "",
+            facebook: about.bride?.socials?.facebook || "",
+            twitter: about.bride?.socials?.twitter || "",
+          },
+        },
+        coupleImage: getSafeImageUrl(
+          about.coupleImage,
+          "/api/placeholder/320/240"
+        ),
       }
-    },
-    bride: {
-      name: about.bride?.name || 'Bride',
-      description: about.bride?.description || 'The beautiful bride who lights up every room with her presence.',
-      image: getSafeImageUrl(about.bride?.image, '/api/placeholder/280/360'),
-      socials: {
-        instagram: about.bride?.socials?.instagram || '',
-        facebook: about.bride?.socials?.facebook || '',
-        twitter: about.bride?.socials?.twitter || ''
+    : null;
+
+  const safeInvitation = invitation
+    ? {
+        heading: invitation.heading || "You're Invited",
+        subheading: invitation.subheading || "To Our Wedding",
+        message:
+          invitation.message ||
+          "Join us as we begin our journey together in love and happiness",
+        rsvpLink: invitation.rsvpLink || "",
+        backgroundImage: getSafeImageUrl(
+          invitation.backgroundImage,
+          "/api/placeholder/1920/800"
+        ),
       }
-    },
-    coupleImage: getSafeImageUrl(about.coupleImage, '/api/placeholder/320/240')
-  } : null;
+    : null;
 
-  const safeInvitation = invitation ? {
-    heading: invitation.heading || 'You\'re Invited',
-    subheading: invitation.subheading || 'To Our Wedding',
-    message: invitation.message || 'Join us as we begin our journey together in love and happiness',
-    rsvpLink: invitation.rsvpLink || '',
-    backgroundImage: getSafeImageUrl(invitation.backgroundImage, '/api/placeholder/1920/800')
-  } : null;
+  const safeLoveStory =
+    loveStory && loveStory.length > 0
+      ? loveStory.map((story, index) => ({
+          id: index + 1,
+          title: story.title || `Chapter ${index + 1}`,
+          date: story.date || new Date().toLocaleDateString(),
+          description:
+            story.description || "A beautiful moment in our love story.",
+          image: getSafeImageUrl(story.image, "/api/placeholder/400/300"),
+        }))
+      : [];
 
-  const safeLoveStory = (loveStory && loveStory.length > 0) ? loveStory.map((story, index) => ({
-    id: index + 1,
-    title: story.title || `Chapter ${index + 1}`,
-    date: story.date || new Date().toLocaleDateString(),
-    description: story.description || 'A beautiful moment in our love story.',
-    image: getSafeImageUrl(story.image, '/api/placeholder/400/300')
-  })) : [];
+  // --- ENHANCED: Each event has its own venue details (address, googleLocation, name) ---
+  const safeWeddingEvents =
+    Array.isArray(weddingEvents) && weddingEvents.length > 0
+      ? weddingEvents.map((event, idx) => {
+          // Try to get venue details from venueDetails state
+          const venue = venueDetails[idx] || {};
+          // Defensive: event.venue may be string or object
+          let eventVenueObj: any = typeof event.venue === "object" && event.venue !== null ? event.venue : {};
+          return {
+            ...event,
+            date: event.date || new Date().toLocaleDateString(),
+            time: event.time || "12:00 PM",
+            address:
+              venue.address ||
+              eventVenueObj.address ||
+              eventVenueObj.location?.address ||
+              "Venue Address",
+            googleLocation:
+              venue.googleLocation ||
+              eventVenueObj.googleLocation ||
+              "",
+            venueName:
+              venue.name ||
+              eventVenueObj.name ||
+              "Venue",
+            description:
+              event.description || "Join us for this special celebration",
+            image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
+            title: event.title || `Event ${idx + 1}`,
+          };
+        })
+      : [];
 
-  const safeWeddingEvents = (weddingEvents && weddingEvents.length > 0) ? weddingEvents.map(event => ({
-    ...event,
-    date: event.date || new Date().toLocaleDateString(),
-    time: event.time || '12:00 PM',
-    venue: event.venue || 'Beautiful Venue',
-    description: event.description || 'Join us for this special celebration',
-    image: getSafeImageUrl(event.image, '/api/placeholder/600/400')
-  })) : [];
-
-  const safePlanning = (planning && planning.length > 0) ? planning.map((item, index) => ({
-    id: index + 1,
-    title: item.title || 'Planning Item',
-    description: item.description || 'Important wedding preparation detail',
-    icon: getSafeImageUrl(item.icon, '/api/placeholder/56/56'),
-    completed: item.completed || false,
-    type: item.title || 'Event',
-    date: new Date().toLocaleDateString(),
-    venue: item.description || 'To be confirmed',
-    time: '12:00 PM',
-    phone: '+1 (555) 123-4567'
-  })) : [];
+  const safePlanning =
+    planning && planning.length > 0
+      ? planning.map((item, index) => ({
+          id: index + 1,
+          title: item.title || "Planning Item",
+          description:
+            item.description || "Important wedding preparation detail",
+          icon: getSafeImageUrl(item.icon, "/api/placeholder/56/56"),
+          completed: item.completed || false,
+          type: item.title || "Event",
+          date: new Date().toLocaleDateString(),
+          venue: item.description || "To be confirmed",
+          time: "12:00 PM",
+          phone: "+1 (555) 123-4567",
+        }))
+      : [];
 
   const countdownItems = [
     { label: "Days", value: timeLeft.days },
@@ -305,8 +560,29 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
   // For gallery modal, ensure the selected image is a safe URL
   const safeSelectedGalleryImage = selectedGalleryImage
-    ? getSafeImageUrl(selectedGalleryImage, '/api/placeholder/400/300')
+    ? getSafeImageUrl(selectedGalleryImage, "/api/placeholder/400/300")
     : null;
+
+  // --- ENHANCED: Map logic for RSVP event checkboxes ---
+  const rsvpEventCheckboxes =
+    safeWeddingEvents.length > 0
+      ? safeWeddingEvents.map((event, idx) => (
+          <label key={idx} className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={rsvpFormData.selectedEvents.includes(idx)}
+              onChange={() => handleEventCheckboxChange(idx)}
+              className="w-5 h-5"
+            />
+            <span>
+              {event.title}{" "}
+              <span className="text-xs text-gray-500">
+                ({event.date}, {event.time})
+              </span>
+            </span>
+          </label>
+        ))
+      : null;
 
   return (
     <section
@@ -916,10 +1192,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       className="font-semibold text-lg mb-1"
                       style={{ color: safeTheme.titleColor }}
                     >
-                      Venue
+                      Address
                     </h4>
                     <p className="text-gray-600">
-                      {safeWeddingEvents[selectedEventIndex].venue}
+                      {safeWeddingEvents[selectedEventIndex].address}
                     </p>
                   </div>
 
@@ -939,6 +1215,34 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     </p>
                   </div>
                 </div>
+                {/* Show Google Map link if available */}
+                {safeWeddingEvents[selectedEventIndex].googleLocation && (
+                  <div className="mt-6 flex flex-col items-center">
+                    {safeWeddingEvents[selectedEventIndex].googleLocation.includes(
+                      "https://www.google.com/maps/embed"
+                    ) ? (
+                      <iframe
+                        src={safeWeddingEvents[selectedEventIndex].googleLocation}
+                        width="100%"
+                        height="300"
+                        style={{ border: 0, borderRadius: "1rem" }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    ) : (
+                      <a
+                        href={safeWeddingEvents[selectedEventIndex].googleLocation}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 mt-2 text-blue-600 hover:underline"
+                      >
+                        <MapPin className="w-5 h-5" />
+                        View on Google Maps
+                      </a>
+                    )}
+                  </div>
+                )}
               </motion.div>
 
               {/* Mobile Layout for Events */}
@@ -1274,39 +1578,103 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </div>
 
               {/* Enhanced Map placeholder */}
+              {/* Enhanced Map with Venue Location for selected event */}
               <motion.div
                 className="w-full lg:w-1/2"
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <div className="relative h-96 lg:h-[600px] w-full rounded-2xl overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 shadow-2xl">
-                  {/* Mock map interface */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin
-                        className="w-12 h-12 mx-auto mb-4"
-                        style={{ color: safeTheme.primaryColor }}
-                      />
-                      <p className="text-gray-600 text-lg font-medium">
-                        Interactive Map
-                      </p>
-                      <p className="text-gray-500 text-sm mt-2">
-                        Wedding venue location will be displayed here
-                      </p>
+                <div className="relative h-96 lg:h-[600px] w-full rounded-2xl overflow-hidden shadow-2xl">
+                  {safeWeddingEvents[selectedEventIndex]?.googleLocation &&
+                  safeWeddingEvents[selectedEventIndex].googleLocation.includes(
+                    "https://www.google.com/maps/embed"
+                  ) ? (
+                    <iframe
+                      src={safeWeddingEvents[selectedEventIndex].googleLocation}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  ) : safeWeddingEvents[selectedEventIndex]?.googleLocation ? (
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 h-full flex items-center justify-center">
+                      <a
+                        href={safeWeddingEvents[selectedEventIndex].googleLocation}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center"
+                      >
+                        <MapPin
+                          className="w-12 h-12 mx-auto mb-4"
+                          style={{ color: safeTheme.primaryColor }}
+                        />
+                        <p className="text-gray-600 text-lg font-medium">
+                          {safeWeddingEvents[selectedEventIndex].venueName ||
+                            "Venue Location"}
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2">
+                          {safeWeddingEvents[selectedEventIndex].address ||
+                            "Address will be displayed here"}
+                        </p>
+                        <span className="text-blue-600 underline mt-2">
+                          View on Google Maps
+                        </span>
+                      </a>
                     </div>
-                  </div>
-
-                  {/* Mock map pins */}
-                  <div
-                    className="absolute top-1/4 left-1/3 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-pulse"
-                    style={{ backgroundColor: safeTheme.primaryColor }}
-                  ></div>
-                  <div
-                    className="absolute top-3/4 right-1/4 w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse"
-                    style={{ backgroundColor: safeTheme.secondaryColor }}
-                  ></div>
+                  ) : (
+                    // Fallback map interface
+                    <div className="bg-gradient-to-br from-gray-200 to-gray-300 h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <MapPin
+                          className="w-12 h-12 mx-auto mb-4"
+                          style={{ color: safeTheme.primaryColor }}
+                        />
+                        <p className="text-gray-600 text-lg font-medium">
+                          {safeWeddingEvents[selectedEventIndex].venueName ||
+                            "Venue Location"}
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2">
+                          {safeWeddingEvents[selectedEventIndex].address ||
+                            "Address will be displayed here"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
+                {/* Venue Details Card */}
+                {(safeWeddingEvents[selectedEventIndex]?.venueName ||
+                  safeWeddingEvents[selectedEventIndex]?.address) && (
+                  <motion.div
+                    className="mt-6 bg-white rounded-2xl p-6 shadow-lg"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                  >
+                    <h4
+                      className="text-xl font-bold mb-4"
+                      style={{ color: safeTheme.primaryColor }}
+                    >
+                      {safeWeddingEvents[selectedEventIndex].venueName}
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <MapPin
+                          className="w-5 h-5 mt-1"
+                          style={{ color: safeTheme.secondaryColor }}
+                        />
+                        <div>
+                          <p className="font-medium text-gray-800">Address</p>
+                          <p className="text-gray-600 text-sm">
+                            {safeWeddingEvents[selectedEventIndex].address}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </motion.div>
             </div>
           </div>
@@ -1419,6 +1787,16 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   </motion.label>
                 </div>
               </div>
+
+              {/* RSVP Event Selection */}
+              {rsvpFormData.attendance === "yes" && safeWeddingEvents.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <p className="font-medium text-gray-800 mb-2">
+                    Which event(s) will you attend?
+                  </p>
+                  <div className="flex flex-col gap-1">{rsvpEventCheckboxes}</div>
+                </div>
+              )}
 
               {rsvpFormData.attendance === "yes" && (
                 <motion.div
@@ -1538,9 +1916,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <MapPin className="w-6 h-6 text-white/80" />
                     <div>
                       <p className="font-semibold">
-                        {safeWeddingEvents[0].venue}
+                        {safeWeddingEvents[0].address}
                       </p>
-                      <p className="text-white/80 text-sm">Venue</p>
+                      <p className="text-white/80 text-sm">Address</p>
                     </div>
                   </div>
                 </div>
