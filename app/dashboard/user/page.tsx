@@ -998,7 +998,7 @@ export default function UserDashboard() {
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview">
+        <TabsContent value="overview mt-8">
           <div className="space-y-6">
             {/* Quick Actions */}
             <Card>
