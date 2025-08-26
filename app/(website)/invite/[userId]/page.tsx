@@ -1158,7 +1158,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <p className="text-gray-600">
                       {new Date(
                         safeWeddingEvents[selectedEventIndex].date
-                      ).toLocaleDateString("en-US", {
+                      ).toLocaleDateString("en-IN", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
@@ -1889,7 +1889,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <div>
                       <p className="font-semibold">
                         {new Date(safeWeddingEvents[0].date).toLocaleDateString(
-                          "en-US",
+                          "en-IN",
                           {
                             weekday: "long",
                             year: "numeric",
@@ -2027,7 +2027,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       style={{ color: safeTheme.titleColor }}
                     >
                       {new Date(safeWeddingEvents[0].date).toLocaleDateString(
-                        "en-US",
+                        "en-IN",
                         {
                           weekday: "long",
                           year: "numeric",
