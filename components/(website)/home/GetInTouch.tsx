@@ -202,14 +202,13 @@ export default function GetInTouch() {
                 </div>
                 <div className="flex-1">
                   <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                    E-mail *
+                    E-mail
                   </label>
                   <Input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    required
                     className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="your.email@example.com"
                   />
@@ -260,38 +259,6 @@ export default function GetInTouch() {
                     required
                     className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
                     placeholder="City or venue preference"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                    Type of Venue / Service Needed *
-                  </label>
-                  <Input
-                    name="venueServiceType"
-                    value={formData.venueServiceType}
-                    onChange={handleChange}
-                    required
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
-                    placeholder="e.g., Banquet Hall, Outdoor Venue"
-                  />
-                </div>
-              </div>
-
-              {/* Guests & Budget */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <label className="block font-cormorant text-[17px] text-[#7d7d7d] mb-1">
-                    Number of Guests *
-                  </label>
-                  <Input
-                    type="number"
-                    min={1}
-                    name="guests"
-                    value={formData.guests}
-                    onChange={handleChange}
-                    required
-                    className="border-0 border-b border-[#d9d9d9] rounded-xs px-0 py-2 text-[16px] font-cormorant bg-transparent focus:ring-0"
-                    placeholder="Approximate count"
                   />
                 </div>
                 <div className="flex-1">

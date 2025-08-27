@@ -72,73 +72,52 @@ export default function FeaturedVendors() {
           Find Top-Rated Wedding Professionals
         </motion.h2>
 
-        <div
-          className="w-full flex flex-row gap-6 md:gap-8 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
-        >
+        {/* Grid of featured vendors (max 8 items) */}
+        <div className="w-full mb-10 md:mb-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {isLoading && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">
-                Loading vendors...
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">Loading vendors...</span>
             </div>
           )}
           {!isLoading && error && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-red-500 font-cormorant text-lg">
-                {error}
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-red-500 font-cormorant text-lg">{error}</span>
             </div>
           )}
           {!isLoading && !error && displayedVendors.length === 0 && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">
-                No featured vendors found.
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">No featured vendors found.</span>
             </div>
           )}
-          {!isLoading &&
-            !error &&
-            displayedVendors.map(
-              (
-                vendor,
-                idx // Changed from 'hotel' to 'vendor'
-              ) => (
-                <motion.div
-                  key={vendor.id} // Using vendor.id
-                  className="relative flex flex-col shrink-0 w-64 sm:w-72"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 * (idx + 1) }}
-                >
-                  <div
-                    className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
-                    style={{
-                      // Using vendor image properties
-                      backgroundImage: vendor.coverImageUrl
-                        ? `url('${vendor.coverImageUrl}')`
-                        : "url('/images/hotels-image.png')",
-                    }}
-                    aria-label={vendor.businessName} // Using vendor.businessName
-                  />
-                  <div className="absolute left-0 bottom-0 w-full">
-                    <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
-                      <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                        {/* Updated link to a generic vendor page */}
-                        <Link href={`/vendors/${vendor.id}`} passHref>
-                          {vendor.businessName || "Vendor Name"}
-                        </Link>
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            )}
+          {!isLoading && !error && displayedVendors.slice(0, 8).map((vendor, idx) => (
+            <motion.div
+              key={vendor.id}
+              className="relative flex flex-col"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
+            >
+              <div
+                className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
+                style={{
+                  backgroundImage: vendor.coverImageUrl
+                    ? `url('${vendor.coverImageUrl}')`
+                    : "url('/images/hotels-image.png')",
+                }}
+                aria-label={vendor.businessName}
+              />
+              <div className="absolute left-0 bottom-0 w-full">
+                <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
+                  <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
+                    <Link href={`/vendors/${vendor.id}`} passHref>
+                      {vendor.businessName || "Vendor Name"}
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* CTA Button */}

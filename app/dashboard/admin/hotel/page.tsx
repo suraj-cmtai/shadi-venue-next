@@ -11,7 +11,6 @@ import {
   deleteHotel,
   type Hotel
 } from '@/lib/redux/features/hotelSlice';
-import { type Currency } from '@/app/api/services/hotelServices';
 import { uploadImageClient, uploadPDFClient } from '@/lib/firebase-client';
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -166,6 +165,7 @@ interface HotelFormState {
   agreeToPrivacy: boolean;
   signature: string;
   isPremium: boolean;
+  isFeatured: boolean;
 }
 
 const initialFormState: HotelFormState = {
@@ -236,6 +236,7 @@ const initialFormState: HotelFormState = {
   agreeToPrivacy: false,
   signature: "",
   isPremium: false,
+  isFeatured: false,
 };
 
 const statusColors: Record<Hotel["status"], string> = {
@@ -472,6 +473,7 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('signature', form.signature);
     formData.append('googleLocation', form.googleLocation);
     formData.append('isPremium', form.isPremium.toString());
+    formData.append('isFeatured', form.isFeatured.toString());
     
     // Rooms as JSON string
     formData.append('rooms', JSON.stringify(form.rooms));
@@ -956,6 +958,17 @@ const createRequestData = async (form: HotelFormState) => {
                   onChange={(e) => setForm((prev) => ({ ...prev, isPremium: e.target.checked }))}
                 />
                 <span className="text-sm text-muted-foreground">Mark as premium</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Featured</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.isFeatured}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isFeatured: e.target.checked }))}
+                />
+                <span className="text-sm text-muted-foreground">Mark as featured</span>
               </div>
             </div>
           </div>
@@ -1602,6 +1615,7 @@ const createRequestData = async (form: HotelFormState) => {
                                 agreeToPrivacy: hotel.agreeToPrivacy || false,
                                 signature: hotel.signature || "",
                                 isPremium: Boolean((hotel as any).isPremium),
+                                isFeatured: Boolean((hotel as any).isFeatured),
                                 googleLocation: hotel.googleLocation || "", 
                               };
                               setEditHotelForm(hotelForEdit);

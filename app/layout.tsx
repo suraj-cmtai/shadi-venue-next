@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Dancing_Script, Cormorant, Cinzel } from "next/font/google";
 import "./globals.css";
-import { ReduxProvider } from "@/lib/redux/provider";
+import ReduxStoreProvider from "./provider";  
 
 const dancingScript = Dancing_Script({
   variable: "--font-dancing-script",
@@ -36,9 +36,9 @@ export default function RootLayout({
       <body
         className={`${dancingScript.variable} ${cormorant.variable} ${cinzel.variable} antialiased`}
       >
-        <ReduxProvider>
+        <ReduxStoreProvider>
         {children}
-        </ReduxProvider>
+        </ReduxStoreProvider>
       </body>
     </html>
   );

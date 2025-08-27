@@ -7,7 +7,7 @@ import {
   selectActiveHeroSlides,
   selectIsLoading,
 } from "@/lib/redux/features/heroSlice";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,6 +29,7 @@ export default function Hero() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [direction, setDirection] = useState<1 | -1>(-1);
 
   // Fetch active hero slides on mount
   useEffect(() => {
@@ -42,14 +43,15 @@ export default function Hero() {
     }
   }, [heroSlides, currentIndex]);
 
-  // Move slider left (prev) every 3 seconds
+  // Move slider left (prev) every 7 seconds (slower for smoother feel)
   useEffect(() => {
     if (heroSlides.length === 0) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
+      setDirection(-1);
       setCurrentIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-    }, 3000);
+    }, 15000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -57,17 +59,25 @@ export default function Hero() {
   }, [heroSlides, currentIndex]);
 
   const nextImage = () => {
+    setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % heroSlides.length);
   };
 
   const prevImage = () => {
+    setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
-  // If loading or no slides, show nothing (could add a skeleton if desired)
+  // Track first render to skip initial fade and avoid white flash
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    isFirstRenderRef.current = false;
+  }, []);
+
+  // If loading or no slides, show a dark placeholder to avoid white flash
   if (isLoading || heroSlides.length === 0) {
     return (
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-gray-100">
+      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
         <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center">
           <span className="text-lg text-gray-400">Loading...</span>
         </div>
@@ -78,23 +88,31 @@ export default function Hero() {
   const { image, heading, subtext, cta } = heroSlides[currentIndex];
 
   return (
-    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <motion.div
-        key={currentIndex}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="absolute inset-0"
-      >
-        <Image
-          src={image}
-          alt={heading || "Wedding hero image"}
-          fill
-          className="object-cover"
-          priority
-        />
-      </motion.div>
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
+      {/* Background Image with smooth crossfade and subtle zoom (Ken Burns) */}
+      <AnimatePresence mode="sync" initial={false}>
+        <motion.div
+          key={image || currentIndex}
+          initial={
+            isFirstRenderRef.current
+              ? { x: 0, opacity: 1 }
+              : { x: direction === 1 ? "100%" : "-100%", opacity: 1 }
+          }
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: direction === 1 ? "-100%" : "100%", opacity: 1 }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 will-change-transform will-change-opacity"
+        >
+          <Image
+            src={image}
+            alt={heading || "Wedding hero image"}
+            fill
+            className="object-cover"
+            priority
+            unoptimized
+          />
+        </motion.div>
+      </AnimatePresence>
 
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />

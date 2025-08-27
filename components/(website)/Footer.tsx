@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Facebook, Twitter, Linkedin, Rss } from "lucide-react";
 import Link from "next/link";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchPremiumHotel, selectPremiumHotel } from "@/lib/redux/features/hotelSlice";
+import { AppDispatch } from "@/lib/redux/store";
 
 /**
  * Footer component - Responsive, accessible, Figma-fidelity footer for Shadi Venue.
@@ -13,16 +17,9 @@ import Link from "next/link";
  * - Decorative flower image is visually hidden on mobile.
  * - All images and icons are accessible.
  * - Social links updated to real URLs as per @file_context_0.
+ * - Hotel images shown in place of static images, click navigates to /venue.
  */
 
-const IMAGES = [
-  "/images/footer-image-1.png",
-  "/images/footer-image-2.png",
-  "/images/footer-image-3.png",
-  "/images/footer-image-4.png",
-  "/images/footer-image-5.png",
-  "/images/footer-image-6.png",
-];
 const LOGO_IMG = "/images/footer.png";
 const FLOWER_IMG = "/images/flower-petals.svg";
 
@@ -31,7 +28,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Venue", href: "/venue" },
-  { label: "Wedding", href: "/wedding" },
+  { label: "Vendors", href: "/vendors" },
   { label: "Blog", href: "/blogs" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },
@@ -51,6 +48,15 @@ export default function Footer() {
   const navCol1 = NAV_LINKS.slice(0, mid);
   const navCol2 = NAV_LINKS.slice(mid);
 
+  // Redux for hotels
+  const dispatch = useDispatch<AppDispatch>();
+  const hotels = useSelector(selectPremiumHotel);
+
+  useEffect(() => {
+    dispatch(fetchPremiumHotel());
+  }, [dispatch]);
+
+  // Fallback: if no hotels, show nothing in the row
   return (
     <footer className="relative w-full bg-[#212d47] text-white overflow-hidden py-8 md:py-14">
       <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-stretch gap-8 md:gap-12 px-4 md:px-8">
@@ -73,26 +79,34 @@ export default function Footer() {
             />
           </div>
         </div>
-        {/* Images + Info */}
+        {/* Hotel Images + Info */}
         <div className="w-full lg:w-3/4 flex flex-col items-center">
-          {/* Images row */}
+          {/* Hotel Images row */}
           <div className="w-full flex justify-center mb-6">
             <div className="flex flex-row flex-wrap justify-center items-center gap-2 md:gap-4 w-full max-w-2xl">
-              {IMAGES.map((src, i) => (
-                <motion.div
-                  key={src}
-                  className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-xs overflow-hidden bg-center bg-cover shadow-lg border-2 border-white flex-shrink-0"
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.07 }}
-                >
-                  <img
-                    src={src}
-                    alt={`Gallery ${i + 1}`}
-                    className="object-cover w-full h-full"
-                  />
-                </motion.div>
-              ))}
+              {(hotels && hotels.length > 0) ? (
+                hotels.slice(0, 6).map((hotel, i) => (
+                  <Link
+                    href="/venue"
+                    key={hotel.id || i}
+                    className="group"
+                    aria-label={hotel.name || `Hotel ${i + 1}`}
+                  >
+                    <motion.div
+                      className="relative h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 lg:h-24 lg:w-24 rounded-xs overflow-hidden bg-center bg-cover shadow-lg border-2 border-white flex-shrink-0 group-hover:scale-105 transition-transform"
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: i * 0.07 }}
+                    >
+                      <img
+                        src={hotel?.images?.[0] || "/images/venue-placeholder.png"}
+                        alt={hotel?.name || `Hotel ${i + 1}`}
+                        className="object-cover w-full h-full"
+                      />
+                    </motion.div>
+                  </Link>
+                ))
+              ) : null}
             </div>
           </div>
           {/* Info sections: nav, nav, address, social */}

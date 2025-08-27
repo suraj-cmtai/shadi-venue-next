@@ -2,10 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { RootState } from "../store";
 
-// Import redux-persist's purge utility
-import { persistStore } from "redux-persist";
-import { store } from "../store";
-
 // The "auth" object will contain all user details from the cookie
 export interface Auth {
   id: string;
@@ -68,16 +64,12 @@ export const login = createAsyncThunk(
   }
 );
 
-// Updated logout: removes redux-persist state using purge
+// Logout: clear auth state; persisted reducer will sync storage without needing purge
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch }) => {
     await axios.delete("/api/routes/auth");
-    // Clear persisted state and cookies handled by backend
     dispatch(clearAuth());
-    // Purge redux-persist state for a full logout
-    const persistor = persistStore(store);
-    await persistor.purge();
     return null;
   }
 );

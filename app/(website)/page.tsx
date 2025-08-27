@@ -30,12 +30,12 @@ const HomePage = () => {
       <HotelByCity />
       <VendorsByCity />
       <About />
-      <VideoSection />
+      {/* <VideoSection /> */}
       <Hotels />
       <Vendor />
       <Process />
       <Award />
-      <Wedding />
+      {/* <Wedding /> */}
       <Gallery />
       <Blog />
       <Testimonials />

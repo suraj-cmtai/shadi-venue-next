@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 
 const WEDDING_IMAGES = [
     "/images/about-new/A gorgeous mandap decor and a beautiful….jpg",
@@ -13,6 +14,7 @@ const WEDDING_IMAGES = [
 ];
 
 export default function WeddingSection() {
+    const router = useRouter();
     return (
         <section className="relative w-full overflow-hidden bg-white">
             <div className="absolute inset-0 bg-white"></div>
@@ -98,6 +100,7 @@ export default function WeddingSection() {
                                 className="bg-[#212d47] text-white px-6 py-3 mt-6 rounded-lg font-cinzel text-base font-semibold hover:bg-[#212d47]/90 transition-all duration-300 shadow-md hover:shadow-lg"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
+                                onClick={() => router.push('/contact')}
                             >
                                 Get in Touch
                             </motion.button>

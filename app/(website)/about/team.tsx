@@ -15,28 +15,6 @@ const TEAM_MEMBERS = [
         image: "/images/wedding/team2.png",
     },
 ];
-const SUB_MEMBERS = [
-    {
-        image: "/images/wedding/team1.png",
-        title: "HARRIET BOUQUET",
-        desc: "WEDDING FLORIST",
-    },
-    {
-        image: "/images/wedding/team2.png",
-        title: "HARRIET BOUQUET",
-        desc: "WEDDING FLORIST",
-    },
-    {
-        image: "/images/wedding/team3.png",
-        title: "HARRIET BOUQUET",
-        desc: "WEDDING & EVENT FLORIST",
-    },
-    {
-        image: "/images/wedding/team4.png",
-        title: "HARRIET BOUQUET",
-        desc: "WEDDING FLORAL DESIGN",
-    },
-];
 
 
 export default function TeamSection() {
@@ -136,44 +114,6 @@ export default function TeamSection() {
                 </div>
 
             </div>
-
-            <div className="bg-white py-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-center text-center">
-                        {SUB_MEMBERS.map((item, index) => (
-                            <div key={index} className="flex flex-col items-center space-y-4">
-                                {/* Icon/Image */}
-                                <div className="w-20 h-10 relative">
-                                    <Image
-                                        src={item.image}
-                                        alt={item.title}
-                                        fill
-                                        sizes="80px"
-                                        className="object-contain"
-                                        onError={(e) => {
-                                            console.error("Image failed to load:", item.image);
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Title */}
-                                <h4 className="text-black text-sm font-normal bg-red-100 border border-red-400">
-                                    {item.title}
-                                </h4>
-                                {/* Description with lines */}
-                                <p className="font-cormorant text-xs text-[#888] relative flex items-center justify-center">
-                                    <span className="w-5 h-px bg-gray-400 mr-2"></span>
-                                    {item.desc}
-                                    <span className="w-5 h-px bg-gray-400 ml-2"></span>
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-
-
 
         </section>
     );

@@ -216,7 +216,7 @@ export async function POST(req: Request) {
         const signature = formData.get("signature")?.toString();
         // Premium flag
         const isPremium = formData.get("isPremium")?.toString();
-
+        const isFeatured = formData.get("isFeatured")?.toString();  
         // Extract file uploads
         const imageFiles = formData.getAll("images");
         const resortPhotoFiles = formData.getAll("uploadResortPhotos");
@@ -330,6 +330,7 @@ export async function POST(req: Request) {
             agreeToPrivacy: safeParseBoolean(agreeToPrivacy?.toString()),
             signature: signature || "",
             isPremium: isPremium === 'true',
+            isFeatured: isFeatured === 'true',
         };
 
         const newHotel = await HotelService.createHotel(hotelData);

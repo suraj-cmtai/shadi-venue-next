@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
-import { useRouter } from "next/navigation";
 import {
   fetchPremiumHotel,
   selectPremiumHotel,
@@ -65,67 +64,53 @@ export default function Hotels() {
           Where to Stay for the Wedding Weekend
         </motion.h2>
 
-        <div
-          className="w-full flex flex-row gap-6 md:gap-8 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
-        >
+        {/* Grid of hotels (max 8 items) */}
+        <div className="w-full mb-10 md:mb-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {isLoading && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">
-                Loading hotels...
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">Loading hotels...</span>
             </div>
           )}
           {!isLoading && error && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-red-500 font-cormorant text-lg">
-                {error}
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-red-500 font-cormorant text-lg">{error}</span>
             </div>
           )}
           {!isLoading && !error && displayedHotels.length === 0 && (
-            <div className="w-full flex justify-center items-center min-h-32">
-              <span className="text-neutral-500 font-cormorant text-lg">
-                No hotels found.
-              </span>
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">No hotels found.</span>
             </div>
           )}
-          {!isLoading &&
-            !error &&
-            displayedHotels.map((hotel, idx) => (
-              <motion.div
-                key={hotel.id}
-                className="relative flex flex-col shrink-0 w-64 sm:w-72"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.1 * (idx + 1) }}
-              >
-                <div
-                  className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
-                  style={{
-                    backgroundImage:
-                      hotel.images && hotel.images.length > 0
-                        ? `url('${hotel.images[0]}')`
-                        : "url('/images/hotels-image.png')",
-                  }}
-                  aria-label={hotel.name}
-                />
-                <div className="absolute left-0 bottom-0 w-full">
-                  <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
-                    <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                      <Link href={`/venue/${hotel.id}`} passHref>
-                        {hotel.name || "Hotel Name"}
-                      </Link>
-                    </p>
-                  </div>
+          {!isLoading && !error && displayedHotels.slice(0, 8).map((hotel, idx) => (
+            <motion.div
+              key={hotel.id}
+              className="relative flex flex-col"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
+            >
+              <div
+                className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
+                style={{
+                  backgroundImage:
+                    hotel.images && hotel.images.length > 0
+                      ? `url('${hotel.images[0]}')`
+                      : "url('/images/hotels-image.png')",
+                }}
+                aria-label={hotel.name}
+              />
+              <div className="absolute left-0 bottom-0 w-full">
+                <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
+                  <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
+                    <Link href={`/venue/${hotel.id}`} passHref>
+                      {hotel.name || "Hotel Name"}
+                    </Link>
+                  </p>
                 </div>
-              </motion.div>
-            ))}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* CTA Button */}

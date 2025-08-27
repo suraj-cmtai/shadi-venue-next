@@ -52,6 +52,7 @@ export interface Hotel {
     createdAt: string;
     updatedAt: string;
     isPremium?: boolean;
+    isFeatured?: boolean;
     googleLocation?: string;
   
     // Personal Information
@@ -174,6 +175,7 @@ class HotelService {
             createdAt: this.convertTimestamp(data.createdAt),
             updatedAt: this.convertTimestamp(data.updatedAt),
             isPremium: data.isPremium || false,
+            isFeatured: data.isFeatured || false,
             // Personal/Business Information
             firstName: data.firstName || "",
             lastName: data.lastName || "",
@@ -268,7 +270,7 @@ private static normalizeArrayOrString(value: any): string[] {
                 rating: Number(hotelData.rating || 0),
                 status: hotelData.status || "draft",
                 isPremium: Boolean((hotelData as any).isPremium),
-                
+                isFeatured: Boolean((hotelData as any).isFeatured),
                 // Location
                 location: {
                     address: hotelData.location?.address || "",
@@ -429,6 +431,7 @@ private static normalizeArrayOrString(value: any): string[] {
             const snapshot = await db
                 .collection(this.collection)
                 .where("isPremium", "==", true)
+                .where("isFeatured", "==", true)
                 .where("status", "==", status)
                 .orderBy("createdAt", "desc")
                 .get();
@@ -455,7 +458,7 @@ private static normalizeArrayOrString(value: any): string[] {
             if (updateData.rating !== undefined) processedUpdateData.rating = Number(updateData.rating);
             if (updateData.status !== undefined) processedUpdateData.status = updateData.status;
             if (updateData.isPremium !== undefined) processedUpdateData.isPremium = Boolean(updateData.isPremium);
-
+            if (updateData.isFeatured !== undefined) processedUpdateData.isFeatured = Boolean(updateData.isFeatured);
             // Handle nested objects carefully
             if (updateData.location) {
                 processedUpdateData.location = updateData.location;

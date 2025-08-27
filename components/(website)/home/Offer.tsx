@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import PricePopup from "@/components/(website)/price-popup";
+import { useState } from "react";
 
 // Figma MCP asset URLs
 const ARROW_IMG = "/images/offer-arrow-right.svg";
@@ -16,6 +18,8 @@ const offerData = {
 };
 
 export default function Offer() {
+  const [showPopup, setShowPopup] = useState(false);
+
   return (
     <section className="w-full py-12 md:py-20 bg-white" id="offer">
       <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-start justify-between gap-8 px-4 md:px-8">
@@ -52,7 +56,11 @@ export default function Offer() {
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <div className="relative bg-[#212d47] rounded-md flex flex-col justify-center px-6 py-6 min-h-28 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowPopup(true)}
+            className="relative bg-[#212d47] rounded-md flex flex-col justify-center px-6 py-6 min-h-28 shadow-sm w-full text-left focus:outline-none cursor-pointer"
+          >
             {/* Subtitle */}
             <div className="flex flex-col gap-1">
               <span className="font-cormorant font-light text-xs md:text-sm text-white">
@@ -65,7 +73,7 @@ export default function Offer() {
               <span className="font-cormorant font-bold text-sm md:text-base text-white uppercase tracking-wide">
                 {offerData.offerTitle}
               </span>
-              
+                            
               <span className="ml-4 flex-shrink-0">
                 <Image
                   src={ARROW_IMG}
@@ -86,8 +94,9 @@ export default function Offer() {
                   className="h-0.5 w-8 object-contain"
                 />
               </div>
-          </div>
+          </button>
         </motion.div>
+        <PricePopup open={showPopup} onClose={() => setShowPopup(false)} />
       </div>
     </section>
   );

@@ -100,6 +100,7 @@ export interface Vendor {
 
   // Premium field
   isPremium?: boolean;
+  isFeatured?: boolean;
 }
 
 class VendorService {
@@ -167,6 +168,7 @@ class VendorService {
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
       isPremium: data.isPremium ?? false,
+      isFeatured: data.isFeatured ?? false,
     };
   }
 
@@ -204,6 +206,7 @@ class VendorService {
       const newVendorRef = await db.collection("vendors").add({
         ...vendorData,
         isPremium: vendorData.isPremium ?? false,
+        isFeatured: vendorData.isFeatured ?? false,
         createdAt: timestamp,
         updatedAt: timestamp,
       });
@@ -314,6 +317,7 @@ class VendorService {
         const snapshot = await db
             .collection("vendors")
             .where("isPremium", "==", true)
+            .where("isFeatured", "==", true)
             .where("status", "==", status)
             .orderBy("createdAt", "desc")
             .get();

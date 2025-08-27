@@ -147,7 +147,7 @@ export async function PUT(
 
     // Fields that are booleans
     const booleanFields = [
-      'agreedToTerms', 'mobileVerified', 'isPremium'
+      'agreedToTerms', 'mobileVerified', 'isPremium', 'isFeatured'
     ];
 
     // Parse all fields from formData
@@ -194,6 +194,12 @@ export async function PUT(
     if (formData.get('isPremium') !== null) {
       const isPremium = formData.get("isPremium")?.toString();
       updateData.isPremium = isPremium?.toLowerCase() === "true";
+    }
+
+    // isFeatured: allow update if provided, use consistent boolean parsing style
+    if (formData.get('isFeatured') !== null) {
+      const isFeatured = formData.get("isFeatured")?.toString();
+      updateData.isFeatured = isFeatured?.toLowerCase() === "true";
     }
 
     // createdAt, updatedAt: do not allow manual update (handled by backend)

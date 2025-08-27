@@ -108,6 +108,8 @@ export async function POST(request: NextRequest) {
       username: formData.get('username') as string,
       agreedToTerms: formData.get('agreedToTerms') === 'true',
       status: (formData.get('status') as any) || 'inactive',
+      isPremium: formData.get('isPremium') === 'true',
+      isFeatured: formData.get('isFeatured') === 'true',
     };
 
     const newVendor = await VendorService.addVendor(vendorData);

@@ -252,6 +252,7 @@ export async function PUT(
         const position = formData.get("position")?.toString();
         const websiteLink = formData.get("websiteLink")?.toString();
         const isPremium = formData.get("isPremium")?.toString();
+        const isFeatured = formData.get("isFeatured")?.toString();
 
         if (firstName !== undefined) hotelData.firstName = firstName;
         if (lastName !== undefined) hotelData.lastName = lastName;
@@ -260,6 +261,7 @@ export async function PUT(
         if (position !== undefined) hotelData.position = position;
         if (websiteLink !== undefined) hotelData.websiteLink = websiteLink;
         if (isPremium !== undefined) hotelData.isPremium = isPremium === 'true';
+        if (isFeatured !== undefined) hotelData.isFeatured = isFeatured === 'true';
 
         // Wedding and Venue Information
         const offerWeddingPackages = formData.get("offerWeddingPackages")?.toString();

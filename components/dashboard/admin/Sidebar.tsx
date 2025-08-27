@@ -55,7 +55,7 @@ const links = [
     badge: null,
   },
   {
-    name: "Contact",
+    name: "Leads",
     href: "/dashboard/admin/contact",
     icon: MailCheck,
     badge: null,
@@ -85,12 +85,12 @@ const links = [
     icon: Package,
     badge: null,
   },
-  {
-    name: "Wedding Themes",
-    href: "/dashboard/admin/wedding",
-    icon: GalleryVerticalEnd,
-    badge: null,
-  },
+  // {
+  //   name: "Wedding Themes",
+  //   href: "/dashboard/admin/wedding",
+  //   icon: GalleryVerticalEnd,
+  //   badge: null,
+  // },
   { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
   {
     name: "Hero Extension",

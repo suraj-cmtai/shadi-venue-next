@@ -49,7 +49,7 @@ export interface Hotel {
 
   // Premium field
   isPremium?: boolean;
-
+  isFeatured?: boolean;
   // New form fields
   firstName?: string;
   lastName?: string;
@@ -97,6 +97,7 @@ interface HotelState {
     priceRange: [number, number];
     rating: number;
     isPremium?: boolean;
+    isFeatured?: boolean;
     status?: string;
   };
   searchQuery: string;
@@ -116,6 +117,7 @@ const initialState: HotelState = {
     priceRange: [0, 10000],
     rating: 0,
     isPremium: undefined,
+    isFeatured: undefined,
     status: undefined,
   },
   searchQuery: '',
@@ -434,10 +436,13 @@ export const selectFilteredHotels = createSelector(
       // isPremium filter
       const matchesIsPremium = typeof filters.isPremium === "undefined" || hotel.isPremium === filters.isPremium;
 
+      // isFeatured filter
+      const matchesIsFeatured = typeof filters.isFeatured === "undefined" || hotel.isFeatured === filters.isFeatured;
+
       // status filter
       const matchesStatus = !filters.status || hotel.status === filters.status;
       
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating && matchesIsPremium && matchesStatus;
+      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating && matchesIsPremium && matchesStatus && matchesIsFeatured;
     });
   }
 );

@@ -101,6 +101,7 @@ export interface Vendor {
 
   // Premium field
   isPremium: boolean;
+  isFeatured: boolean;
 }
 
 interface VendorState {
@@ -118,6 +119,7 @@ interface VendorState {
     minPrice: number;
     maxPrice: number;
     search: string;
+    isFeatured?: boolean;
   };
 }
 
@@ -136,6 +138,7 @@ const initialState: VendorState = {
     minPrice: 0,
     maxPrice: 1000000,
     search: "",
+    isFeatured: undefined,
   },
 };
 
@@ -426,7 +429,10 @@ export const selectFilteredVendors = createSelector(
       const matchesPrice = vendor.startingPrice >= filters.minPrice &&
         vendor.startingPrice <= filters.maxPrice;
 
-      return matchesSearch && matchesCategory && matchesCity && matchesServiceArea && matchesPrice;
+      // isFeatured filter
+      const matchesIsFeatured = typeof filters.isFeatured === "undefined" || vendor.isFeatured === filters.isFeatured;
+
+      return matchesSearch && matchesCategory && matchesCity && matchesServiceArea && matchesPrice && matchesIsFeatured;
     });
   }
 );
