@@ -312,7 +312,7 @@ export default function BlogDetailsPage({
         </div>
       </div>
       {/* Relevant Blogs Section */}
-      <div className="px-2 sm:px-4 md:px-6">
+      <div className="">
         <Blog />
       </div>
     </section>
