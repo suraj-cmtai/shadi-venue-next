@@ -276,25 +276,26 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     roles: ["marketing", "admin", "super-admin"],
   },
+  // --- FIX: Ensure marketing can access hotel-enquiry and vendor-enquiry routes ---
   {
     pattern: "/api/routes/hotel-enquiry",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: [ "marketing", "admin", "super-admin"],
+    roles: ["marketing", "admin", "super-admin"],
   },
   {
     pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["hotel", "marketing", "admin", "super-admin"],
+    roles: ["marketing", "hotel", "admin", "super-admin"],
   },
   {
     pattern: "/api/routes/vendor-enquiry",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["vendor", "marketing", "admin", "super-admin"],
+    roles: ["marketing", "vendor", "admin", "super-admin"],
   },
   {
     pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["vendor", "marketing", "admin", "super-admin"],
+    roles: ["marketing", "vendor", "admin", "super-admin"],
   },
 
   // Blog Routes
