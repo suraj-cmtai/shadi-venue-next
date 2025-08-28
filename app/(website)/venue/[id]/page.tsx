@@ -688,15 +688,15 @@ export default function HotelDetailsPage() {
                     <div className="flex items-start gap-3">
                       <Clock className="w-5 h-5 text-pink-500 mt-0.5" />
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 break-words break-all">
                           Check-in: {hotel?.policies.checkIn}
                         </div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 break-words break-all">
                           Check-out: {hotel?.policies.checkOut}
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-3">
+                    <div className="text-sm text-gray-600 mt-3 break-words break-all">
                       {hotel?.policies.cancellation}
                     </div>
                   </div>
