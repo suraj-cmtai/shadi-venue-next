@@ -446,7 +446,7 @@ export default function HotelEnquiryPage() {
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
+                        {/* <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => {
                             setSelectedEnquiry(enquiry);
@@ -455,7 +455,7 @@ export default function HotelEnquiryPage() {
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

@@ -389,7 +389,7 @@ export default function ContactPage() {
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
+                        {/* <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => {
                             setSelectedContact(contact)
@@ -398,7 +398,7 @@ export default function ContactPage() {
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
