@@ -7,7 +7,7 @@ export interface Auth {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "super-admin" | "hotel" | "vendor" | "user";
+  role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
   roleId: string;
   status: "active" | "inactive";
   createdOn: string;
@@ -17,6 +17,8 @@ export interface Auth {
   hotelId?: string;
   vendorId?: string;
   userId?: string;
+  blogId?: string;
+  marketingId?: string;
   [key: string]: any; // allow for extra fields if backend adds more
 }
 

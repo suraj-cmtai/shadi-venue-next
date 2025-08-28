@@ -76,7 +76,7 @@ export interface Invite {
   invitation: InviteSection;
 }
 
-export type UserRole = 'user' | 'admin' | 'hotel' | 'vendor';
+export type UserRole = 'user' | 'admin' | 'hotel' | 'vendor' | 'blog' | 'marketing';
 
 export interface User {
   id: string;

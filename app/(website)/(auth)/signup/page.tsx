@@ -17,6 +17,8 @@ const ROLES = [
   { value: "user", label: "User" },
   { value: "hotel", label: "Hotel" },
   { value: "vendor", label: "Vendor" },
+  { value: "blog", label: "Blog" },
+  { value: "marketing", label: "Marketing" },
   // Add more roles here as needed
 ];
 

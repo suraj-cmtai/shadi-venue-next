@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // ===== TYPES =====
-export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user";
+export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
 
 interface Auth {
@@ -35,6 +35,8 @@ const ROLE_DASHBOARDS: Record<Role, string> = {
   "hotel": "/dashboard/hotel",
   "vendor": "/dashboard/vendor",
   "user": "/dashboard/user",
+  "blog": "/dashboard/blog",
+  "marketing": "/dashboard/marketing",
 };
 
 // Dashboard Access Configuration
@@ -59,10 +61,42 @@ const DASHBOARD_ROUTES: DashboardConfig[] = [
     path: "/dashboard/user",
     allowedRoles: ["user"],
   },
+  {
+    path: "/dashboard/blog",
+    allowedRoles: ["blog", "admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/marketing",
+    allowedRoles: ["marketing", "admin", "super-admin"],
+  },
 ];
 
 // Public Routes (accessible without authentication)
 const PUBLIC_ROUTES = ["/login", "/signup"];
+
+// Marketing Routes Configuration
+const MARKETING_ROUTES: DashboardConfig[] = [
+  {
+    path: "/dashboard/marketing/contact",
+    allowedRoles: ["marketing", "admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/marketing/hotel-enquiry",
+    allowedRoles: ["marketing", "admin", "super-admin"],
+  },
+  {
+    path: "/dashboard/marketing/vendor-enquiry",
+    allowedRoles: ["marketing", "admin", "super-admin"],
+  },
+];
+
+// Blog Routes Configuration
+const BLOG_ROUTES: DashboardConfig[] = [
+  {
+    path: "/dashboard/blog",
+    allowedRoles: ["blog", "admin", "super-admin"],
+  },
+];
 
 // API Routes Configuration
 const API_ROUTES: RouteConfig[] = [
@@ -228,6 +262,26 @@ const API_ROUTES: RouteConfig[] = [
   {
     pattern: "/api/routes/hotel",
     roles: ["hotel", "admin", "super-admin"],
+  },
+
+  // Marketing Routes
+  {
+    pattern: "/api/routes/contact",
+    roles: ["marketing", "admin", "super-admin"],
+  },
+  {
+    pattern: "/api/routes/hotel-enquiry",
+    roles: ["marketing", "admin", "super-admin"],
+  },
+  {
+    pattern: "/api/routes/vendor-enquiry",
+    roles: ["marketing", "admin", "super-admin"],
+  },
+
+  // Blog Routes
+  {
+    pattern: "/api/routes/blogs",
+    roles: ["blog", "admin", "super-admin"],
   },
 
   // ===== CUSTOM LOGIC ROUTES =====

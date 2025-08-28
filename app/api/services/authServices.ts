@@ -17,6 +17,10 @@ function getRoleCollection(role: UserRole) {
             return "hotels";
         case "vendor":
             return "vendors";
+        case "blog":
+            return "blogs";
+        case "marketing":
+            return "marketing";
         default:
             throw new Error("Invalid role");
     }
@@ -69,7 +73,7 @@ class AuthService {
                 updatedAt: new Date().toISOString(),
             };
 
-            // Add more fields for hotel/vendor if needed
+            // Add more fields for hotel/vendor/blog/marketing if needed
             if (role === "hotel") {
                 // Minimal hotel doc, can be expanded later
                 roleDocData = {
@@ -117,6 +121,20 @@ class AuthService {
                     },
                     phoneNumber: "",
                     avatar: "",
+                };
+            } else if (role === "blog") {
+                // Minimal blog doc, can be expanded later
+                roleDocData = {
+                    ...roleDocData,
+                    description: "",
+                    posts: [],
+                };
+            } else if (role === "marketing") {
+                // Minimal marketing doc, can be expanded later
+                roleDocData = {
+                    ...roleDocData,
+                    campaigns: [],
+                    description: "",
                 };
             }
 

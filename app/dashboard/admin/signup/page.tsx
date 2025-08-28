@@ -38,6 +38,8 @@ const ROLES = [
   { value: "hotel", label: "Hotel Manager" },
   { value: "vendor", label: "Vendor" },
   { value: "user", label: "User" },
+  { value: "blog", label: "Blog" },
+  { value: "marketing", label: "Marketing" },
 ];
 
 const AdminSignupPage = () => {
