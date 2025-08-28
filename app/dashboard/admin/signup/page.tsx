@@ -57,6 +57,7 @@ const AdminSignupPage = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [selectedAuthId, setSelectedAuthId] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<"activate" | "deactivate" | "delete" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const { authList, listLoading, listError } = useSelector((state: RootState) => state.auth);
@@ -142,11 +143,20 @@ const AdminSignupPage = () => {
     }
   };
 
-  const filteredAuthList = authList.filter(auth => 
-    auth.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    auth.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    auth.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAuthList = authList.filter(auth => {
+    // First apply role filter
+    if (selectedRole && auth.role !== selectedRole) {
+      return false;
+    }
+    
+    // Then apply search filter
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      auth.email.toLowerCase().includes(searchLower) ||
+      auth.name.toLowerCase().includes(searchLower) ||
+      auth.role.toLowerCase().includes(searchLower)
+    );
+  });
 
   const getStatusStyles = (status: string) => {
     return status === "active"
@@ -262,17 +272,44 @@ const AdminSignupPage = () => {
 
       {/* Auth List Table */}
       <div className="bg-white/95 rounded-lg shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">Auth Management</h2>
-          <div className="relative w-64">
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Auth Management</h2>
+            <div className="relative w-64">
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </div>
+          </div>
+          
+          {/* Role Tabs */}
+          <div className="flex space-x-2 border-b">
+            <Button
+              variant="ghost"
+              className={`rounded-none border-b-2 ${
+                !selectedRole ? 'border-primary text-primary' : 'border-transparent'
+              }`}
+              onClick={() => setSelectedRole(null)}
+            >
+              All
+            </Button>
+            {ROLES.map((r) => (
+              <Button
+                key={r.value}
+                variant="ghost"
+                className={`rounded-none border-b-2 ${
+                  selectedRole === r.value ? 'border-primary text-primary' : 'border-transparent'
+                }`}
+                onClick={() => setSelectedRole(r.value)}
+              >
+                {r.label}
+              </Button>
+            ))}
           </div>
         </div>
 
