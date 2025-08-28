@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+// api/routes/welcome/route.ts
+
 /**
  * API route to send a welcome email to a newly registered user for the Shadi Venue project.
  * Expects a POST request with JSON body: { name, email, role, password }

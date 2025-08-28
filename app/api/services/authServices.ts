@@ -21,6 +21,9 @@ function getRoleCollection(role: UserRole) {
             return "blog";
         case "marketing":
             return "marketing";
+        case "admin":
+        case "super-admin":
+            return "admins";
         default:
             throw new Error("Invalid role");
     }

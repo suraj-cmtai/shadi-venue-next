@@ -72,10 +72,24 @@ const AdminSignupPage = () => {
     setError("");
 
     try {
-      await dispatch(signup({ name, email, password, role })).unwrap();
+      const result = await dispatch(signup({ name, email, password, role })).unwrap();
       toast.success("Account created successfully!");
+      
+      // Send welcome email
+      try {
+        await fetch("/api/routes/welcome", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, role, password }),
+        });
+      } catch (welcomeError) {
+        // Log error but don't block the signup process
+        console.error("Welcome email error:", welcomeError);
+      }
+
       dispatch(fetchAuthList()); // Refresh the list
-      dispatch(fetchAuthList());
       // Reset form
       setName("");
       setEmail("");

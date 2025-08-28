@@ -5,13 +5,15 @@ export interface Auth {
     id: string;
     email: string;
     name: string;
-    role: "admin" | "super-admin" | "hotel" | "vendor" | "user";
+    role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
     status: "active" | "inactive";
     userId?: string;
     hotelId?: string;
     adminId?: string;
     vendorId?: string;
     "super-adminId"?: string;
+    blogId?: string;
+    marketingId?: string;
     createdOn: string;
     updatedOn: string;
 }
@@ -132,6 +134,13 @@ export default class AuthService {
                 return "hotels";
             case "vendor":
                 return "vendors";
+            case "blog":
+                return "blog";
+            case "marketing":
+                return "marketing";
+            case "admin":
+            case "super-admin":
+                return "admins";
             default:
                 throw new Error("Invalid role");
         }
