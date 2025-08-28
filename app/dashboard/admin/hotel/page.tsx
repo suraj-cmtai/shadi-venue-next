@@ -1448,10 +1448,10 @@ const createRequestData = async (form: HotelFormState) => {
                 className="pl-10 w-full"
               />
             </div>
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center justify-center gap-2">
+            {/* <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center justify-center gap-2">
               <Plus className="h-5 w-5" />
               <span className="hidden sm:inline">Add Hotel</span>
-            </Button>
+            </Button> */}
           </div>
         </div>
 

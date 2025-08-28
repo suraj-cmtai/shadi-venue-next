@@ -701,13 +701,13 @@ export default function VendorDashboard () {
               <h1 className="text-3xl font-bold text-gray-900">Vendor Management</h1>
               <p className="text-sm text-gray-600 mt-1">Manage your wedding vendors and services</p>
             </div>
-            <button
+            {/* <button
               onClick={() => openModal('create')}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
             >
               <Plus size={20} />
               Add New Vendor
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
