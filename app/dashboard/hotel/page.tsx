@@ -338,37 +338,37 @@ export default function HotelDashboard() {
       const uploadedWeddingBrochures = await uploadFiles(editHotelForm.uploadWeddingBrochure);
       setUploadProgress(90);
       const uploadedCancelledCheques = await uploadFiles(editHotelForm.uploadCancelledCheque);
-      
+
       const formData = new FormData();
-      
+
       // Basic hotel information
       formData.append('name', editHotelForm.name);
       formData.append('category', editHotelForm.category);
       formData.append('description', editHotelForm.description);
       formData.append('rating', editHotelForm.rating.toString());
       formData.append('status', editHotelForm.status);
-      
+
       // Location - use nested field names
       formData.append('location[address]', editHotelForm.location.address);
       formData.append('location[city]', editHotelForm.location.city);
       formData.append('location[state]', editHotelForm.location.state);
       formData.append('location[country]', editHotelForm.location.country);
       formData.append('location[zipCode]', editHotelForm.location.zipCode);
-      
+
       // Price Range
       formData.append('priceRange[startingPrice]', editHotelForm.priceRange.startingPrice.toString());
       formData.append('priceRange[currency]', editHotelForm.priceRange.currency);
-      
+
       // Contact Info
       formData.append('contactInfo[phone]', editHotelForm.contactInfo.phone);
       formData.append('contactInfo[email]', editHotelForm.contactInfo.email);
       formData.append('contactInfo[website]', editHotelForm.contactInfo.website);
-      
+
       // Policies
       formData.append('policies[checkIn]', editHotelForm.policies.checkIn);
       formData.append('policies[checkOut]', editHotelForm.policies.checkOut);
       formData.append('policies[cancellation]', editHotelForm.policies.cancellation);
-      
+
       // Personal information
       formData.append('firstName', editHotelForm.firstName);
       formData.append('lastName', editHotelForm.lastName);
@@ -376,7 +376,7 @@ export default function HotelDashboard() {
       formData.append('venueType', editHotelForm.venueType);
       formData.append('position', editHotelForm.position);
       formData.append('websiteLink', editHotelForm.websiteLink);
-      
+
       // Wedding and venue information
       formData.append('offerWeddingPackages', editHotelForm.offerWeddingPackages);
       formData.append('resortCategory', editHotelForm.resortCategory);
@@ -389,13 +389,13 @@ export default function HotelDashboard() {
       formData.append('refundPolicy', editHotelForm.refundPolicy);
       formData.append('referralSource', editHotelForm.referralSource);
       formData.append('partnershipInterest', editHotelForm.partnershipInterest);
-      
+
       // Agreement fields
       formData.append('agreeToTerms', editHotelForm.agreeToTerms.toString());
       formData.append('agreeToPrivacy', editHotelForm.agreeToPrivacy.toString());
       formData.append('signature', editHotelForm.signature);
       formData.append('googleLocation', editHotelForm.googleLocation);
-      
+
       // Convert comma-separated strings to individual fields for API (amenities as array)
       stringToArray(editHotelForm.amenities).forEach((amenity) => {
         formData.append('amenities', amenity);
@@ -404,25 +404,40 @@ export default function HotelDashboard() {
       formData.append('diningOptions', JSON.stringify(stringToArray(editHotelForm.diningOptions)));
       formData.append('otherAmenities', JSON.stringify(stringToArray(editHotelForm.otherAmenities)));
       formData.append('allInclusivePackages', editHotelForm.allInclusivePackages);
-formData.append('staffAccommodation', editHotelForm.staffAccommodation);
-formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
-      
+      formData.append('staffAccommodation', editHotelForm.staffAccommodation);
+      formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
+
       // Rooms
       formData.append('rooms', JSON.stringify(editHotelForm.rooms));
 
-      // Handle images - combine existing with new uploads
-      const allImages = [...editHotelForm.images, ...uploadedImages];
-      allImages.forEach((url, index) => {
+      // Handle images - combine existing (not removed) with new uploads
+      const finalImages = [
+        ...(editHotelForm.images || []),
+        ...uploadedImages
+      ];
+      finalImages.forEach((url, index) => {
         formData.append(`images[${index}]`, url);
       });
-      
-      // File uploads
-      uploadedResortPhotos.forEach((url, index) => {
+
+      // Handle resort photos
+      const finalResortPhotos = [
+        ...((editHotelForm as any).existing_uploadResortPhotos || selectedHotel?.uploadResortPhotos || []),
+        ...uploadedResortPhotos
+      ];
+      finalResortPhotos.forEach((url, index) => {
         formData.append(`uploadResortPhotos[${index}]`, url);
       });
-      uploadedMarriagePhotos.forEach((url, index) => {
+
+      // Handle marriage photos
+      const finalMarriagePhotos = [
+        ...((editHotelForm as any).existing_uploadMarriagePhotos || selectedHotel?.uploadMarriagePhotos || []),
+        ...uploadedMarriagePhotos
+      ];
+      finalMarriagePhotos.forEach((url, index) => {
         formData.append(`uploadMarriagePhotos[${index}]`, url);
       });
+
+      // Handle documents
       uploadedWeddingBrochures.forEach((url, index) => {
         formData.append(`uploadWeddingBrochure[${index}]`, url);
       });
@@ -480,6 +495,32 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
     const updatedImages = editHotelForm.images.filter((_, i) => i !== index);
     setEditHotelForm(prev => prev ? { ...prev, images: updatedImages } : null);
   };
+
+  // Add these new handler functions to your component:
+
+const handleNewImageRemove = (fieldName: keyof HotelFormState, index: number) => {
+  if (!editHotelForm) return;
+  const currentFiles = editHotelForm[fieldName] as File[];
+  const updatedFiles = currentFiles.filter((_, i) => i !== index);
+  setEditHotelForm(prev => prev ? { ...prev, [fieldName]: updatedFiles } : null);
+};
+
+const handleExistingFileRemove = (fieldName: string, index: number) => {
+  if (!selectedHotel || !editHotelForm) return;
+  
+  // Create a copy of the existing files and remove the one at index
+  const currentFiles = (selectedHotel as any)[fieldName] || [];
+  const updatedFiles = currentFiles.filter((_: any, i: number) => i !== index);
+  
+  // Update the form state to track removed files
+  setEditHotelForm(prev => {
+    if (!prev) return null;
+    return {
+      ...prev,
+      [`existing_${fieldName}`]: updatedFiles
+    } as any;
+  });
+};
 
   if (isLoading) {
     return (
@@ -1002,6 +1043,8 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
               </Card>
             )}
           </TabsContent>
+
+          
 
           {/* Analytics Tab */}
           {/* <TabsContent value="analytics" className="space-y-6">
@@ -1684,103 +1727,306 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
                   </div>
                 </TabsContent>
 
-                <TabsContent value="files" className="space-y-4">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="hotelImages">Upload Hotel Images</Label>
-                      <Input
-                        id="hotelImages"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(e, 'imageFiles')}
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload up to 20 photos/videos</p>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="resortPhotos">Upload Resort Photos *</Label>
-                      <Input
-                        id="resortPhotos"
-                        type="file"
-                        multiple
-                        accept="image/*,video/*"
-                        onChange={(e) => handleFileChange(e, 'uploadResortPhotos')}
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload up to 20 photos/videos of your resort</p>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="marriagePhotos">Upload Marriage Photos</Label>
-                      <Input
-                        id="marriagePhotos"
-                        type="file"
-                        multiple
-                        accept="image/*,video/*"
-                        onChange={(e) => handleFileChange(e, 'uploadMarriagePhotos')}
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload up to 30 photos/videos of weddings hosted at your venue</p>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="weddingBrochure">Upload Wedding Package Brochure</Label>
-                      <Input
-                        id="weddingBrochure"
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx"
-                        onChange={(e) => handleFileChange(e, 'uploadWeddingBrochure')}
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload your wedding package brochure (PDF, DOC, DOCX)</p>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="cancelledCheque">Cancel Cheque Copy of Your Resort Account</Label>
-                      <Input
-                        id="cancelledCheque"
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileChange(e, 'uploadCancelledCheque')}
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Upload a cancelled cheque for verification (PDF, JPG, PNG)</p>
-                    </div>
-                  </div>
+                // Replace the files TabsContent in your component with this:
 
-                  <Separator />
-                  <h3 className="text-lg font-semibold">Terms & Agreements</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="agreeTerms"
-                        checked={editHotelForm.agreeToTerms}
-                        onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToTerms: !!checked } : null)}
-                        required
-                      />
-                      <Label htmlFor="agreeTerms">I agree to the <Link href="/terms-and-conditions">terms and conditions *</Link></Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="agreePrivacy"
-                        checked={editHotelForm.agreeToPrivacy}
-                        onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToPrivacy: !!checked } : null)}
-                        required
-                      />
-                      <Label htmlFor="agreePrivacy">I agree to the <Link href="/privacy-policy">Privacy Policy *</Link></Label>
-                    </div>
+<TabsContent value="files" className="space-y-4">
+  <div className="space-y-6">
+    {/* Hotel Images Section */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-lg font-semibold">Hotel Images</Label>
+        <div>
+          <Input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => handleFileChange(e, 'imageFiles')}
+            className="hidden"
+            id="hotel-images-input"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => document.getElementById('hotel-images-input')?.click()}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Images
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Existing hotel images */}
+        {editHotelForm?.images?.map((image, index) => (
+          <div key={`existing-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-blue-200">
+              <Image
+                src={image}
+                alt={`Hotel image ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleImageRemove(index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-blue-500">Existing</Badge>
+          </div>
+        ))}
+        
+        {/* New hotel images to be uploaded */}
+        {editHotelForm?.imageFiles?.map((file, index) => (
+          <div key={`new-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-green-200">
+              <Image
+                src={URL.createObjectURL(file)}
+                alt={`New hotel image ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleNewImageRemove('imageFiles', index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-green-500">New</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
 
-                    <div>
-                      <Label htmlFor="signature">Digital Signature</Label>
-                      <Input
-                        id="signature"
-                        value={editHotelForm.signature}
-                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, signature: e.target.value } : null)}
-                        placeholder="Type your full name as signature"
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
+    <Separator />
+
+    {/* Resort Photos Section */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-lg font-semibold">Resort Photos *</Label>
+        <div>
+          <Input
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            onChange={(e) => handleFileChange(e, 'uploadResortPhotos')}
+            className="hidden"
+            id="resort-photos-input"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => document.getElementById('resort-photos-input')?.click()}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Photos
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Existing resort photos */}
+        {(selectedHotel?.uploadResortPhotos || []).map((image, index) => (
+          <div key={`existing-resort-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-blue-200">
+              <Image
+                src={image}
+                alt={`Resort photo ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleExistingFileRemove('uploadResortPhotos', index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-blue-500">Existing</Badge>
+          </div>
+        ))}
+        
+        {/* New resort photos */}
+        {editHotelForm?.uploadResortPhotos?.map((file, index) => (
+          <div key={`new-resort-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-green-200">
+              <Image
+                src={URL.createObjectURL(file)}
+                alt={`New resort photo ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleNewImageRemove('uploadResortPhotos', index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-green-500">New</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <Separator />
+
+    {/* Marriage Photos Section */}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-lg font-semibold">Marriage Photos</Label>
+        <div>
+          <Input
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            onChange={(e) => handleFileChange(e, 'uploadMarriagePhotos')}
+            className="hidden"
+            id="marriage-photos-input"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => document.getElementById('marriage-photos-input')?.click()}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Photos
+          </Button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Existing marriage photos */}
+        {(selectedHotel?.uploadMarriagePhotos || []).map((image, index) => (
+          <div key={`existing-marriage-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-blue-200">
+              <Image
+                src={image}
+                alt={`Marriage photo ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleExistingFileRemove('uploadMarriagePhotos', index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-blue-500">Existing</Badge>
+          </div>
+        ))}
+        
+        {/* New marriage photos */}
+        {editHotelForm?.uploadMarriagePhotos?.map((file, index) => (
+          <div key={`new-marriage-${index}`} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-green-200">
+              <Image
+                src={URL.createObjectURL(file)}
+                alt={`New marriage photo ${index + 1}`}
+                width={200}
+                height={200}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
+              onClick={() => handleNewImageRemove('uploadMarriagePhotos', index)}
+            >
+              ✕
+            </Button>
+            <Badge className="absolute bottom-1 left-1 text-xs bg-green-500">New</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <Separator />
+
+    {/* Document Upload Section */}
+    <div className="grid md:grid-cols-2 gap-6">
+      <div>
+        <Label htmlFor="weddingBrochure">Wedding Package Brochure</Label>
+        <Input
+          id="weddingBrochure"
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx"
+          onChange={(e) => handleFileChange(e, 'uploadWeddingBrochure')}
+        />
+        <p className="text-sm text-gray-500 mt-1">Upload your wedding package brochure (PDF, DOC, DOCX)</p>
+      </div>
+      
+      <div>
+        <Label htmlFor="cancelledCheque">Cancel Cheque Copy of Your Resort Account</Label>
+        <Input
+          id="cancelledCheque"
+          type="file"
+          multiple
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => handleFileChange(e, 'uploadCancelledCheque')}
+        />
+        <p className="text-sm text-gray-500 mt-1">Upload a cancelled cheque for verification (PDF, JPG, PNG)</p>
+      </div>
+    </div>
+
+    {/* Terms & Agreements */}
+    <Separator />
+    <h3 className="text-lg font-semibold">Terms & Agreements</h3>
+    <div className="space-y-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="agreeTerms"
+          checked={editHotelForm?.agreeToTerms || false}
+          onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToTerms: !!checked } : null)}
+          required
+        />
+        <Label htmlFor="agreeTerms">I agree to the <Link href="/terms-and-conditions">terms and conditions *</Link></Label>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="agreePrivacy"
+          checked={editHotelForm?.agreeToPrivacy || false}
+          onCheckedChange={(checked) => setEditHotelForm(prev => prev ? { ...prev, agreeToPrivacy: !!checked } : null)}
+          required
+        />
+        <Label htmlFor="agreePrivacy">I agree to the <Link href="/privacy-policy">Privacy Policy *</Link></Label>
+      </div>
+
+      <div>
+        <Label htmlFor="signature">Digital Signature</Label>
+        <Input
+          id="signature"
+          value={editHotelForm?.signature || ''}
+          onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, signature: e.target.value } : null)}
+          placeholder="Type your full name as signature"
+        />
+      </div>
+    </div>
+  </div>
+</TabsContent>
+
+
               </Tabs>
             </div>
           )}
