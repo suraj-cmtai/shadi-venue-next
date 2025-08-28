@@ -3,27 +3,19 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { logout } from "@/lib/redux/features/authSlice";
 
 const LogoutPage = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
+  
   useEffect(() => {
     const handleLogout = async () => {
       try {
-        // Call the server logout endpoint
-        const response = await fetch('/api/routes/auth', {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          throw new Error('Logout failed');
-        }
-
-        // Clear client-side storage
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("auth");
-        }
-
+        // Dispatch the logout action which will handle both API call and state update
+        await dispatch(logout() as any);
+        
         // Redirect after a brief delay
         const timer = setTimeout(() => {
           router.push("/");

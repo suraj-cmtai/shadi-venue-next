@@ -42,9 +42,13 @@ export default function Header() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Handler for logout
-  const handleLogout = () => {
-    dispatch(logout() as any);
-    setSheetOpen(false);
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout() as any);
+      setSheetOpen(false);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   // Compute dashboard link for the current role (removed useMemo)

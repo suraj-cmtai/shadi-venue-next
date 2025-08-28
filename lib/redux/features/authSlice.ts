@@ -70,9 +70,21 @@ export const login = createAsyncThunk(
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch }) => {
-    await axios.delete("/api/routes/auth");
-    dispatch(clearAuth());
-    return null;
+    try {
+      await axios.delete("/api/routes/auth");
+      // Clear any auth data from localStorage
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth");
+        localStorage.removeItem("persist:root"); // Clear persisted state if using redux-persist
+      }
+      dispatch(clearAuth());
+      return null;
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if the API call fails, clear local state
+      dispatch(clearAuth());
+      return null;
+    }
   }
 );
 
