@@ -18,7 +18,7 @@ function getRoleCollection(role: UserRole) {
         case "vendor":
             return "vendors";
         case "blog":
-            return "blogs";
+            return "blog";
         case "marketing":
             return "marketing";
         default:
