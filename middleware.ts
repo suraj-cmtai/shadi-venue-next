@@ -265,17 +265,36 @@ const API_ROUTES: RouteConfig[] = [
   },
 
   // Marketing Routes
+  // GET requests are public, other methods for marketing role
   {
     pattern: "/api/routes/contact",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["marketing", "admin", "super-admin"],
+  },
+  {
+    pattern: /^\/api\/routes\/contact\/[^/]+$/,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     roles: ["marketing", "admin", "super-admin"],
   },
   {
     pattern: "/api/routes/hotel-enquiry",
-    roles: ["marketing", "admin", "super-admin"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: [ "marketing", "admin", "super-admin"],
+  },
+  {
+    pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["hotel", "marketing", "admin", "super-admin"],
   },
   {
     pattern: "/api/routes/vendor-enquiry",
-    roles: ["marketing", "admin", "super-admin"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["vendor", "marketing", "admin", "super-admin"],
+  },
+  {
+    pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["vendor", "marketing", "admin", "super-admin"],
   },
 
   // Blog Routes
@@ -331,32 +350,7 @@ const API_ROUTES: RouteConfig[] = [
     },
   },
 
-  // https://shadi-venue-next.vercel.app/api/routes/hotel-enquiry ALL METHODS MARKETING
-
-  {
-    pattern: "/api/routes/hotel-enquiry",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-  // [ID]
-  {
-    pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-
-  // https://shadi-venue-next.vercel.app/api/routes/vendor-enquiry ALL METHODS MARKETING
-  {
-    pattern: "/api/routes/vendor-enquiry",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-  // [ID]
-  {
-    pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
+  // Removed duplicate marketing routes as they are defined above
 
   // ===== EXAMPLE: HOW TO ADD NEW ROUTES =====
   
