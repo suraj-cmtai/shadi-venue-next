@@ -378,7 +378,73 @@ export default function HotelDetailsPage() {
               </p>
             </motion.div>
 
-            
+            {/* Marriage Photos Gallery */}
+            {hotel?.uploadMarriagePhotos && hotel.uploadMarriagePhotos.length > 0 && (
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <h2 className="text-2xl font-bold text-[#212D47] mb-6">
+                  Wedding Ceremonies Gallery
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {hotel.uploadMarriagePhotos.map((photo, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        delay: 0.6 + index * 0.1,
+                        duration: 0.4,
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
+                    >
+                      <img
+                        src={photo}
+                        alt={`Wedding ceremony at ${hotel.name} - ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Resort Photos Gallery */}
+            {hotel?.uploadResortPhotos && hotel.uploadResortPhotos.length > 0 && (
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                <h2 className="text-2xl font-bold text-[#212D47] mb-6">
+                  Resort Photo Gallery
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {hotel.uploadResortPhotos.map((photo, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        delay: 0.6 + index * 0.1,
+                        duration: 0.4,
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
+                    >
+                      <img
+                        src={photo}
+                        alt={`Resort view at ${hotel.name} - ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Amenities */}
             {hotel?.amenities && hotel.amenities.length > 0 && (
@@ -622,15 +688,15 @@ export default function HotelDetailsPage() {
                     <div className="flex items-start gap-3">
                       <Clock className="w-5 h-5 text-pink-500 mt-0.5" />
                       <div>
-                        <div className="font-medium text-gray-900 break-words">
+                        <div className="font-medium text-gray-900">
                           Check-in: {hotel?.policies.checkIn}
                         </div>
-                        <div className="font-medium text-gray-900 break-words">
+                        <div className="font-medium text-gray-900">
                           Check-out: {hotel?.policies.checkOut}
                         </div>
                       </div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-3 break-words break-all">
+                    <div className="text-sm text-gray-600 mt-3">
                       {hotel?.policies.cancellation}
                     </div>
                   </div>
