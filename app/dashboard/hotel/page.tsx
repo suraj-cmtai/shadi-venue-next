@@ -962,10 +962,19 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
                         <FileText className="h-5 w-5 text-blue-600" />
                         <span>Wedding Brochure ({selectedHotel.uploadWeddingBrochure.length} files)</span>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        {selectedHotel.uploadWeddingBrochure.map((brochure, index) => (
+                          <Button 
+                            key={index}
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(brochure, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View {index + 1}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {selectedHotel.uploadCancelledCheque?.length && (
@@ -974,10 +983,19 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
                         <FileText className="h-5 w-5 text-purple-600" />
                         <span>Banking Documents ({selectedHotel.uploadCancelledCheque.length} files)</span>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        {selectedHotel.uploadCancelledCheque.map((doc, index) => (
+                          <Button 
+                            key={index}
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(doc, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View {index + 1}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>
