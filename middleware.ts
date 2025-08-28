@@ -100,6 +100,43 @@ const BLOG_ROUTES: DashboardConfig[] = [
 
 // API Routes Configuration
 const API_ROUTES: RouteConfig[] = [
+
+    // Marketing access to contact routes
+    {
+      pattern: "/api/routes/contact",
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      roles: ["marketing", "admin", "super-admin"],
+    },
+    {
+      pattern: /^\/api\/routes\/contact\/[^/]+$/,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      roles: ["marketing", "admin", "super-admin"],
+    },
+    
+    // Marketing access to hotel-enquiry routes
+    {
+      pattern: "/api/routes/hotel-enquiry",
+      methods: ["GET", "PUT", "PATCH", "DELETE"],  // Remove POST - it's public
+      roles: ["marketing", "admin", "super-admin"],
+    },
+    {
+      pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
+      methods: ["GET", "PUT", "PATCH", "DELETE"],
+      roles: ["marketing", "hotel", "admin", "super-admin"],
+    },
+    
+    // Marketing access to vendor-enquiry routes  
+    {
+      pattern: "/api/routes/vendor-enquiry",
+      methods: ["GET", "PUT", "PATCH", "DELETE"],  // Remove POST - it's public
+      roles: ["marketing", "vendor", "admin", "super-admin"],
+    },
+    {
+      pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
+      methods: ["GET", "PUT", "PATCH", "DELETE"],
+      roles: ["marketing", "vendor", "admin", "super-admin"],
+    },
+  
   // ===== PUBLIC API ROUTES =====
   {
     pattern: /\/api\/routes\/invite\/[^/]+\/responses$/,
@@ -266,37 +303,6 @@ const API_ROUTES: RouteConfig[] = [
 
   // Marketing Routes
   // GET requests are public, other methods for marketing role
-  {
-    pattern: "/api/routes/contact",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-  {
-    pattern: /^\/api\/routes\/contact\/[^/]+$/,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-  // --- FIX: Ensure marketing can access hotel-enquiry and vendor-enquiry routes ---
-  {
-    pattern: "/api/routes/hotel-enquiry",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "admin", "super-admin"],
-  },
-  {
-    pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "hotel", "admin", "super-admin"],
-  },
-  {
-    pattern: "/api/routes/vendor-enquiry",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "vendor", "admin", "super-admin"],
-  },
-  {
-    pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    roles: ["marketing", "vendor", "admin", "super-admin"],
-  },
 
   // Blog Routes
   {
