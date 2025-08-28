@@ -570,7 +570,7 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {/* <TabsTrigger value="analytics">Analytics</TabsTrigger> */}
           </TabsList>
 
           {/* Overview Tab */}
@@ -1004,7 +1004,7 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
           </TabsContent>
 
           {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
+          {/* <TabsContent value="analytics" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card>
                 <CardContent className="p-6">
@@ -1058,7 +1058,7 @@ formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </main>
 
