@@ -51,6 +51,26 @@ const AdminSignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Role-specific description messages
+  const getRoleDescription = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "Create a new administrator account with full system access";
+      case "hotel":
+        return "Add a new hotel manager to manage venue listings";
+      case "vendor":
+        return "Register a new vendor for wedding services";
+      case "user":
+        return "Create a new user account for wedding planning";
+      case "blog":
+        return "Add a new blog manager to create and manage content";
+      case "marketing":
+        return "Register a marketing team member to manage inquiries and promotions";
+      default:
+        return "Create a new account";
+    }
+  };
   
   // Table State
   const [searchQuery, setSearchQuery] = useState("");
@@ -167,8 +187,11 @@ const AdminSignupPage = () => {
   return (
     <div className="min-h-[90vh] p-6 space-y-8">
       {/* Create New Auth Form */}
-      <div className="max-w-md mx-auto bg-white/95 p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-semibold mb-6">Create New Auth</h2>
+      <div className="max-w-md mx-auto bg-white/95 p-6 rounded-lg shadow-sm border border-pink-200/50">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-semibold text-pink-700">Create New Account</h2>
+          <p className="text-gray-600 mt-2">{getRoleDescription(role)}</p>
+        </div>
         
         {error && (
           <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
@@ -271,10 +294,10 @@ const AdminSignupPage = () => {
       </div>
 
       {/* Auth List Table */}
-      <div className="bg-white/95 rounded-lg shadow-sm p-6">
+      <div className="bg-white/95 rounded-lg shadow-sm p-6 border border-pink-200/50">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold">Auth Management</h2>
+            <h2 className="text-2xl font-semibold text-pink-700">Auth Management</h2>
             <div className="relative w-64">
               <Input
                 type="text"
@@ -292,7 +315,7 @@ const AdminSignupPage = () => {
             <Button
               variant="ghost"
               className={`rounded-none border-b-2 ${
-                !selectedRole ? 'border-primary text-primary' : 'border-transparent'
+                !selectedRole ? 'border-pink-500 text-pink-700' : 'border-transparent'
               }`}
               onClick={() => setSelectedRole(null)}
             >
@@ -303,7 +326,7 @@ const AdminSignupPage = () => {
                 key={r.value}
                 variant="ghost"
                 className={`rounded-none border-b-2 ${
-                  selectedRole === r.value ? 'border-primary text-primary' : 'border-transparent'
+                  selectedRole === r.value ? 'border-pink-500 text-pink-700' : 'border-transparent hover:text-pink-600'
                 }`}
                 onClick={() => setSelectedRole(r.value)}
               >

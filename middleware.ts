@@ -331,6 +331,33 @@ const API_ROUTES: RouteConfig[] = [
     },
   },
 
+  // https://shadi-venue-next.vercel.app/api/routes/hotel-enquiry ALL METHODS MARKETING
+
+  {
+    pattern: "/api/routes/hotel-enquiry",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["marketing", "admin", "super-admin"],
+  },
+  // [ID]
+  {
+    pattern: /^\/api\/routes\/hotel-enquiry\/[^/]+$/,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["marketing", "admin", "super-admin"],
+  },
+
+  // https://shadi-venue-next.vercel.app/api/routes/vendor-enquiry ALL METHODS MARKETING
+  {
+    pattern: "/api/routes/vendor-enquiry",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["marketing", "admin", "super-admin"],
+  },
+  // [ID]
+  {
+    pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    roles: ["marketing", "admin", "super-admin"],
+  },
+
   // ===== EXAMPLE: HOW TO ADD NEW ROUTES =====
   
   // Example: Analytics route for managers and above

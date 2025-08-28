@@ -30,6 +30,24 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Role-specific welcome messages
+  const getRoleMessage = (role: string) => {
+    switch (role) {
+      case "user":
+        return "Create your account to start planning your dream wedding!";
+      case "hotel":
+        return "Join as a Hotel Partner and showcase your venue to thousands of couples!";
+      case "vendor":
+        return "Start your journey as a Wedding Service Provider!";
+      case "blog":
+        return "Share your wedding expertise and inspiration through our blog platform!";
+      case "marketing":
+        return "Join our marketing team to help connect couples with their perfect venues!";
+      default:
+        return "Sign up to get started";
+    }
+  };
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -71,14 +89,14 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy/5 via-blue-50/30 to-orange-50/20 px-4">
-      <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-xl p-8 flex flex-col items-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-pink-100/30 to-pink-50/20 px-4">
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-2xl border border-pink-200/50 shadow-xl p-8 flex flex-col items-center">
         <div className="mb-6 flex flex-col items-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange to-orange/80 rounded-full flex items-center justify-center mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-400 rounded-full flex items-center justify-center mb-4">
             <UserCircle2 className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-navy">Create Account</h2>
-          <p className="text-gray-600 text-sm mt-1">Sign up to get started</p>
+          <h2 className="text-2xl font-bold text-pink-700">Create Account</h2>
+          <p className="text-gray-600 text-sm mt-1">{getRoleMessage(role)}</p>
         </div>
 
         {error && (
