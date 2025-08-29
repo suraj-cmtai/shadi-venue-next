@@ -709,7 +709,12 @@ const DynamicVenuePage: React.FC = () => {
               : 'grid-cols-1'
             }`}>
               {ordered.map((venue) => (
-                <VenueCard key={venue.id} venue={venue} onVenueClick={handleVenueClick} />
+                <div key={venue.id} className="relative">
+                  {venue.isPremium && (
+                    <Badge className="absolute top-2 left-2 z-10 bg-[#212D47] text-white">Premium</Badge>
+                  )}
+                  <VenueCard venue={venue} onVenueClick={handleVenueClick} />
+                </div>
               ))}
             </div>
           );

@@ -10,15 +10,12 @@ import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle } from
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import GradientButton from "@/components/GradientButton";
 import { Button } from "@/components/ui/button";
 
 const ROLES = [
   { value: "user", label: "User" },
   { value: "hotel", label: "Hotel" },
   { value: "vendor", label: "Vendor" },
-  { value: "blog", label: "Blog" },
-  { value: "marketing", label: "Marketing" },
   // Add more roles here as needed
 ];
 
@@ -40,10 +37,6 @@ const SignupPage = () => {
         return "Join as a Hotel Partner and showcase your venue to thousands of couples!";
       case "vendor":
         return "Start your journey as a Wedding Service Provider!";
-      case "blog":
-        return "Share your wedding expertise and inspiration through our blog platform!";
-      case "marketing":
-        return "Join our marketing team to help connect couples with their perfect venues!";
       default:
         return "Sign up to get started";
     }

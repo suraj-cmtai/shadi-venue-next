@@ -19,7 +19,9 @@ import {
   selectVendorLoading, 
   selectVendorError,
   clearSelectedVendor,
-  clearError
+  clearError,
+  fetchActiveVendors,
+  selectActiveVendors
 } from "@/lib/redux/features/vendorSlice"
 import {
   createVendorEnquiry,
@@ -82,6 +84,7 @@ export default function VendorDetailsPage() {
     const vendor = useAppSelector(selectSelectedVendor)
     const loading = useAppSelector(selectVendorLoading)
     const error = useAppSelector(selectVendorError)
+    const allVendors = useAppSelector(selectActiveVendors) || []
 
     // Vendor enquiry redux state
     const enquiryLoading = useAppSelector(selectVendorEnquiryLoading)
@@ -103,12 +106,16 @@ export default function VendorDetailsPage() {
         if (vendorId) {
             dispatch(fetchVendorById(vendorId))
         }
+        if (!allVendors || allVendors.length === 0) {
+            dispatch(fetchActiveVendors())
+        }
         // Cleanup on unmount
         return () => {
             dispatch(clearSelectedVendor())
             setEnquirySuccess(false)
         }
-    }, [params.id, dispatch])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [params.id])
 
     // Handle form input changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -496,7 +503,7 @@ export default function VendorDetailsPage() {
                                         className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
                                         onClick={() => setIsBookingOpen(true)}
                                     >
-                                        Book Now
+                                        Enquiry Now
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -588,14 +595,14 @@ export default function VendorDetailsPage() {
                 <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
                     <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
-                            <DialogTitle>Book Now</DialogTitle>
+                            <DialogTitle>Enquiry Now</DialogTitle>
                         </DialogHeader>
                         {enquirySuccess ? (
                             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-8">
                                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Send className="w-8 h-8 text-green-600" />
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Booked!</h3>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Enquiry Sent!</h3>
                                 <p className="text-gray-600 mb-6">We received your request. We'll reach out shortly.</p>
                                 <Button onClick={() => { setFormData({ name: '', phone: '', email: '' }); setEnquirySuccess(false); setIsBookingOpen(false); }} variant="outline">Close</Button>
                             </motion.div>
@@ -624,12 +631,33 @@ export default function VendorDetailsPage() {
                                     </div>
                                 </div>
                                 <Button type="submit" className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white" disabled={enquiryLoading}>
-                                    {enquiryLoading ? "Booking..." : "Book Now"}
+                                    {enquiryLoading ? "Enquiry..." : "Enquiry Now"}
                                 </Button>
                             </form>
                         )}
                     </DialogContent>
                 </Dialog>
+
+                {/* Our Premium Vendors */}
+                {allVendors && allVendors.filter(v => v.isPremium && v.id !== vendor?.id).length > 0 && (
+                    <div className="max-w-7xl mx-auto px-6 py-12">
+                        <h2 className="text-2xl font-bold text-[#212D47] mb-6">Our Premium Vendors</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {allVendors.filter(v => v.isPremium && v.id !== vendor?.id).slice(0, 6).map((v) => (
+                                <Card key={v.id} className="group cursor-pointer hover:shadow-lg transition" onClick={() => router.push(`/vendors/${v.id}`)}>
+                                    <div className="relative aspect-[4/3] overflow-hidden">
+                                        <img src={v.coverImageUrl || v.logoUrl || "/api/placeholder/400/300"} alt={v.businessName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                        <Badge className="absolute top-3 left-3 bg-[#212D47]/90 text-white">Premium</Badge>
+                                    </div>
+                                    <CardContent className="p-4">
+                                        <h3 className="font-semibold line-clamp-1 group-hover:text-[#212D47]">{v.businessName}</h3>
+                                        <div className="text-sm text-gray-600 mt-1 flex items-center"><MapPin className="w-4 h-4 mr-1" />{v.city}{v.state ? `, ${v.state}` : ''}</div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

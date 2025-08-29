@@ -749,7 +749,12 @@ const DynamicVendorPage: React.FC = () => {
               : 'grid-cols-1'
             }`}>
               {ordered.map((vendor) => (
-                <VendorCard key={vendor.id} vendor={vendor} onVendorClick={handleVendorClick} />
+                <div key={vendor.id} className="relative">
+                  {vendor.isPremium && (
+                    <Badge className="absolute top-2 left-2 z-10 bg-[#212D47] text-white">Premium</Badge>
+                  )}
+                  <VendorCard vendor={vendor} onVendorClick={handleVendorClick} />
+                </div>
               ))}
             </div>
           );
