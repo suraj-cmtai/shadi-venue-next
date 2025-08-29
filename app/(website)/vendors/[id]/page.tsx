@@ -7,6 +7,7 @@ import { Star, MapPin, Phone, Mail, Globe, Clock, Users, Camera, ArrowLeft, Send
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -94,6 +95,7 @@ export default function VendorDetailsPage() {
       phone: '',
       email: ''
     })
+    const [isBookingOpen, setIsBookingOpen] = useState(false)
 
     // Fetch vendor data on mount
     useEffect(() => {
@@ -492,58 +494,60 @@ export default function VendorDetailsPage() {
                                     
                                     <Button 
                                         className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                                        onClick={() => document.getElementById('enquiry-form')?.scrollIntoView({ behavior: 'smooth' })}
+                                        onClick={() => setIsBookingOpen(true)}
                                     >
-                                        Send Enquiry
+                                        Book Now
                                     </Button>
                                 </CardContent>
                             </Card>
                         </motion.div>
 
-                        {/* Contact Info */}
-                        <motion.div
-                            initial={{ y: 30, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ delay: 0.7, duration: 0.6 }}
-                        >
-                            <Card>
-                                <CardContent className="p-6">
-                                    <h3 className="text-xl font-bold text-[#212D47] mb-4">Contact Information</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <Users className="w-5 h-5 text-pink-500" />
-                                            <div>
-                                                <div className="font-medium">{vendor?.contactPersonName}</div>
-                                                <div className="text-sm text-gray-600">{vendor?.designation}</div>
+                        {/* Contact Info - show only for premium */}
+                        {vendor?.isPremium && (
+                            <motion.div
+                                initial={{ y: 30, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.7, duration: 0.6 }}
+                            >
+                                <Card>
+                                    <CardContent className="p-6">
+                                        <h3 className="text-xl font-bold text-[#212D47] mb-4">Contact Information</h3>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <Users className="w-5 h-5 text-pink-500" />
+                                                <div>
+                                                    <div className="font-medium">{vendor?.contactPersonName}</div>
+                                                    <div className="text-sm text-gray-600">{vendor?.designation}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <Phone className="w-5 h-5 text-pink-500" />
-                                            <span className="text-gray-700">{vendor?.mobileNumber}</span>
-                                            {vendor?.mobileVerified && (
-                                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                            <div className="flex items-center gap-3">
+                                                <Phone className="w-5 h-5 text-pink-500" />
+                                                <span className="text-gray-700">{vendor?.mobileNumber}</span>
+                                                {vendor?.mobileVerified && (
+                                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                                )}
+                                            </div>
+                                            {vendor?.whatsappNumber && (
+                                                <div className="flex items-center gap-3">
+                                                    <Phone className="w-5 h-5 text-green-500" />
+                                                    <span className="text-gray-700">{vendor?.whatsappNumber} (WhatsApp)</span>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-3">
+                                                <Mail className="w-5 h-5 text-pink-500" />
+                                                <span className="text-gray-700">{vendor?.email}</span>
+                                            </div>
+                                            {vendor?.websiteOrSocial && (
+                                                <div className="flex items-center gap-3">
+                                                    <Globe className="w-5 h-5 text-pink-500" />
+                                                    <span className="text-gray-700">{vendor?.websiteOrSocial}</span>
+                                                </div>
                                             )}
                                         </div>
-                                        {vendor?.whatsappNumber && (
-                                            <div className="flex items-center gap-3">
-                                                <Phone className="w-5 h-5 text-green-500" />
-                                                <span className="text-gray-700">{vendor?.whatsappNumber} (WhatsApp)</span>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-3">
-                                            <Mail className="w-5 h-5 text-pink-500" />
-                                            <span className="text-gray-700">{vendor?.email}</span>
-                                        </div>
-                                        {vendor?.websiteOrSocial && (
-                                            <div className="flex items-center gap-3">
-                                                <Globe className="w-5 h-5 text-pink-500" />
-                                                <span className="text-gray-700">{vendor?.websiteOrSocial}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
 
                         {/* Payment Information */}
                         {vendor?.paymentModesAccepted && vendor.paymentModesAccepted.length > 0 && (
@@ -580,114 +584,52 @@ export default function VendorDetailsPage() {
                     </div>
                 </div>
 
-                {/* Enquiry Form */}
-                <motion.div
-                    id="enquiry-form"
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.9, duration: 0.6 }}
-                    className="mt-16"
-                >
-                    <Card className="max-w-2xl mx-auto">
-                        <CardHeader>
-                            <CardTitle className="text-2xl font-bold text-[#212D47] text-center">
-                                Send Enquiry
-                            </CardTitle>
-                            <p className="text-center text-gray-600">
-                                Get in touch with {vendor?.businessName} directly
-                            </p>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            {enquirySuccess ? (
-                                <motion.div
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="text-center py-12"
-                                >
-                                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Send className="w-8 h-8 text-green-600" />
+                {/* Booking Modal */}
+                <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>Book Now</DialogTitle>
+                        </DialogHeader>
+                        {enquirySuccess ? (
+                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Send className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Booked!</h3>
+                                <p className="text-gray-600 mb-6">We received your request. We'll reach out shortly.</p>
+                                <Button onClick={() => { setFormData({ name: '', phone: '', email: '' }); setEnquirySuccess(false); setIsBookingOpen(false); }} variant="outline">Close</Button>
+                            </motion.div>
+                        ) : (
+                            <form onSubmit={handleFormSubmit} className="space-y-6">
+                                {enquiryError && (
+                                    <Alert variant="destructive">
+                                        <AlertDescription className="flex items-center justify-between">
+                                            {enquiryError}
+                                            <Button variant="ghost" size="sm" onClick={handleClearEnquiryError} className="h-auto p-1 ml-2">✕</Button>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label htmlFor="name" className="mb-2">Name *</Label>
+                                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Your Full Name" />
                                     </div>
-                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Enquiry Sent!</h3>
-                                    <p className="text-gray-600 mb-6">Your enquiry has been sent to the vendor. They will contact you soon!</p>
-                                    <Button 
-                                        onClick={() => {
-                                            setFormData({
-                                                name: '',
-                                                phone: '',
-                                                email: ''
-                                            })
-                                            setEnquirySuccess(false)
-                                        }}
-                                        variant="outline"
-                                    >
-                                        Send Another Enquiry
-                                    </Button>
-                                </motion.div>
-                            ) : (
-                                <form onSubmit={handleFormSubmit} className="space-y-6">
-                                    {enquiryError && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription className="flex items-center justify-between">
-                                                {enquiryError}
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm" 
-                                                    onClick={handleClearEnquiryError}
-                                                    className="h-auto p-1 ml-2"
-                                                >
-                                                    ✕
-                                                </Button>
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label htmlFor="name">Name *</Label>
-                                            <Input
-                                                id="name"
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleInputChange}
-                                                required
-                                                placeholder="Your Full Name"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="phone">Phone Number *</Label>
-                                            <Input
-                                                id="phone"
-                                                name="phone"
-                                                type="tel"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                                required
-                                                placeholder="Your Phone Number"
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <Label htmlFor="email">Email (Optional)</Label>
-                                            <Input
-                                                id="email"
-                                                name="email"
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                placeholder="your@email.com"
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="phone" className="mb-2">Phone Number *</Label>
+                                        <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleInputChange} required placeholder="Your Phone Number" />
                                     </div>
-                                    <Button
-                                        type="submit"
-                                        className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                                        disabled={enquiryLoading}
-                                    >
-                                        {enquiryLoading ? "Sending..." : "Send Enquiry"}
-                                    </Button>
-                                </form>
-                            )}
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                                    <div className="md:col-span-2">
+                                        <Label htmlFor="email" className="mb-2">Email (Optional)</Label>
+                                        <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="your@email.com" />
+                                    </div>
+                                </div>
+                                <Button type="submit" className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white" disabled={enquiryLoading}>
+                                    {enquiryLoading ? "Booking..." : "Book Now"}
+                                </Button>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

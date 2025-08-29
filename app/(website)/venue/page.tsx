@@ -60,6 +60,7 @@ const DynamicVenuePage: React.FC = () => {
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [localSearch, setLocalSearch] = useState<string>('');
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   // On mount, fetch hotels and reset filters
   useEffect(() => {
@@ -81,10 +82,7 @@ const DynamicVenuePage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, hasFetched]);
 
-  // Keep localSearch in sync with redux searchQuery (for reset)
-  useEffect(() => {
-    setLocalSearch(searchQuery || '');
-  }, [searchQuery]);
+  // Avoid syncing redux search back into input to prevent focus jumps
 
   // Dynamic filter options derived from active hotels only
   const filterOptions = useMemo(() => {
@@ -178,16 +176,14 @@ const DynamicVenuePage: React.FC = () => {
     });
   }, [activeHotels, searchQuery, filters]);
 
-  // Debounced search handler
-  const handleLocalSearchChange = (query: string) => {
-    setLocalSearch(query);
-    if (searchTimeout.current) {
-      clearTimeout(searchTimeout.current);
+  // Apply-only search to avoid re-rendering while typing
+  const applySearch = () => {
+    const raw = searchInputRef.current ? searchInputRef.current.value : localSearch;
+    const trimmed = (raw || '').trim();
+    if (searchQuery !== trimmed) {
+      dispatch(setSearchQuery(trimmed));
     }
-    // Debounce: only dispatch after 400ms of inactivity
-    searchTimeout.current = setTimeout(() => {
-      dispatch(setSearchQuery(query));
-    }, 400);
+    setLocalSearch(trimmed);
   };
 
   // Handle filter changes
@@ -305,19 +301,7 @@ const DynamicVenuePage: React.FC = () => {
         <p className="text-lg sm:text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
           Discover amazing venues for your special day
         </p>
-        {/* Search Input */}
-        <div className="w-full max-w-2xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5 pointer-events-none" />
-            <Input
-              placeholder="Search for wedding venues..."
-              value={localSearch}
-              onChange={(e) => handleLocalSearchChange(e.target.value)}
-              className="pl-12 py-4 text-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg focus:ring-2 focus:ring-white/40 transition"
-              aria-label="Search for wedding venues"
-            />
-          </div>
-        </div>
+        {/* Search is available in the sticky toolbar below to avoid duplicate inputs */}
       </div>
     </section>
   );
@@ -444,14 +428,29 @@ const DynamicVenuePage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <Input
                 placeholder="Search Wedding Venues..."
-                value={localSearch}
-                onChange={(e) => handleLocalSearchChange(e.target.value)}
+                defaultValue={localSearch}
+                onChange={() => { /* uncontrolled typing - do not dispatch */ }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applySearch();
+                  }
+                }}
+                onBlur={(e) => {
+                  const next = e.relatedTarget as HTMLElement | null;
+                  if (!next || !next.closest('.venue-search-controls')) {
+                    setTimeout(() => {
+                      searchInputRef.current?.focus();
+                    }, 0);
+                  }
+                }}
+                ref={searchInputRef}
                 className="pl-10"
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 venue-search-controls">
             {activeFilterCount > 0 && (
               <Badge className="bg-[#212D47] text-white">
                 {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''} applied
@@ -459,6 +458,7 @@ const DynamicVenuePage: React.FC = () => {
             )}
 
             <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={applySearch}>Apply</Button>
               <Button
                 size="sm"
                 onClick={() => setViewMode('list')}
@@ -699,16 +699,21 @@ const DynamicVenuePage: React.FC = () => {
         {!loading && !error && filteredVenues.length === 0 && hasFetched && <NoResults />}
 
         {/* Venues Grid */}
-        {!loading && !error && filteredVenues.length > 0 && (
-          <div className={`grid gap-6 ${viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-            : 'grid-cols-1'
-          }`}>
-            {filteredVenues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} onVenueClick={handleVenueClick} />
-            ))}
-          </div>
-        )}
+        {!loading && !error && filteredVenues.length > 0 && (() => {
+          const normal = filteredVenues.filter(v => !v.isPremium);
+          const premium = filteredVenues.filter(v => v.isPremium);
+          const ordered = [...normal.slice(0, 6), ...premium, ...normal.slice(6)];
+          return (
+            <div className={`grid gap-6 ${viewMode === 'grid' 
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+              : 'grid-cols-1'
+            }`}>
+              {ordered.map((venue) => (
+                <VenueCard key={venue.id} venue={venue} onVenueClick={handleVenueClick} />
+              ))}
+            </div>
+          );
+        })()}
       </main>
     </div>
   );

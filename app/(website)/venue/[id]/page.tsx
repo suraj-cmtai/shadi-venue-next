@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,6 +117,7 @@ export default function HotelDetailsPage() {
     phoneNumber: "",
     email: "",
   });
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   // Fetch hotel data on mount
   useEffect(() => {
@@ -610,11 +612,7 @@ export default function HotelDetailsPage() {
                   </div>
                   <Button
                     className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                    onClick={() =>
-                      document
-                        .getElementById("contact-form")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                    onClick={() => setIsBookingOpen(true)}
                   >
                     Book Now
                   </Button>
@@ -622,7 +620,8 @@ export default function HotelDetailsPage() {
               </Card>
             </motion.div>
 
-            {/* Contact Info */}
+            {/* Contact Info - only for premium */}
+            {hotel?.isPremium && (
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -633,45 +632,48 @@ export default function HotelDetailsPage() {
                   <h3 className="text-xl font-bold text-[#212D47] mb-4">
                     Contact Information
                   </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-pink-500" />
-                      <span className="text-gray-700">
-                        {hotel?.contactInfo.phone}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-pink-500" />
-                      <span className="text-gray-700">
-                        {hotel?.contactInfo.email}
-                      </span>
-                    </div>
-                    {hotel?.contactInfo.website && (
+                  {
+                    <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <Globe className="w-5 h-5 text-pink-500" />
+                        <Phone className="w-5 h-5 text-pink-500" />
                         <span className="text-gray-700">
-                          {hotel?.contactInfo.website}
+                          {hotel?.contactInfo.phone}
                         </span>
                       </div>
-                    )}
-                    {/* Google Location in Contact Info */}
-                    {hotel?.googleLocation && (
                       <div className="flex items-center gap-3">
-                        <MapPin className="w-5 h-5 text-pink-500" />
-                        <a
-                          href={hotel.googleLocation}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-700 underline hover:text-pink-700"
-                        >
-                          View on Google Maps
-                        </a>
+                        <Mail className="w-5 h-5 text-pink-500" />
+                        <span className="text-gray-700">
+                          {hotel?.contactInfo.email}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                      {hotel?.contactInfo.website && (
+                        <div className="flex items-center gap-3">
+                          <Globe className="w-5 h-5 text-pink-500" />
+                          <span className="text-gray-700">
+                            {hotel?.contactInfo.website}
+                          </span>
+                        </div>
+                      )}
+                      {/* Google Location in Contact Info */}
+                      {hotel?.googleLocation && (
+                        <div className="flex items-center gap-3">
+                          <MapPin className="w-5 h-5 text-pink-500" />
+                          <a
+                            href={hotel.googleLocation}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-700 underline hover:text-pink-700"
+                          >
+                            View on Google Maps
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  }
                 </CardContent>
               </Card>
             </motion.div>
+            )}
 
             {/* Policies */}
             <motion.div
@@ -706,118 +708,49 @@ export default function HotelDetailsPage() {
           </div>
         </div>
 
-        {/* Enquiry Form */}
-        <motion.div
-          id="contact-form"
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-          className="mt-16"
-        >
-          <Card className="max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-[#212D47] text-center">
-                Request a Booking
-              </CardTitle>
-              <p className="text-center text-gray-600">
-                Fill out the form below and we'll get back to you within 24 hours
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              {enquirySuccess ? (
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-center py-12"
-                >
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Send className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Thank You!
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Your inquiry has been submitted successfully. We'll contact you soon!
-                  </p>
-                  <Button
-                    onClick={() => {
-                      setFormData({
-                        name: "",
-                        phoneNumber: "",
-                        email: "",
-                      });
-                      setEnquirySuccess(false);
-                    }}
-                    variant="outline"
-                  >
-                    Submit Another Inquiry
-                  </Button>
-                </motion.div>
-              ) : (
-                <form onSubmit={handleFormSubmit} className="space-y-6">
-                  {enquiryError && (
-                    <Alert variant="destructive">
-                      <AlertDescription>{enquiryError}</AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Enter your full name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phoneNumber">Phone Number *</Label>
-                      <Input
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Enter your phone number"
-                      />
-                    </div>
+        {/* Booking Modal */}
+        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Book Now</DialogTitle>
+            </DialogHeader>
+            {enquirySuccess ? (
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Send className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
+                <p className="text-gray-600 mb-6">Your inquiry has been submitted successfully. We'll contact you soon!</p>
+                <Button onClick={() => { setFormData({ name: "", phoneNumber: "", email: "" }); setEnquirySuccess(false); setIsBookingOpen(false); }} variant="outline">Close</Button>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                {enquiryError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{enquiryError}</AlertDescription>
+                  </Alert>
+                )}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Enter your full name" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email (optional)</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email address"
-                    />
+                    <Label htmlFor="phoneNumber">Phone Number *</Label>
+                    <Input id="phoneNumber" name="phoneNumber" type="tel" value={formData.phoneNumber} onChange={handleInputChange} required placeholder="Enter your phone number" />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                    disabled={enquiryLoading}
-                  >
-                    {enquiryLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit Inquiry
-                      </>
-                    )}
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email (optional)</Label>
+                  <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="Enter your email address" />
+                </div>
+                <Button type="submit" className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white" disabled={enquiryLoading}>
+                  {enquiryLoading ? "Submitting..." : "Book Now"}
+                </Button>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
