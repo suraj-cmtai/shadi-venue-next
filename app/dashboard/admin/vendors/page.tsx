@@ -47,6 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -209,6 +210,22 @@ export default function VendorDashboard () {
       toast.success('Vendor deleted successfully!');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to delete vendor');
+    }
+  };
+
+  // Handle premium toggle
+  const handlePremiumToggle = async (vendorId: string, isPremium: boolean) => {
+    try {
+      const vendor = vendors.find((v: Vendor) => v.id === vendorId);
+      if (!vendor) return;
+      
+      const formData = new FormData();
+      formData.append('isPremium', isPremium.toString());
+      
+      await dispatch(updateVendor({ id: vendorId, data: formData })).unwrap();
+      toast.success(`Vendor premium status ${isPremium ? 'enabled' : 'disabled'}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update premium status');
     }
   };
 
@@ -877,7 +894,17 @@ export default function VendorDashboard () {
                     <TableCell className="text-gray-600">{vendor.category}</TableCell>
                     <TableCell className="text-gray-600">{vendor.city || 'N/A'}, {vendor.state || 'N/A'}</TableCell>
                     <TableCell className="text-gray-600">₹{(vendor.startingPrice || 0).toLocaleString()}</TableCell>
-                    <TableCell className="text-gray-600">{vendor.isPremium ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={Boolean(vendor.isPremium)}
+                          onCheckedChange={(checked) => handlePremiumToggle(vendor.id, checked)}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {Boolean(vendor.isPremium)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-gray-600">{vendor.isFeatured ? 'Yes' : 'No'}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${vendor.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>

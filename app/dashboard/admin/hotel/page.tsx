@@ -62,6 +62,7 @@ import {
   Archive,
   AlertCircle,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 import Link from 'next/link';
 
@@ -625,6 +626,24 @@ const createRequestData = async (form: HotelFormState) => {
       toast.success(`Hotel status updated to ${newStatus}`);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update hotel status');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePremiumToggle = async (hotelId: string, isPremium: boolean) => {
+    try {
+      setIsSubmitting(true);
+      const hotel = hotels.find((h: Hotel) => h.id === hotelId);
+      if (!hotel) return;
+      
+      const formData = new FormData();
+      formData.append('isPremium', isPremium.toString());
+      
+      await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
+      toast.success(`Hotel premium status ${isPremium ? 'enabled' : 'disabled'}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update premium status');
     } finally {
       setIsSubmitting(false);
     }
@@ -1514,7 +1533,18 @@ const createRequestData = async (form: HotelFormState) => {
                       }).format(hotel.priceRange.startingPrice || 0) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
-                    <TableCell className="text-muted-foreground">{(hotel as any).isPremium ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={Boolean((hotel as any).isPremium)}
+                          onCheckedChange={(checked) => handlePremiumToggle(hotel.id, checked)}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {Boolean((hotel as any).isPremium)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(hotel.status)}
