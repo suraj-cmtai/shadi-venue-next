@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phoneNumber, authId, status } = body;
+    const { name, email, phoneNumber, authId, status, message } = body;
 
     // Validate required fields
     if (!authId) {
@@ -54,7 +54,8 @@ export async function POST(req: Request) {
       email : email || "", // Optional field
       phoneNumber,
       status: status || "Pending",
-      authId
+      authId,
+      message: message || ""
     };
 
     const newEnquiry = await HotelEnquiryService.createEnquiry(enquiryData);

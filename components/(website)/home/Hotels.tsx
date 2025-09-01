@@ -61,7 +61,7 @@ export default function Hotels() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Where to Stay for the Wedding Weekend
+          India’s Most Beautiful Wedding Venues for Your Special Day
         </motion.h2>
 
         {/* Grid of hotels (max 8 items) */}

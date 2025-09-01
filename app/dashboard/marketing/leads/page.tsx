@@ -57,6 +57,9 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+// Add Textarea import
+import { Textarea } from "@/components/ui/textarea"
+
 export default function ContactPage() {
   const dispatch = useDispatch<AppDispatch>()
   const contacts = useSelector(selectContacts)
@@ -432,6 +435,7 @@ export default function ContactPage() {
                   id="name"
                   value={newContact.name}
                   onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+                  disabled
                 />
               </div>
               <div className="grid gap-2">
@@ -441,6 +445,7 @@ export default function ContactPage() {
                   type="email"
                   value={newContact.email}
                   onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                  disabled
                 />
               </div>
               <div className="grid gap-2">
@@ -449,6 +454,7 @@ export default function ContactPage() {
                   id="phone"
                   value={newContact.phone}
                   onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+                  disabled
                 />
               </div>
               <div className="grid gap-2">
@@ -457,11 +463,12 @@ export default function ContactPage() {
                   id="subject"
                   value={newContact.subject}
                   onChange={(e) => setNewContact({ ...newContact, subject: e.target.value })}
+                  disabled
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="message">Message</Label>
-                <Input
+                <Textarea
                   id="message"
                   value={newContact.message}
                   onChange={(e) => setNewContact({ ...newContact, message: e.target.value })}
@@ -475,6 +482,7 @@ export default function ContactPage() {
                     type="date"
                     value={newContact.preferredDate}
                     onChange={(e) => setNewContact({ ...newContact, preferredDate: e.target.value })}
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -484,6 +492,7 @@ export default function ContactPage() {
                     type="number"
                     value={newContact.guests as any}
                     onChange={(e) => setNewContact({ ...newContact, guests: e.target.value })}
+                    disabled
                   />
                 </div>
               </div>
@@ -494,6 +503,7 @@ export default function ContactPage() {
                     id="locationPreference"
                     value={newContact.locationPreference}
                     onChange={(e) => setNewContact({ ...newContact, locationPreference: e.target.value })}
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -502,6 +512,7 @@ export default function ContactPage() {
                     id="venueServiceType"
                     value={newContact.venueServiceType}
                     onChange={(e) => setNewContact({ ...newContact, venueServiceType: e.target.value })}
+                    disabled
                   />
                 </div>
               </div>
@@ -512,6 +523,7 @@ export default function ContactPage() {
                     id="budgetRange"
                     value={newContact.budgetRange}
                     onChange={(e) => setNewContact({ ...newContact, budgetRange: e.target.value })}
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -520,6 +532,7 @@ export default function ContactPage() {
                     id="contactTimePreference"
                     value={newContact.contactTimePreference}
                     onChange={(e) => setNewContact({ ...newContact, contactTimePreference: e.target.value })}
+                    disabled
                   />
                 </div>
               </div>
@@ -549,8 +562,9 @@ export default function ContactPage() {
                     onValueChange={(value: Contact['priority']) =>
                       setNewContact({ ...newContact, priority: value })
                     }
+                    disabled
                   >
-                    <SelectTrigger id="priority">
+                    <SelectTrigger id="priority" disabled>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
@@ -603,6 +617,7 @@ export default function ContactPage() {
                         name: e.target.value,
                       })
                     }
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -617,6 +632,7 @@ export default function ContactPage() {
                         email: e.target.value,
                       })
                     }
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -630,6 +646,7 @@ export default function ContactPage() {
                         phone: e.target.value,
                       })
                     }
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
@@ -643,11 +660,12 @@ export default function ContactPage() {
                         subject: e.target.value,
                       })
                     }
+                    disabled
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-message">Message</Label>
-                  <Input
+                  <Textarea
                     id="edit-message"
                     value={selectedContact.message}
                     onChange={(e) =>
@@ -666,6 +684,7 @@ export default function ContactPage() {
                       type="date"
                       value={selectedContact.preferredDate || ''}
                       onChange={(e) => setSelectedContact({ ...selectedContact, preferredDate: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div className="grid gap-2">
@@ -675,6 +694,7 @@ export default function ContactPage() {
                       type="number"
                       value={typeof selectedContact.guests === 'undefined' ? '' : String(selectedContact.guests)}
                       onChange={(e) => setSelectedContact({ ...selectedContact, guests: Number(e.target.value) })}
+                      disabled
                     />
                   </div>
                 </div>
@@ -685,6 +705,7 @@ export default function ContactPage() {
                       id="edit-locationPreference"
                       value={selectedContact.locationPreference || ''}
                       onChange={(e) => setSelectedContact({ ...selectedContact, locationPreference: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div className="grid gap-2">
@@ -693,6 +714,7 @@ export default function ContactPage() {
                       id="edit-venueServiceType"
                       value={selectedContact.venueServiceType || ''}
                       onChange={(e) => setSelectedContact({ ...selectedContact, venueServiceType: e.target.value })}
+                      disabled
                     />
                   </div>
                 </div>
@@ -703,6 +725,7 @@ export default function ContactPage() {
                       id="edit-budgetRange"
                       value={selectedContact.budgetRange || ''}
                       onChange={(e) => setSelectedContact({ ...selectedContact, budgetRange: e.target.value })}
+                      disabled
                     />
                   </div>
                   <div className="grid gap-2">
@@ -711,6 +734,7 @@ export default function ContactPage() {
                       id="edit-contactTimePreference"
                       value={selectedContact.contactTimePreference || ''}
                       onChange={(e) => setSelectedContact({ ...selectedContact, contactTimePreference: e.target.value })}
+                      disabled
                     />
                   </div>
                 </div>
@@ -746,8 +770,9 @@ export default function ContactPage() {
                           priority: value,
                         })
                       }
+                      disabled
                     >
-                      <SelectTrigger id="edit-priority">
+                      <SelectTrigger id="edit-priority" disabled>
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>

@@ -98,6 +98,77 @@ export default class AuthService {
     }
 
     /**
+     * Update auth entry details
+     */
+    static async updateAuth(id: string, updates: { name: string; email: string; role: string }): Promise<Auth> {
+        try {
+            const authDoc = await db.collection(this.collection).doc(id).get();
+            if (!authDoc.exists) {
+                throw new Error("Auth entry not found");
+            }
+
+            const authData = authDoc.data() as Auth;
+            const oldRole = authData.role;
+            const newRole = updates.role as Auth["role"];
+
+            // Update auth document
+            await db.collection(this.collection).doc(id).update({
+                name: updates.name,
+                email: updates.email,
+                role: newRole,
+                updatedOn: new Date().toISOString()
+            });
+
+            // If role changed, update the corresponding role documents
+            if (oldRole !== newRole) {
+                const oldRoleId = authData[`${oldRole}Id`];
+                const newRoleId = authData[`${newRole}Id`];
+
+                // Update old role document if it exists
+                if (oldRoleId) {
+                    const oldRoleCollection = this.getRoleCollection(oldRole);
+                    await db.collection(oldRoleCollection).doc(oldRoleId).update({
+                        name: updates.name,
+                        email: updates.email,
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+
+                // Update new role document if it exists
+                if (newRoleId) {
+                    const newRoleCollection = this.getRoleCollection(newRole);
+                    await db.collection(newRoleCollection).doc(newRoleId).update({
+                        name: updates.name,
+                        email: updates.email,
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            } else {
+                // Same role, just update the role document
+                const roleId = authData[`${newRole}Id`];
+                if (roleId) {
+                    const roleCollection = this.getRoleCollection(newRole);
+                    await db.collection(roleCollection).doc(roleId).update({
+                        name: updates.name,
+                        email: updates.email,
+                        updatedAt: new Date().toISOString()
+                    });
+                }
+            }
+
+            // Return updated auth
+            const updatedDoc = await db.collection(this.collection).doc(id).get();
+            return {
+                id: updatedDoc.id,
+                ...updatedDoc.data()
+            } as Auth;
+        } catch (error: any) {
+            consoleManager.error("Error updating auth:", error);
+            throw error;
+        }
+    }
+
+    /**
      * Delete auth entry and corresponding role document
      */
     static async deleteAuth(id: string): Promise<void> {

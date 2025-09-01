@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/lib/redux/store";
-import { signup, fetchAuthList, updateAuthStatus, deleteAuth } from "@/lib/redux/features/authSlice";
-import { UserCircle2, Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle, Search, MoreHorizontal, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { signup, fetchAuthList, updateAuthStatus, updateAuth, deleteAuth } from "@/lib/redux/features/authSlice";
+import { Mail, Lock, Eye, EyeOff, Loader2, User, AlertCircle, Search, MoreHorizontal, CheckCircle, XCircle, Trash2, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -78,9 +78,16 @@ const AdminSignupPage = () => {
   const [selectedAuthId, setSelectedAuthId] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<"activate" | "deactivate" | "delete" | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  
+  // Edit State
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
-  const { authList, listLoading, listError } = useSelector((state: RootState) => state.auth);
+  const { authList, listLoading } = useSelector((state: RootState) => state.auth);
 
   // Fetch auth list on mount
   useEffect(() => {
@@ -140,6 +147,38 @@ const AdminSignupPage = () => {
     setSelectedAuthId(id);
     setSelectedAction("delete");
     setIsConfirmDialogOpen(true);
+  };
+
+  const handleEdit = (auth: any) => {
+    setSelectedAuthId(auth.id);
+    setEditName(auth.name);
+    setEditEmail(auth.email);
+    setEditRole(auth.role);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateAuth = async () => {
+    if (!selectedAuthId) return;
+    
+    setEditLoading(true);
+    try {
+      await dispatch(updateAuth({
+        id: selectedAuthId,
+        name: editName,
+        email: editEmail,
+        role: editRole
+      })).unwrap();
+      toast.success("Auth entry updated successfully");
+      setIsEditDialogOpen(false);
+      setSelectedAuthId(null);
+      setEditName("");
+      setEditEmail("");
+      setEditRole("");
+    } catch (error: any) {
+      toast.error(error.message || "Update failed");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleConfirmAction = async () => {
@@ -383,6 +422,13 @@ const AdminSignupPage = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
+                            onClick={() => handleEdit(auth)}
+                            className="text-blue-600"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => handleStatusChange(auth.id, auth.status)}
                             className={auth.status === "active" ? "text-red-600" : "text-green-600"}
                           >
@@ -441,6 +487,94 @@ const AdminSignupPage = () => {
               onClick={handleConfirmAction}
             >
               {selectedAction === "delete" ? "Delete" : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Auth Entry</DialogTitle>
+            <DialogDescription>
+              Update the details for this auth entry.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-navy">Full Name</label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Full Name"
+                  className="pl-10 border-gray-300"
+                  required
+                />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-navy">Email</label>
+              <div className="relative">
+                <Input
+                  type="email"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  placeholder="Email"
+                  className="pl-10 border-gray-300"
+                  required
+                />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-navy">Role</label>
+              <div className="relative">
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger className="w-full pl-10">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <User className="w-4 h-4 text-gray-400" />
+                  </span>
+                  <SelectContent>
+                    {ROLES.map(r => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={editLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateAuth}
+              disabled={editLoading || !editName || !editEmail || !editRole}
+            >
+              {editLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -35,7 +35,6 @@ export default function FeaturedVendors() {
   const displayedVendors =
     activeVendors?.filter((vendor) => vendor.isPremium) || [];
 
-    console.log("displayedVendors", displayedVendors);
 
   return (
     <section className="relative w-full bg-neutral-50 py-16 md:py-24 overflow-hidden">
@@ -69,7 +68,7 @@ export default function FeaturedVendors() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Find Top-Rated Wedding Professionals
+          Premier Wedding Services for Your Special Day
         </motion.h2>
 
         {/* Grid of featured vendors (max 8 items) */}

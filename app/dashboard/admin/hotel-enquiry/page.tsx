@@ -58,6 +58,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { fetchHotels, selectHotels } from "@/lib/redux/features/hotelSlice";
 
 const initialHotelEnquiryState: Omit<
   HotelEnquiry,
@@ -68,6 +70,7 @@ const initialHotelEnquiryState: Omit<
   phoneNumber: "",
   authId: "",
   status: "Pending",
+  message: "",
 };
 
 function getStatusColor(status: HotelEnquiry["status"]): string {
@@ -159,6 +162,15 @@ const HotelEnquiryFormFields = ({
         </SelectContent>
       </Select>
     </div>
+    <div>
+      <Label htmlFor="message">Message</Label>
+      <Textarea
+        id="message"
+        value={data.message}
+        onChange={(e) => setData({ ...data, message: e.target.value })}
+        placeholder="Enter message"
+      />
+    </div>
   </div>
 );
 
@@ -175,9 +187,13 @@ export default function HotelEnquiryPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
   const [newEnquiry, setNewEnquiry] = useState(initialHotelEnquiryState);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const hotels = useAppSelector(selectHotels);
   useEffect(() => {
     dispatch(fetchHotelEnquiries());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchHotels());
   }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry) => {
@@ -226,6 +242,7 @@ export default function HotelEnquiryPage() {
         email: selectedEnquiry.email,
         phoneNumber: selectedEnquiry.phoneNumber,
         status: selectedEnquiry.status,
+        message: selectedEnquiry.message,
       };
       await dispatch(
         updateHotelEnquiry({
@@ -268,6 +285,14 @@ export default function HotelEnquiryPage() {
   };
 
   const stats = getStatusStats();
+
+  const getHotelName = (authId: string) => {
+    if (!hotels || (Array.isArray(hotels) && hotels.length === 0)) {
+      return "Unknown Hotel";
+    }
+    const vendor = (hotels as any[]).find((v: any) => String(v?.id) == String(authId));
+    return vendor?.businessName || "Unknown Hotel";
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -546,6 +571,9 @@ export default function HotelEnquiryPage() {
                 <p className="text-sm text-muted-foreground">{selectedEnquiry.phoneNumber}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Auth ID: {selectedEnquiry.authId}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Message: {selectedEnquiry.message}
                 </p>
               </div>
             </div>

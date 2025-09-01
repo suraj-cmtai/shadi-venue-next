@@ -294,7 +294,7 @@ const DynamicVenuePage: React.FC = () => {
         </nav>
         {/* Heading */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-wide uppercase mb-3">
-          Find Your Perfect Wedding Venue
+        Uncover Stunning Venues for Your Big Day
         </h1>
         {/* Decorative Black Line */}
         <div className="mx-auto w-10 h-1 bg-black/80 rounded mb-4" />

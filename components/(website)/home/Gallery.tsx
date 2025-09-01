@@ -68,7 +68,7 @@ export default function Gallery() {
           id="gallery-heading"
           className="font-cormorant font-bold text-[#212d47] text-2xl md:text-5xl text-center md:text-left leading-tight"
         >
-          Our Recent work Best Wedding Gallery
+          Memorable Wedding Highlights in Our Gallery
         </motion.h2>
 
         {/* Gallery Scrollable Row with Ellipse Overlays */}

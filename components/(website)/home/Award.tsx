@@ -14,19 +14,19 @@ const VECTOR06_IMG = "/images/award-flower-left-bg-vector.svg";
 const counters = [
   {
     value: "135",
-    label: "Annual Weddings",
+    label: "Weddings Hosted Annually",
   },
   {
     value: "08",
-    label: "Years of Commemoration",
+    label: "Years of Exceptional Service",
   },
   {
     value: "1925",
-    label: "Floral Arrangements",
+    label: "Custom Decorations Created",
   },
   {
     value: "225",
-    label: "Annual Sunny Days",
+    label: "Sunny Days Each Year",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function Award() {
               <img src={VECTOR2_IMG} alt="" className="h-3 w-auto " />
             </div>
             <h2 className="font-dancing-script font-normal text-[28px] xl:text-[36px] 2xl:text-[40px] text-[#212d47] text-center mb-8 leading-tight px-2">
-              Among The Top Ten Wedding Venues In The All Countries
+              Ranked Among the Top Ten Wedding Venues in India
             </h2>
           </div>
           {/* Counters */}

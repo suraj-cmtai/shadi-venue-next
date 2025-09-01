@@ -22,6 +22,7 @@ export interface VendorEnquiry {
   createdAt: string;
   updatedAt: string;
   authId: string; // The authId of the vendor user
+  message: string;
 }
 
 class VendorEnquiryService {
@@ -44,6 +45,7 @@ class VendorEnquiryService {
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
       authId: data.authId || "",
+      message: data.message || "",
     };
   }
 
@@ -123,7 +125,7 @@ class VendorEnquiryService {
    */
   static async updateEnquiry(
     id: string,
-    updateData: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId">>
+    updateData: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId" | "message">>
   ): Promise<VendorEnquiry> {
     try {
       const enquiryRef = db.collection(this.collectionName).doc(id);

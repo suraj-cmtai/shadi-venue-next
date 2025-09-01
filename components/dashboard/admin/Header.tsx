@@ -1,22 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { 
-  Bell, 
   Search, 
   Menu,
-  Settings,
-  User,
-  HelpCircle,
-  Moon,
-  Sun,
-  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +14,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import {
   Avatar,
@@ -46,6 +35,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectAuth } from "@/lib/redux/features/authSlice";
 
 interface HeaderProps {
   title: string;
@@ -91,6 +82,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const router = useRouter();
+  const auth = useAppSelector(selectAuth);
+  const displayName = (auth as any)?.data?.businessName || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -280,7 +273,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Shadi Venue Admin</p>
+                  <p className="text-sm font-medium leading-none">{`Welcome, ${displayName}`}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

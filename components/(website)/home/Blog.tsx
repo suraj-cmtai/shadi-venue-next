@@ -74,7 +74,7 @@ export default function Blog() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Check Out These Fresh New Ideas
+          Start Planning with Inspiration & Insights
         </motion.h2>
 
         {/* Blog Posts Horizontal Scroll */}

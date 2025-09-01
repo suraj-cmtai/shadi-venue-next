@@ -116,6 +116,23 @@ export const updateAuthStatus = createAsyncThunk(
   }
 );
 
+// Update auth entry
+export const updateAuth = createAsyncThunk(
+  "auth/update",
+  async ({ id, name, email, role }: { id: string; name: string; email: string; role: string }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("role", role);
+      const response = await axios.put(`/api/routes/auth/${id}`, formData);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.errorMessage || error.message);
+    }
+  }
+);
+
 // Delete auth entry
 export const deleteAuth = createAsyncThunk(
   "auth/delete",
@@ -201,6 +218,14 @@ const authSlice = createSlice({
 
     // Update Auth Status
     builder.addCase(updateAuthStatus.fulfilled, (state, action) => {
+      const updatedAuth = action.payload;
+      state.authList = state.authList.map(auth =>
+        auth.id === updatedAuth.id ? updatedAuth : auth
+      );
+    });
+
+    // Update Auth
+    builder.addCase(updateAuth.fulfilled, (state, action) => {
       const updatedAuth = action.payload;
       state.authList = state.authList.map(auth =>
         auth.id === updatedAuth.id ? updatedAuth : auth

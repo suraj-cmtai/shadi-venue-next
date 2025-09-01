@@ -28,7 +28,7 @@ const HomePage = () => {
       <HeroExtension />
       {/* <AllLogos /> */}
       <HotelByCity />
-      <VendorsByCity />
+      {/* <VendorsByCity /> */}
       <About />
       {/* <VideoSection /> */}
       <Hotels />

@@ -64,6 +64,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fetchVendors, selectVendors } from "@/lib/redux/features/vendorSlice";
 
 // This should match the Omit type in your slice
 type NewEnquiryState = Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">;
@@ -74,6 +75,7 @@ const initialEnquiryState: NewEnquiryState = {
   phoneNumber: "",
   status: VendorEnquiryStatus.NEW,
   authId: "",
+  message: "",
 };
 
 export default function VendorEnquiryPage() {
@@ -81,7 +83,7 @@ export default function VendorEnquiryPage() {
   const enquiries = useAppSelector(selectVendorEnquiries);
   const isLoading = useAppSelector(selectVendorEnquiryLoading);
   const error = useAppSelector(selectVendorEnquiryError);
-
+  const vendors = useAppSelector(selectVendors);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEnquiry, setSelectedEnquiry] = useState<VendorEnquiry | null>(
@@ -95,6 +97,10 @@ export default function VendorEnquiryPage() {
 
   useEffect(() => {
     dispatch(fetchVendorEnquiries());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchVendors());
   }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry: VendorEnquiry) => {
@@ -128,7 +134,6 @@ export default function VendorEnquiryPage() {
     }
 
     dispatch(createVendorEnquiry(newEnquiry))
-      .unwrap()
       .then(() => {
         toast.success("Vendor enquiry added successfully!");
         setIsAddDialogOpen(false);
@@ -171,6 +176,14 @@ export default function VendorEnquiryPage() {
       .catch((err: unknown) =>
         toast.error(`Failed to delete enquiry: ${getErrorMessage(err)}`)
       );
+  };
+
+  const getVendorName = (authId: string) => {
+    if (!vendors || (Array.isArray(vendors) && vendors.length === 0)) {
+      return "Unknown Vendor";
+    }
+    const vendor = (vendors as any[]).find((v: any) => String(v?.id) == String(authId));
+    return vendor?.businessName || "Unknown Vendor";
   };
 
   /*
@@ -244,6 +257,18 @@ export default function VendorEnquiryPage() {
                 setNewEnquiry(prev => ({ ...prev, authId: e.target.value }));
               }}
               placeholder="Enter vendor auth ID"
+            />
+          </div>
+          <div>
+            <Label htmlFor="add-message">Message *</Label>
+            <Textarea
+              id="add-message"
+              key="add-message-input"
+              value={newEnquiry.message}
+              onChange={(e) => {
+                setNewEnquiry(prev => ({ ...prev, message: e.target.value }));
+              }}
+              placeholder="Enter message"
             />
           </div>
         </div>
@@ -345,6 +370,20 @@ export default function VendorEnquiryPage() {
                 placeholder="Enter vendor auth ID"
                 disabled // Note: Auth ID cannot be changed as mentioned in UI
                 className="bg-gray-50"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-message">Message *</Label>
+              <Textarea
+                id="edit-message"
+                key="edit-message-input"
+                value={selectedEnquiry.message}
+                onChange={(e) => {
+                  setSelectedEnquiry(prev => 
+                    prev ? { ...prev, message: e.target.value } : null
+                  );
+                }}
+                placeholder="Enter message"
               />
             </div>
           </div>
@@ -485,7 +524,7 @@ export default function VendorEnquiryPage() {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground font-mono">
-                      {enquiry.authId}
+                      {getVendorName(enquiry.authId)}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -609,6 +648,7 @@ export default function VendorEnquiryPage() {
               <p><strong>Name:</strong> {selectedEnquiry.name}</p>
               <p><strong>Email:</strong> {selectedEnquiry.email}</p>
               <p><strong>Phone:</strong> {selectedEnquiry.phoneNumber}</p>
+              <p><strong>Message:</strong> {selectedEnquiry.message}</p>
             </div>
           )}
           <DialogFooter>

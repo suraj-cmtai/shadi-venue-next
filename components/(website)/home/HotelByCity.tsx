@@ -83,12 +83,12 @@ export default function Hotels() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Find the Perfect Stay for Your Wedding Weekend
+          Unforgettable Wedding Locations Across India
         </motion.h2>
 
         {/* ✨ CHANGE HERE: Replaced grid with a horizontally scrollable flex container */}
         <div
-          className="w-full flex flex-row gap-6 md:gap-8 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
+          className="w-full flex flex-row gap-3 md:gap-6 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
           style={{
             WebkitOverflowScrolling: "touch",
             scrollbarWidth: "none",

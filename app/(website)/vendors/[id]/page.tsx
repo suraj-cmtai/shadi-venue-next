@@ -137,17 +137,18 @@ export default function VendorDetailsPage() {
             email: formData.email || '', // Optional field
             phoneNumber: formData.phone,
             status: VendorEnquiryStatus.NEW,
-            authId: vendor.id // Vendor authId
+            authId: vendor.id, // Vendor authId
+            message: ''
         }
 
         try {
-            await dispatch(createVendorEnquiry(enquiryData)).unwrap()
+            await dispatch(createVendorEnquiry(enquiryData))
             setEnquirySuccess(true)
             // Reset form
             setFormData({
                 name: '',
                 phone: '',
-                email: ''
+                email: '',
             })
         } catch (error) {
             // Error is handled by Redux

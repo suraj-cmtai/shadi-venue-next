@@ -36,7 +36,7 @@ export async function GET(
     }
 }
 
-// Update auth status (PUT)
+// Update auth entry (PUT)
 export async function PUT(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
@@ -44,21 +44,38 @@ export async function PUT(
     try {
         const { id } = await params;
         const formData = await req.formData();
+        
         const status = formData.get("status")?.toString();
+        const name = formData.get("name")?.toString();
+        const email = formData.get("email")?.toString();
+        const role = formData.get("role")?.toString();
 
-        if (!status) {
+        // If only status is provided, update status only
+        if (status && !name && !email && !role) {
+            const updatedAuth = await AuthService.updateAuthStatus(id, status as "active" | "inactive");
+            return NextResponse.json({
+                statusCode: 200,
+                message: "Auth status updated successfully",
+                data: updatedAuth,
+                errorCode: "NO",
+                errorMessage: "",
+            }, { status: 200 });
+        }
+
+        // If other fields are provided, update the full auth entry
+        if (!name || !email || !role) {
             return NextResponse.json({
                 statusCode: 400,
                 errorCode: "INVALID_INPUT",
-                errorMessage: "Status is required",
+                errorMessage: "Name, email, and role are required for auth update",
             }, { status: 400 });
         }
 
-        const updatedAuth = await AuthService.updateAuthStatus(id, status as "active" | "inactive");
+        const updatedAuth = await AuthService.updateAuth(id, { name, email, role });
 
         return NextResponse.json({
             statusCode: 200,
-            message: "Auth status updated successfully",
+            message: "Auth entry updated successfully",
             data: updatedAuth,
             errorCode: "NO",
             errorMessage: "",

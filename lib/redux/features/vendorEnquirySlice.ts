@@ -19,6 +19,7 @@ export interface VendorEnquiry {
   createdAt: string;
   updatedAt: string;
   authId: string; // The authId of the vendor user
+  message: string;
 }
 
 interface VendorEnquiryState {
@@ -100,7 +101,7 @@ export const updateVendorEnquiry = createAsyncThunk<
   VendorEnquiry,
   { 
     id: string; 
-    data: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId">> 
+    data: Partial<Omit<VendorEnquiry, "id" | "createdAt" | "authId" | "message">> 
   }
 >(
   "vendorEnquiry/updateVendorEnquiry",

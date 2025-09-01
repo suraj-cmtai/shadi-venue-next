@@ -15,6 +15,7 @@ export interface HotelEnquiry {
   createdAt: string;
   updatedAt: string;
   authId: string; // The authId of the hotel user
+  message: string;
 }
 
 class HotelEnquiryService {
@@ -37,6 +38,7 @@ class HotelEnquiryService {
       createdAt: this.convertTimestampToString(data.createdAt),
       updatedAt: this.convertTimestampToString(data.updatedAt),
       authId: data.authId || "",
+      message: data.message || "",
     };
   }
 
@@ -119,7 +121,7 @@ class HotelEnquiryService {
    */
   static async updateEnquiry(
     id: string,
-    updateData: Partial<Omit<HotelEnquiry, "id" | "createdAt" | "authId">>
+    updateData: Partial<Omit<HotelEnquiry, "id" | "createdAt" | "authId" | "message">>
   ): Promise<HotelEnquiry> {
     try {
       const enquiryRef = db.collection(this.collectionName).doc(id);

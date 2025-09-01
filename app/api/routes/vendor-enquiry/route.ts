@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phoneNumber, status, authId } = body;
+    const { name, email, phoneNumber, status, authId, message } = body;
 
     if (!name || !phoneNumber) {
       return NextResponse.json(
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       phoneNumber,
       status,
       authId,
+      message: message || ""
     };
 
     const newEnquiry = await VendorEnquiryService.createEnquiry(enquiryData);

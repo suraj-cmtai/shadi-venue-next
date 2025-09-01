@@ -15,7 +15,6 @@ import { motion } from "framer-motion";
 import {
   Plus,
   Pencil,
-  Trash2,
   Search,
   Loader2,
   MoreHorizontal,
@@ -59,6 +58,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Import Textarea from shadcn/ui or your own component
+import { Textarea } from "@/components/ui/textarea";
+import { fetchHotels, selectHotels } from "@/lib/redux/features/hotelSlice";
+
 const initialHotelEnquiryState: Omit<
   HotelEnquiry,
   "id" | "createdAt" | "updatedAt"
@@ -68,6 +71,7 @@ const initialHotelEnquiryState: Omit<
   phoneNumber: "",
   authId: "",
   status: "Pending",
+  message: "",
 };
 
 function getStatusColor(status: HotelEnquiry["status"]): string {
@@ -104,6 +108,7 @@ const HotelEnquiryFormFields = ({
           value={data.name}
           onChange={(e) => setData({ ...data, name: e.target.value })}
           placeholder="Enter name"
+          disabled
         />
       </div>
       <div>
@@ -114,6 +119,7 @@ const HotelEnquiryFormFields = ({
           value={data.email}
           onChange={(e) => setData({ ...data, email: e.target.value })}
           placeholder="Enter email"
+          disabled
         />
       </div>
     </div>
@@ -125,6 +131,7 @@ const HotelEnquiryFormFields = ({
           value={data.phoneNumber}
           onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
           placeholder="Enter phone number"
+          disabled
         />
       </div>
       <div>
@@ -134,14 +141,20 @@ const HotelEnquiryFormFields = ({
           value={data.authId}
           onChange={(e) => setData({ ...data, authId: e.target.value })}
           placeholder="Enter hotel authentication ID"
-          disabled={isEditing} // Typically authId shouldn't be changed after creation
+          disabled
         />
-        {isEditing && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Auth ID cannot be modified after creation
-          </p>
-        )}
       </div>
+    </div>
+    <div>
+      <Label htmlFor="message">Message</Label>
+      <Textarea
+        id="message"
+        value={data.message || ""}
+        onChange={(e) => setData({ ...data, message: e.target.value })}
+        placeholder="Enter message"
+        rows={4}
+        disabled={!isEditing && !("message" in data)}
+      />
     </div>
     <div>
       <Label htmlFor="status">Status</Label>
@@ -165,6 +178,7 @@ const HotelEnquiryFormFields = ({
 export default function HotelEnquiryPage() {
   const dispatch = useAppDispatch();
   const { enquiries, loading } = useAppSelector((state) => state.hotelEnquiry);
+  const hotels = useAppSelector(selectHotels);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedEnquiry, setSelectedEnquiry] = useState<HotelEnquiry | null>(
@@ -178,6 +192,7 @@ export default function HotelEnquiryPage() {
 
   useEffect(() => {
     dispatch(fetchHotelEnquiries());
+    dispatch(fetchHotels());
   }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry) => {
@@ -222,9 +237,8 @@ export default function HotelEnquiryPage() {
     setIsSubmitting(true);
     try {
       const updateData = {
-        name: selectedEnquiry.name,
-        email: selectedEnquiry.email,
-        phoneNumber: selectedEnquiry.phoneNumber,
+        // Only allow updating message and status
+        message: selectedEnquiry.message,
         status: selectedEnquiry.status,
       };
       await dispatch(
@@ -268,6 +282,14 @@ export default function HotelEnquiryPage() {
   };
 
   const stats = getStatusStats();
+
+  const getHotelName = (authId: string) => {
+    if (!hotels || (Array.isArray(hotels) && hotels.length === 0)) {
+      return "Unknown Hotel";
+    }
+    const hotel = (hotels as any[]).find((v: any) => String(v?.id) == String(authId));
+    return hotel?.name || "Unknown Hotel";
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -394,7 +416,7 @@ export default function HotelEnquiryPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">{enquiry.name}</span>
+                      <span className="font-medium">{getHotelName(enquiry.authId)}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -411,7 +433,7 @@ export default function HotelEnquiryPage() {
                   </TableCell>
                   <TableCell>
                     <code className="bg-muted px-2 py-1 rounded text-xs">
-                      {enquiry.authId}
+                      {getHotelName(enquiry.authId)}
                     </code>
                   </TableCell>
                   <TableCell>
@@ -499,7 +521,7 @@ export default function HotelEnquiryPage() {
           <DialogHeader>
             <DialogTitle>Edit Hotel Enquiry</DialogTitle>
             <DialogDescription>
-              Update the hotel enquiry details. Auth ID cannot be modified.
+              Only message and status can be updated.
             </DialogDescription>
           </DialogHeader>
           {selectedEnquiry && (
@@ -545,7 +567,7 @@ export default function HotelEnquiryPage() {
                 <p className="text-sm text-muted-foreground">{selectedEnquiry.email}</p>
                 <p className="text-sm text-muted-foreground">{selectedEnquiry.phoneNumber}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Auth ID: {selectedEnquiry.authId}
+                  Auth ID: {getHotelName(selectedEnquiry.authId)}
                 </p>
               </div>
             </div>

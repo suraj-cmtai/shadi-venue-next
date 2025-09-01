@@ -46,6 +46,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectAuth } from "@/lib/redux/features/authSlice";
 
 interface HeaderProps {
   title: string;
@@ -89,6 +91,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchValue, setSearchValue] = useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const router = useRouter();
+  const auth = useAppSelector(selectAuth);
+  const displayName = (auth as any)?.data?.businessName || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -278,7 +282,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Shadi Venue Admin</p>
+                  <p className="text-sm font-medium leading-none">{`Welcome, ${displayName}`}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

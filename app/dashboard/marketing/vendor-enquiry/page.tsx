@@ -65,6 +65,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { fetchVendors, selectVendors } from "@/lib/redux/features/vendorSlice";
+
 // This should match the Omit type in your slice
 type NewEnquiryState = Omit<VendorEnquiry, "id" | "createdAt" | "updatedAt">;
 
@@ -74,6 +76,7 @@ const initialEnquiryState: NewEnquiryState = {
   phoneNumber: "",
   status: VendorEnquiryStatus.NEW,
   authId: "",
+  message: "",
 };
 
 export default function VendorEnquiryPage() {
@@ -81,7 +84,7 @@ export default function VendorEnquiryPage() {
   const enquiries = useAppSelector(selectVendorEnquiries);
   const isLoading = useAppSelector(selectVendorEnquiryLoading);
   const error = useAppSelector(selectVendorEnquiryError);
-
+  const vendors = useAppSelector(selectVendors);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedEnquiry, setSelectedEnquiry] = useState<VendorEnquiry | null>(
@@ -95,6 +98,7 @@ export default function VendorEnquiryPage() {
 
   useEffect(() => {
     dispatch(fetchVendorEnquiries());
+    dispatch(fetchVendors());
   }, [dispatch]);
 
   const filteredEnquiries = enquiries.filter((enquiry: VendorEnquiry) => {
@@ -122,7 +126,12 @@ export default function VendorEnquiryPage() {
   };
 
   const handleAdd = () => {
-    if (!newEnquiry.name || !newEnquiry.email || !newEnquiry.phoneNumber || !newEnquiry.authId) {
+    if (
+      !newEnquiry.name ||
+      !newEnquiry.email ||
+      !newEnquiry.phoneNumber ||
+      !newEnquiry.authId
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -141,11 +150,10 @@ export default function VendorEnquiryPage() {
 
   const handleUpdate = () => {
     if (!selectedEnquiry) return;
-    
+
     const updateData = {
-      name: selectedEnquiry.name,
-      email: selectedEnquiry.email,
-      phoneNumber: selectedEnquiry.phoneNumber,
+      // Only message and status are editable
+      message: selectedEnquiry.message,
       status: selectedEnquiry.status,
     };
 
@@ -173,22 +181,7 @@ export default function VendorEnquiryPage() {
       );
   };
 
-  /*
-   * SOLUTION EXPLANATION:
-   * 
-   * The original issue was caused by:
-   * 1. Using 'any' type for setData parameter which broke TypeScript's type checking
-   * 2. Using the same component for different data shapes (NewEnquiryState vs VendorEnquiry)
-   * 3. React losing track of input state due to inconsistent state management
-   * 
-   * FIXES APPLIED:
-   * 1. Created separate, properly typed form components for Add and Edit operations
-   * 2. Each component has its own specific state setter with proper typing
-   * 3. Used proper React key props to help React track component identity
-   * 4. Ensured consistent state shapes and update patterns
-   */
-
-  // FIXED: Separate form component for ADD operation with proper typing
+  // Add Dialog Form: All fields enabled for add
   const AddEnquiryFormFields = () => (
     <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1 pr-4">
       <section>
@@ -200,11 +193,10 @@ export default function VendorEnquiryPage() {
             <Label htmlFor="add-name">Name *</Label>
             <Input
               id="add-name"
-              key="add-name-input" // Helps React track this specific input
+              key="add-name-input"
               value={newEnquiry.name}
               onChange={(e) => {
-                // FIXED: Proper state update with functional update pattern
-                setNewEnquiry(prev => ({ ...prev, name: e.target.value }));
+                setNewEnquiry((prev) => ({ ...prev, name: e.target.value }));
               }}
               placeholder="Enter vendor name"
             />
@@ -217,7 +209,7 @@ export default function VendorEnquiryPage() {
               type="email"
               value={newEnquiry.email}
               onChange={(e) => {
-                setNewEnquiry(prev => ({ ...prev, email: e.target.value }));
+                setNewEnquiry((prev) => ({ ...prev, email: e.target.value }));
               }}
               placeholder="Enter email address"
             />
@@ -229,7 +221,10 @@ export default function VendorEnquiryPage() {
               key="add-phone-input"
               value={newEnquiry.phoneNumber}
               onChange={(e) => {
-                setNewEnquiry(prev => ({ ...prev, phoneNumber: e.target.value }));
+                setNewEnquiry((prev) => ({
+                  ...prev,
+                  phoneNumber: e.target.value,
+                }));
               }}
               placeholder="Enter phone number"
             />
@@ -241,11 +236,36 @@ export default function VendorEnquiryPage() {
               key="add-authid-input"
               value={newEnquiry.authId}
               onChange={(e) => {
-                setNewEnquiry(prev => ({ ...prev, authId: e.target.value }));
+                setNewEnquiry((prev) => ({
+                  ...prev,
+                  authId: e.target.value,
+                }));
               }}
               placeholder="Enter vendor auth ID"
             />
           </div>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+          Message
+        </h3>
+        <div>
+          <Label htmlFor="add-message">Message</Label>
+          <Textarea
+            id="add-message"
+            key="add-message-textarea"
+            value={newEnquiry.message || ""}
+            onChange={(e) => {
+              setNewEnquiry((prev) => ({
+                ...prev,
+                message: e.target.value,
+              }));
+            }}
+            placeholder="Enter message"
+            rows={4}
+          />
         </div>
       </section>
 
@@ -259,7 +279,10 @@ export default function VendorEnquiryPage() {
             key="add-status-select"
             value={newEnquiry.status}
             onValueChange={(value) => {
-              setNewEnquiry(prev => ({ ...prev, status: value as VendorEnquiryStatus }));
+              setNewEnquiry((prev) => ({
+                ...prev,
+                status: value as VendorEnquiryStatus,
+              }));
             }}
           >
             <SelectTrigger>
@@ -267,8 +290,12 @@ export default function VendorEnquiryPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
-              <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
-              <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
+              <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>
+                In Progress
+              </SelectItem>
+              <SelectItem value={VendorEnquiryStatus.COMPLETED}>
+                Completed
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -276,7 +303,7 @@ export default function VendorEnquiryPage() {
     </div>
   );
 
-  // FIXED: Separate form component for EDIT operation with proper typing
+  // Edit Dialog Form: All fields disabled except message and status
   const EditEnquiryFormFields = () => {
     if (!selectedEnquiry) return null;
 
@@ -291,15 +318,11 @@ export default function VendorEnquiryPage() {
               <Label htmlFor="edit-name">Name *</Label>
               <Input
                 id="edit-name"
-                key="edit-name-input" // Unique key for edit form
+                key="edit-name-input"
                 value={selectedEnquiry.name}
-                onChange={(e) => {
-                  // FIXED: Proper state update for selectedEnquiry
-                  setSelectedEnquiry(prev => 
-                    prev ? { ...prev, name: e.target.value } : null
-                  );
-                }}
+                disabled
                 placeholder="Enter vendor name"
+                className="bg-gray-50"
               />
             </div>
             <div>
@@ -309,12 +332,9 @@ export default function VendorEnquiryPage() {
                 key="edit-email-input"
                 type="email"
                 value={selectedEnquiry.email}
-                onChange={(e) => {
-                  setSelectedEnquiry(prev => 
-                    prev ? { ...prev, email: e.target.value } : null
-                  );
-                }}
+                disabled
                 placeholder="Enter email address"
+                className="bg-gray-50"
               />
             </div>
             <div>
@@ -323,12 +343,9 @@ export default function VendorEnquiryPage() {
                 id="edit-phoneNumber"
                 key="edit-phone-input"
                 value={selectedEnquiry.phoneNumber}
-                onChange={(e) => {
-                  setSelectedEnquiry(prev => 
-                    prev ? { ...prev, phoneNumber: e.target.value } : null
-                  );
-                }}
+                disabled
                 placeholder="Enter phone number"
+                className="bg-gray-50"
               />
             </div>
             <div>
@@ -337,16 +354,32 @@ export default function VendorEnquiryPage() {
                 id="edit-authId"
                 key="edit-authid-input"
                 value={selectedEnquiry.authId}
-                onChange={(e) => {
-                  setSelectedEnquiry(prev => 
-                    prev ? { ...prev, authId: e.target.value } : null
-                  );
-                }}
+                disabled
                 placeholder="Enter vendor auth ID"
-                disabled // Note: Auth ID cannot be changed as mentioned in UI
                 className="bg-gray-50"
               />
             </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="font-semibold text-lg border-b pb-2 mb-4">
+            Message
+          </h3>
+          <div>
+            <Label htmlFor="edit-message">Message</Label>
+            <Textarea
+              id="edit-message"
+              key="edit-message-textarea"
+              value={selectedEnquiry.message || ""}
+              onChange={(e) => {
+                setSelectedEnquiry((prev) =>
+                  prev ? { ...prev, message: e.target.value } : null
+                );
+              }}
+              placeholder="Enter message"
+              rows={4}
+            />
           </div>
         </section>
 
@@ -360,8 +393,10 @@ export default function VendorEnquiryPage() {
               key="edit-status-select"
               value={selectedEnquiry.status}
               onValueChange={(value) => {
-                setSelectedEnquiry(prev => 
-                  prev ? { ...prev, status: value as VendorEnquiryStatus } : null
+                setSelectedEnquiry((prev) =>
+                  prev
+                    ? { ...prev, status: value as VendorEnquiryStatus }
+                    : null
                 );
               }}
             >
@@ -370,8 +405,12 @@ export default function VendorEnquiryPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
-                <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
-                <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
+                <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>
+                  In Progress
+                </SelectItem>
+                <SelectItem value={VendorEnquiryStatus.COMPLETED}>
+                  Completed
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -380,12 +419,22 @@ export default function VendorEnquiryPage() {
     );
   };
 
+  const getVendorName = (authId: string) => {
+    if (!vendors || (Array.isArray(vendors) && vendors.length === 0)) {
+      return "Unknown Vendor";
+    }
+    const vendor = (vendors as any[]).find((v: any) => String(v?.id) == String(authId));
+    return vendor?.businessName || "Unknown Vendor";
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Vendor Enquiries</h1>
-          <p className="text-muted-foreground">Manage vendor enquiries and their status</p>
+          <p className="text-muted-foreground">
+            Manage vendor enquiries and their status
+          </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" /> Add Enquiry
@@ -410,8 +459,12 @@ export default function VendorEnquiryPage() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value={VendorEnquiryStatus.NEW}>New</SelectItem>
-            <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>In Progress</SelectItem>
-            <SelectItem value={VendorEnquiryStatus.COMPLETED}>Completed</SelectItem>
+            <SelectItem value={VendorEnquiryStatus.IN_PROGRESS}>
+              In Progress
+            </SelectItem>
+            <SelectItem value={VendorEnquiryStatus.COMPLETED}>
+              Completed
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -442,17 +495,18 @@ export default function VendorEnquiryPage() {
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  <p className="mt-2 text-muted-foreground">Loading enquiries...</p>
+                  <p className="mt-2 text-muted-foreground">
+                    Loading enquiries...
+                  </p>
                 </TableCell>
               </TableRow>
             ) : filteredEnquiries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
                   <div className="text-muted-foreground">
-                    {searchQuery || statusFilter !== "all" 
+                    {searchQuery || statusFilter !== "all"
                       ? "No enquiries match your filters"
-                      : "No enquiries found"
-                    }
+                      : "No enquiries found"}
                   </div>
                 </TableCell>
               </TableRow>
@@ -485,7 +539,7 @@ export default function VendorEnquiryPage() {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-muted-foreground font-mono">
-                      {enquiry.authId}
+                      {getVendorName(enquiry.authId)}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -538,7 +592,7 @@ export default function VendorEnquiryPage() {
         </Table>
       </motion.div>
 
-      {/* FIXED: Add Dialog with dedicated form component */}
+      {/* Add Dialog with dedicated form component */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -565,13 +619,13 @@ export default function VendorEnquiryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* FIXED: Edit Dialog with dedicated form component */}
+      {/* Edit Dialog with dedicated form component */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Vendor Enquiry</DialogTitle>
             <DialogDescription>
-              Update the vendor enquiry information. Note: Auth ID cannot be changed.
+              Only message and status can be updated. All other fields are read-only.
             </DialogDescription>
           </DialogHeader>
           <EditEnquiryFormFields />
@@ -606,9 +660,15 @@ export default function VendorEnquiryPage() {
           </DialogHeader>
           {selectedEnquiry && (
             <div className="bg-gray-50 p-4 rounded-md">
-              <p><strong>Name:</strong> {selectedEnquiry.name}</p>
-              <p><strong>Email:</strong> {selectedEnquiry.email}</p>
-              <p><strong>Phone:</strong> {selectedEnquiry.phoneNumber}</p>
+              <p>
+                <strong>Name:</strong> {selectedEnquiry.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedEnquiry.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {selectedEnquiry.phoneNumber}
+              </p>
             </div>
           )}
           <DialogFooter>

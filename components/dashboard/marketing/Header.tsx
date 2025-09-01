@@ -3,20 +3,10 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
-  Bell, 
   Search, 
   Menu,
-  Settings,
-  User,
-  HelpCircle,
-  Moon,
-  Sun,
-  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +14,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import {
   Avatar,
@@ -46,6 +35,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectAuth } from "@/lib/redux/features/authSlice";
 
 interface HeaderProps {
   title: string;
@@ -58,12 +49,6 @@ const searchSuggestions = [
   { label: "Leads", value:" leads", href: "/dashboard/marketing/leads" },
   { label: "Hotel Enquiry", value: "hotel-enquiry", href: "/dashboard/marketing/hotel-enquiry" },
   { label: "Vendor Enquiry", value: "vendor-enquiry", href: "/dashboard/marketing/vendor-enquiry" },
-
-  // { label: "Blogs", value: "blogs", href: "/dashboard/blogs" },
-  // { label: "Subscribers", value: "leads", href: "/dashboard/subscribers" },
-  // { label: "Gallery", value: "gallery", href: "/dashboard/gallery" },
-  // { label: "Contact", value: "contact", href: "/dashboard/contact" },
-  // {label: "Test", value: "test", href: "/dashboard/test" },
 ];
 
 const notifications = [
@@ -89,8 +74,9 @@ const searchVariants = {
 const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const router = useRouter();
+  const auth = useAppSelector(selectAuth);
+  const displayName = (auth as any)?.data?.businessName || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -280,7 +266,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Shadi Venue Admin</p>
+                  <p className="text-sm font-medium leading-none">{`Welcome, ${displayName}`}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

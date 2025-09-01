@@ -13,6 +13,7 @@ export interface HotelEnquiry {
   createdAt: string;
   updatedAt: string;
   authId: string; // The authId of the hotel user
+  message: string;
 }
 
 interface HotelEnquiryState {
@@ -94,7 +95,7 @@ export const updateHotelEnquiry = createAsyncThunk<
   HotelEnquiry,
   { 
     id: string; 
-    data: Partial<Omit<HotelEnquiry, "id" | "createdAt" | "authId">> 
+    data: Partial<Omit<HotelEnquiry, "id" | "createdAt" | "authId" | "message">> 
   }
 >(
   "hotelEnquiry/updateHotelEnquiry",
