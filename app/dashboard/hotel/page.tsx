@@ -107,7 +107,8 @@ interface HotelFormState {
   status: 'active' | 'draft' | 'archived';
   description: string;
   amenities: string;
-  rooms: { type: string; capacity: number; pricePerNight: number; available: number; }[];
+  totalRooms: number;
+  weddingPackages: { name: string; rooms: number; price: number; totalGuests: number; }[];
   images: string[];
   imageFiles: File[];
   removeImages: boolean;
@@ -124,10 +125,8 @@ interface HotelFormState {
   websiteLink: string;
   offerWeddingPackages: 'Yes' | 'No';
   resortCategory: string;
-  weddingPackagePrice: string;
   servicesOffered: string;
   maxGuestCapacity: string;
-  numberOfRooms: string;
   venueAvailability: string;
   allInclusivePackages: string;
   staffAccommodation: string;
@@ -150,12 +149,6 @@ interface HotelFormState {
   uploadCancelledCheque: File[];
 }
 
-interface RoomFormState {
-  type: string;
-  capacity: number;
-  pricePerNight: number;
-  available: number;
-}
 
 const statusColors: Record<Hotel["status"], string> = {
   active: "bg-green-100 text-green-800 border-green-200",
@@ -185,7 +178,8 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
     status: hotel.status || 'draft',
     description: hotel.description || '',
     amenities: arrayToString(hotel.amenities),
-    rooms: hotel.rooms || [],
+    totalRooms: hotel.totalRooms || 0,
+    weddingPackages: hotel.weddingPackages || [],
     images: hotel.images || [],
     imageFiles: [],
     removeImages: false,
@@ -207,11 +201,9 @@ const getInitialFormState = (hotel: Hotel | null): HotelFormState | null => {
 
     // Wedding services - FIX THESE PROBLEMATIC FIELDS
     offerWeddingPackages: hotel.offerWeddingPackages || 'No',
-    resortCategory: hotel.resortCategory || '',
-    weddingPackagePrice: hotel.weddingPackagePrice || '',
+    resortCategory: hotel.resortCategory || '', 
     servicesOffered: arrayToString(hotel.servicesOffered),
     maxGuestCapacity: hotel.maxGuestCapacity || '',
-    numberOfRooms: hotel.numberOfRooms || '',
     venueAvailability: hotel.venueAvailability || '',
 
     // Fix these boolean/array field conversions:
@@ -286,9 +278,9 @@ export default function HotelDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Room management state
-  const [roomForm, setRoomForm] = useState<RoomFormState>({ type: '', capacity: 1, pricePerNight: 0, available: 0 });
-  const [editingRoomIndex, setEditingRoomIndex] = useState<number | null>(null);
+  // Wedding package management state
+  const [weddingPackageForm, setWeddingPackageForm] = useState<{ name: string; rooms: number; price: number; totalGuests: number }>({ name: '', rooms: 0, price: 0, totalGuests: 0 });
+  const [editingWeddingPackageIndex, setEditingWeddingPackageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (auth?.data?.role === 'hotel' && auth?.data?.roleId) {
@@ -300,22 +292,6 @@ export default function HotelDashboard() {
     setEditHotelForm(getInitialFormState(selectedHotel));
   }, [selectedHotel]);
 
-  const handleStatusChange = async (newStatus: 'active' | 'draft' | 'archived') => {
-    if (!auth?.data?.roleId || !selectedHotel) return;
-
-    const formData = new FormData();
-    formData.append('status', newStatus);
-
-    try {
-      setIsSubmitting(true);
-      await dispatch(updateHotel({ id: auth.data.roleId, data: formData })).unwrap();
-      toast.success(`Hotel status updated to ${newStatus}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to update status");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleEdit = async () => {
     if (!editHotelForm || !auth?.data?.roleId || isSubmitting) return;
@@ -380,9 +356,8 @@ export default function HotelDashboard() {
       // Wedding and venue information
       formData.append('offerWeddingPackages', editHotelForm.offerWeddingPackages);
       formData.append('resortCategory', editHotelForm.resortCategory);
-      formData.append('weddingPackagePrice', editHotelForm.weddingPackagePrice);
+      formData.append('weddingPackages', JSON.stringify(editHotelForm.weddingPackages));
       formData.append('maxGuestCapacity', editHotelForm.maxGuestCapacity);
-      formData.append('numberOfRooms', editHotelForm.numberOfRooms);
       formData.append('venueAvailability', editHotelForm.venueAvailability);
       formData.append('bookingLeadTime', editHotelForm.bookingLeadTime);
       formData.append('weddingDepositRequired', editHotelForm.weddingDepositRequired);
@@ -407,8 +382,8 @@ export default function HotelDashboard() {
       formData.append('staffAccommodation', editHotelForm.staffAccommodation);
       formData.append('preferredContactMethod', editHotelForm.preferredContactMethod);
 
-      // Rooms
-      formData.append('rooms', JSON.stringify(editHotelForm.rooms));
+      // Rooms and wedding packages
+      formData.append('totalRooms', editHotelForm.totalRooms.toString());
 
       // Handle images - combine existing (not removed) with new uploads
       const finalImages = [
@@ -457,32 +432,72 @@ export default function HotelDashboard() {
     }
   };
 
-  const handleRoomAdd = () => {
-    if (!editHotelForm || !roomForm.type.trim()) return;
 
-    const newRoom = { ...roomForm };
-    if (editingRoomIndex !== null) {
-      const updatedRooms = [...editHotelForm.rooms];
-      updatedRooms[editingRoomIndex] = newRoom;
-      setEditHotelForm(prev => prev ? { ...prev, rooms: updatedRooms } : null);
-      setEditingRoomIndex(null);
+
+  // Wedding package management functions
+  const handleWeddingPackageAdd = async () => {
+    if (!editHotelForm || !weddingPackageForm.rooms || !weddingPackageForm.price || !auth?.data?.roleId) return;
+    
+    const newPackage = { ...weddingPackageForm };
+    let updatedPackages;
+    
+    if (editingWeddingPackageIndex !== null) {
+      updatedPackages = [...editHotelForm.weddingPackages];
+      updatedPackages[editingWeddingPackageIndex] = newPackage;
     } else {
-      setEditHotelForm(prev => prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : null);
+      if (editHotelForm.weddingPackages.length >= 5) {
+        toast.error("Maximum 5 wedding packages allowed");
+        return;
+      }
+      updatedPackages = [...editHotelForm.weddingPackages, newPackage];
     }
 
-    setRoomForm({ type: '', capacity: 1, pricePerNight: 0, available: 0 });
+    // Update local state first
+    setEditHotelForm(prev => prev ? { ...prev, weddingPackages: updatedPackages } : null);
+    
+    // Update database via API
+    try {
+      const formData = new FormData();
+      formData.append('weddingPackages', JSON.stringify(updatedPackages));
+      
+      await dispatch(updateHotel({ id: auth.data.roleId, data: formData })).unwrap();
+      toast.success(editingWeddingPackageIndex !== null ? "Package updated successfully!" : "Package added successfully!");
+      
+      setEditingWeddingPackageIndex(null);
+      setWeddingPackageForm({ name: '', rooms: 0, price: 0, totalGuests: 0 });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update packages");
+      // Revert local state on error
+      setEditHotelForm(prev => prev ? { ...prev, weddingPackages: editHotelForm.weddingPackages } : null);
+    }
   };
 
-  const handleRoomEdit = (index: number) => {
+  const handleWeddingPackageEdit = (index: number) => {
     if (!editHotelForm) return;
-    setRoomForm(editHotelForm.rooms[index]);
-    setEditingRoomIndex(index);
+    setWeddingPackageForm(editHotelForm.weddingPackages[index]);
+    setEditingWeddingPackageIndex(index);
   };
 
-  const handleRoomDelete = (index: number) => {
-    if (!editHotelForm) return;
-    const updatedRooms = editHotelForm.rooms.filter((_, i) => i !== index);
-    setEditHotelForm(prev => prev ? { ...prev, rooms: updatedRooms } : null);
+  const handleWeddingPackageDelete = async (index: number) => {
+    if (!editHotelForm || !auth?.data?.roleId) return;
+    
+    const updatedPackages = editHotelForm.weddingPackages.filter((_, i) => i !== index);
+    
+    // Update local state first
+    setEditHotelForm(prev => prev ? { ...prev, weddingPackages: updatedPackages } : null);
+    
+    // Update database via API
+    try {
+      const formData = new FormData();
+      formData.append('weddingPackages', JSON.stringify(updatedPackages));
+      
+      await dispatch(updateHotel({ id: auth.data.roleId, data: formData })).unwrap();
+      toast.success("Package deleted successfully!");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete package");
+      // Revert local state on error
+      setEditHotelForm(prev => prev ? { ...prev, weddingPackages: editHotelForm.weddingPackages } : null);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: keyof HotelFormState) => {
@@ -623,7 +638,7 @@ export default function HotelDashboard() {
                     <Bed className="h-8 w-8 text-blue-600" />
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Total Rooms</p>
-                      <p className="text-2xl font-bold">{selectedHotel.rooms?.length || 0}</p>
+                      <p className="text-2xl font-bold">{selectedHotel.totalRooms || 0}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -777,10 +792,16 @@ export default function HotelDashboard() {
                       <Label className="text-sm font-medium text-gray-600">Wedding Packages</Label>
                       <p className="text-lg">{selectedHotel.offerWeddingPackages}</p>
                     </div>
-                    {selectedHotel.weddingPackagePrice && (
+                    {selectedHotel.weddingPackages && selectedHotel.weddingPackages.length > 0 && (
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Package Price</Label>
-                        <p className="text-lg">{selectedHotel.weddingPackagePrice}</p>
+                        <Label className="text-sm font-medium text-gray-600 mb-2 block">Wedding Packages</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedHotel.weddingPackages.map((packageItem: any, index: number) => (
+                            <Badge key={index} variant="secondary">
+                              {packageItem.rooms} rooms - ${packageItem.price} - {packageItem.totalGuests} guests
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -829,78 +850,101 @@ export default function HotelDashboard() {
           <TabsContent value="rooms" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Room Management</CardTitle>
+                <CardTitle>Wedding Package Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <Input
-                    placeholder="Room Type"
-                    value={roomForm.type}
-                    onChange={(e) => setRoomForm(prev => ({ ...prev, type: e.target.value }))}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Capacity"
-                    value={roomForm.capacity}
-                    onChange={(e) => setRoomForm(prev => ({ ...prev, capacity: Number(e.target.value) }))}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Price per Night"
-                    value={roomForm.pricePerNight}
-                    onChange={(e) => setRoomForm(prev => ({ ...prev, pricePerNight: Number(e.target.value) }))}
-                  />
-                  <div className="flex space-x-2">
-                    <Input
-                      type="number"
-                      placeholder="Available"
-                      value={roomForm.available}
-                      onChange={(e) => setRoomForm(prev => ({ ...prev, available: Number(e.target.value) }))}
-                    />
-                    <Button onClick={handleRoomAdd}>
-                      {editingRoomIndex !== null ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    </Button>
+                <div className="space-y-6">
+                  {/* Add New Wedding Package Form */}
+                  <div className="border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-4">Add New Wedding Package</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      <div>
+                        <Label htmlFor="packageName">Package Name</Label>
+                        <Input
+                          id="packageName"
+                          type="text"
+                          value={weddingPackageForm.name}
+                          onChange={(e) => setWeddingPackageForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g., Premium Package"
+                        />
+                      </div>
+                      <div>
+                          <Label htmlFor="packageRooms">Number of Rooms</Label>
+                        <Input
+                          id="packageRooms"
+                          type="number"
+                          value={weddingPackageForm.rooms}
+                          onChange={(e) => setWeddingPackageForm(prev => ({ ...prev, rooms: Number(e.target.value) }))}
+                          placeholder="5"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="packagePrice">Price</Label>
+                        <Input
+                          id="packagePrice"
+                          type="number"
+                          value={weddingPackageForm.price}
+                          onChange={(e) => setWeddingPackageForm(prev => ({ ...prev, price: Number(e.target.value) }))}
+                          placeholder="5000"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="packageGuests">Total Guests</Label>
+                        <Input
+                          id="packageGuests"
+                          type="number"
+                          value={weddingPackageForm.totalGuests}
+                          onChange={(e) => setWeddingPackageForm(prev => ({ ...prev, totalGuests: Number(e.target.value) }))}
+                          placeholder="200"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <Button onClick={handleWeddingPackageAdd} disabled={!weddingPackageForm.rooms || !weddingPackageForm.price}>
+                        {editingWeddingPackageIndex !== null ? <Save className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                        {editingWeddingPackageIndex !== null ? 'Update Package' : 'Add Package'}
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  {selectedHotel.rooms?.map((room, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1 grid grid-cols-4 gap-4">
-                        <div>
-                          <Label className="text-sm text-gray-600">Type</Label>
-                          <p className="font-medium">{room.type}</p>
+                  {/* Existing Wedding Packages */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Existing Wedding Packages</h3>
+                    <div className="space-y-4">
+                      {editHotelForm?.weddingPackages?.map((pkg, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg">{pkg.name || `Package ${index + 1}`}</h4>
+                              <div className="flex items-center space-x-4 mt-2">
+                                <span className="text-green-600 font-semibold">
+                                  {selectedHotel.priceRange?.currency} {pkg.price.toLocaleString()}
+                                </span>
+                                <span className="text-gray-500">{pkg.rooms} rooms</span>
+                                <span className="text-gray-500">Max {pkg.totalGuests} guests</span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              <Button size="sm" variant="outline" onClick={() => handleWeddingPackageEdit(index)}>
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleWeddingPackageDelete(index)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <Label className="text-sm text-gray-600">Capacity</Label>
-                          <p className="font-medium">{room.capacity} guests</p>
+                      ))}
+                      
+                      {(!editHotelForm?.weddingPackages || editHotelForm.weddingPackages.length === 0) && (
+                        <div className="text-center py-8 text-gray-500">
+                          <Package className="h-12 w-12 mx-auto mb-4" />
+                          <p>No wedding packages configured yet. Add your first package above.</p>
                         </div>
-                        <div>
-                          <Label className="text-sm text-gray-600">Price per Night</Label>
-                          <p className="font-medium">{selectedHotel.priceRange?.currency} {room.pricePerNight}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm text-gray-600">Available</Label>
-                          <p className="font-medium">{room.available} rooms</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2 ml-4">
-                        <Button size="sm" variant="outline" onClick={() => handleRoomEdit(index)}>
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleRoomDelete(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      )}
                     </div>
-                  ))}
-
-                  {(!selectedHotel.rooms || selectedHotel.rooms.length === 0) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Bed className="h-12 w-12 mx-auto mb-4" />
-                      <p>No rooms configured yet. Add your first room above.</p>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -1454,12 +1498,13 @@ export default function HotelDashboard() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="weddingPackagePrice">Wedding Package Price Range (2 Nights)</Label>
+                      <Label htmlFor="totalRooms">Total Number of Rooms</Label>
                       <Input
-                        id="weddingPackagePrice"
-                        value={editHotelForm.weddingPackagePrice}
-                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, weddingPackagePrice: e.target.value } : null)}
-                        placeholder="e.g., $5000 - $15000"
+                        id="totalRooms"
+                        type="number"
+                        value={editHotelForm.totalRooms}
+                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, totalRooms: Number(e.target.value) } : null)}
+                        placeholder="Total number of rooms"
                       />
                     </div>
                     <div>
@@ -1472,16 +1517,19 @@ export default function HotelDashboard() {
                         placeholder="e.g., 200"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="numberOfRooms">Number of Rooms Available for Guests</Label>
-                      <Input
-                        id="numberOfRooms"
-                        type="number"
-                        value={editHotelForm.numberOfRooms}
-                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, numberOfRooms: e.target.value } : null)}
-                        placeholder="e.g., 50"
-                      />
+
+                  </div>
+
+                                    {/* Wedding Packages Display */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600 mb-2 block">Wedding Packages</Label>
+                    <div className="text-center py-4 text-gray-500 border rounded-lg">
+                      <p>Wedding packages are managed in the "Rooms" tab</p>
+                      <p className="text-sm">Go to the "Rooms" tab to add/edit wedding packages</p>
                     </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="venueAvailability">Wedding Venue Availability</Label>
                       <Select value={editHotelForm.venueAvailability} onValueChange={(val) => setEditHotelForm(prev => prev ? { ...prev, venueAvailability: val } : null)}>

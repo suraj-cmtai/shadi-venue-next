@@ -111,12 +111,7 @@ interface HotelFormState {
   status: 'active' | 'draft' | 'archived';
   description: string;
   amenities: string;
-  rooms: {
-    type: string;
-    capacity: number;
-    pricePerNight: number;
-    available: number;
-  }[];
+  weddingPackages: { name: string; rooms: number; price: number; totalGuests: number; }[];  
   images: string[];
   imageFiles: File[];
   contactInfo: {
@@ -139,10 +134,9 @@ interface HotelFormState {
   websiteLink: string;
   offerWeddingPackages: 'Yes' | 'No';
   resortCategory: string;
-  weddingPackagePrice: string;
   servicesOffered: string;
   maxGuestCapacity: string;
-  numberOfRooms: string;
+  totalRooms: number;
   venueAvailability: string;
   allInclusivePackages: string;
   staffAccommodation: string;
@@ -187,7 +181,8 @@ const initialFormState: HotelFormState = {
   status: "draft",
   description: "",
   amenities: "WiFi, Pool, Restaurant, Parking",
-  rooms: [],
+  weddingPackages: [],
+  totalRooms: 0,
   images: [],
   imageFiles: [],
   contactInfo: {
@@ -210,10 +205,8 @@ const initialFormState: HotelFormState = {
   websiteLink: "",
   offerWeddingPackages: "Yes",
   resortCategory: "Luxury",
-  weddingPackagePrice: "50000",
   servicesOffered: "Wedding Planning, Catering, Photography",
   maxGuestCapacity: "200",
-  numberOfRooms: "50",
   venueAvailability: "Year Round",
   allInclusivePackages: "Yes",
   staffAccommodation: "Yes",
@@ -448,9 +441,9 @@ const createRequestData = async (form: HotelFormState) => {
     // Wedding and Venue Information
     formData.append('offerWeddingPackages', form.offerWeddingPackages);
     formData.append('resortCategory', form.resortCategory);
-    formData.append('weddingPackagePrice', form.weddingPackagePrice);
+    formData.append('weddingPackages', JSON.stringify(form.weddingPackages));
     formData.append('maxGuestCapacity', form.maxGuestCapacity);
-    formData.append('numberOfRooms', form.numberOfRooms);
+    formData.append('totalRooms', form.totalRooms.toString());
     formData.append('venueAvailability', form.venueAvailability);
     
     // Services and Amenities
@@ -476,8 +469,8 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('isPremium', form.isPremium.toString());
     formData.append('isFeatured', form.isFeatured.toString());
     
-    // Rooms as JSON string
-    formData.append('rooms', JSON.stringify(form.rooms));
+    // Wedding Packages as JSON string
+    formData.append('weddingPackages', JSON.stringify(form.weddingPackages));
 
     // File URLs - append as indexed arrays
     imageUrls.forEach((url, index) => {
@@ -1016,11 +1009,11 @@ const createRequestData = async (form: HotelFormState) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Wedding Package Price</Label>
+              <Label>Wedding Packages</Label>
               <Input
-                value={form.weddingPackagePrice}
-                onChange={(e) => setForm((prev) => ({ ...prev, weddingPackagePrice: e.target.value }))}
-                placeholder="Package Price"
+                value={JSON.stringify(form.weddingPackages)}
+                onChange={(e) => setForm((prev) => ({ ...prev, weddingPackages: JSON.parse(e.target.value) }))}
+                placeholder="Package Name"
               />
             </div>
             <div className="space-y-2">
@@ -1032,11 +1025,11 @@ const createRequestData = async (form: HotelFormState) => {
               />
             </div>
             <div className="space-y-2">
-              <Label>Number of Rooms</Label>
+              <Label>Total Number of Rooms</Label>
               <Input
-                value={form.numberOfRooms}
-                onChange={(e) => setForm((prev) => ({ ...prev, numberOfRooms: e.target.value }))}
-                placeholder="Number of Rooms"
+                value={form.totalRooms}
+                onChange={(e) => setForm((prev) => ({ ...prev, totalRooms: Number(e.target.value) }))}
+                placeholder="Total Number of Rooms"
               />
             </div>
           </div>
@@ -1574,6 +1567,8 @@ const createRequestData = async (form: HotelFormState) => {
                                 rating: hotel.rating || 0,
                                 status: hotel.status || "draft",
                                 description: hotel.description || "",
+                                weddingPackages: hotel.weddingPackages || [],
+                                totalRooms: hotel.totalRooms || 0,
                                 amenities: Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : (hotel.amenities || ""),
                                 servicesOffered: Array.isArray(hotel.servicesOffered) 
                                   ? hotel.servicesOffered.join(", ") 
@@ -1601,7 +1596,6 @@ const createRequestData = async (form: HotelFormState) => {
                                   : (Array.isArray(hotel.preferredContactMethod) 
                                     ? hotel.preferredContactMethod[0] || "Email"
                                     : "Email"),
-                                rooms: hotel.rooms || [],
                                 images: hotel.images || [],
                                 imageFiles: [],
                                 contactInfo: hotel.contactInfo || initialFormState.contactInfo,
@@ -1614,12 +1608,10 @@ const createRequestData = async (form: HotelFormState) => {
                                 websiteLink: hotel.websiteLink || "",
                                 offerWeddingPackages: hotel.offerWeddingPackages || "No",
                                 resortCategory: hotel.resortCategory || "",
-                                weddingPackagePrice: hotel.weddingPackagePrice || "",
                                 // servicesOffered: Array.isArray(hotel.servicesOffered) 
                                 //   ? hotel.servicesOffered.join(", ") 
                                 //   : hotel.servicesOffered || "",
                                 maxGuestCapacity: hotel.maxGuestCapacity || "",
-                                numberOfRooms: hotel.numberOfRooms || "",
                                 venueAvailability: hotel.venueAvailability || "",
                                 // allInclusivePackages: hotel.allInclusivePackages?.toString() || "",
                                 // staffAccommodation: hotel.staffAccommodation?.toString() || "",

@@ -587,10 +587,10 @@ const DynamicVenuePage: React.FC = () => {
             <div className="flex items-center text-sm text-gray-600">
               <Users className="w-4 h-4 mr-1" />
               <span>
-                {venue.numberOfRooms && venue.numberOfRooms.trim() !== '' 
-                  ? `${venue.numberOfRooms} rooms` 
-                  : venue.rooms && venue.rooms.length > 0 
-                    ? `${venue.rooms.length} rooms`
+                {venue.totalRooms && venue.totalRooms !== 0 
+                  ? `${venue.totalRooms} rooms` 
+                  : venue.weddingPackages && venue.weddingPackages.length > 0 
+                    ? `${venue.weddingPackages.length} packages`
                     : 'Rooms: N/A'
                 }
               </span>

@@ -24,11 +24,12 @@ export interface Hotel {
   status: 'active' | 'draft' | 'archived';
   description: string;
   amenities: string[];
-  rooms: {
-    type: string;
-    capacity: number;
-    pricePerNight: number;
-    available: number;
+  totalRooms: number;
+  weddingPackages: {
+    name: string;
+    rooms: number;
+    price: number;
+    totalGuests: number;
   }[];
   images: string[];
   contactInfo: {
@@ -36,7 +37,7 @@ export interface Hotel {
     email: string;
     website?: string;
   };
-  policies: {
+  policies: { 
     checkIn: string;
     checkOut: string;
     cancellation: string;
@@ -59,10 +60,8 @@ export interface Hotel {
   websiteLink?: string;
   offerWeddingPackages?: 'Yes' | 'No';
   resortCategory?: string;
-  weddingPackagePrice?: string;
   servicesOffered?: string[];
   maxGuestCapacity?: string;
-  numberOfRooms?: string;
   venueAvailability?: string;
   allInclusivePackages?: ('Yes' | 'No' | 'Partially')[];
   staffAccommodation?: ('Yes' | 'No' | 'Limited')[];

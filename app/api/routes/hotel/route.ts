@@ -156,8 +156,8 @@ export async function POST(req: Request) {
                 }
             }
         }
-        const rooms = formData.get("rooms")?.toString();
-
+        const rooms = formData.get("weddingPackages")?.toString();
+    
         // Extract location information
         const address = formData.get("address")?.toString();
         const city = formData.get("city")?.toString();
@@ -190,9 +190,9 @@ export async function POST(req: Request) {
         // Extract wedding package information
         const offerWeddingPackages = formData.get("offerWeddingPackages")?.toString();
         const resortCategory = formData.get("resortCategory")?.toString();
-        const weddingPackagePrice = formData.get("weddingPackagePrice")?.toString();
+        const weddingPackages = formData.get("weddingPackages")?.toString();
         const maxGuestCapacity = formData.get("maxGuestCapacity")?.toString();
-        const numberOfRooms = formData.get("numberOfRooms")?.toString();
+        const totalRooms = formData.get("totalRooms")?.toString();
         const venueAvailability = formData.get("venueAvailability")?.toString();
 
         // Extract services and amenities
@@ -249,14 +249,6 @@ export async function POST(req: Request) {
             rating: safeParseNumber(rating),
             status: (status as HotelStatus) || "draft",
             amenities,
-            rooms: rooms ? (() => {
-                try {
-                    return JSON.parse(rooms);
-                } catch {
-                    consoleManager.warn("Failed to parse rooms JSON, using empty array");
-                    return [];
-                }
-            })() : [],
             images: imageUrls,
 
             // Location information
@@ -299,9 +291,16 @@ export async function POST(req: Request) {
             // Wedding package information
             offerWeddingPackages: offerWeddingPackages as 'Yes' | 'No' | undefined,
             resortCategory: resortCategory || "",
-            weddingPackagePrice: weddingPackagePrice || "",
+            weddingPackages: weddingPackages ? (() => {
+                try {
+                    return JSON.parse(weddingPackages);
+                } catch {
+                    consoleManager.warn("Failed to parse weddingPackages JSON, using empty array");
+                    return [];
+                }
+            })() : [],
             maxGuestCapacity: maxGuestCapacity || "",
-            numberOfRooms: numberOfRooms || "",
+            totalRooms: safeParseNumber(totalRooms),
             venueAvailability: venueAvailability || "",
 
             // Services and amenities (handle as flexible string or array)

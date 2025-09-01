@@ -172,7 +172,7 @@ export async function PUT(
             hotelData.amenities = amenities;
         }
 
-        const rooms = formData.get("rooms")?.toString();
+        const rooms = formData.get("weddingPackages")?.toString();
 
         if (name) hotelData.name = name;
         if (category) hotelData.category = category;
@@ -181,9 +181,9 @@ export async function PUT(
         if (status) hotelData.status = status as HotelStatus;
         if (rooms) {
             try {
-                hotelData.rooms = JSON.parse(rooms);
+                hotelData.weddingPackages = JSON.parse(rooms);
             } catch {
-                consoleManager.warn("Failed to parse rooms JSON, keeping existing rooms");
+                consoleManager.warn("Failed to parse weddingPackages JSON, keeping existing weddingPackages");
             }
         }
 
@@ -266,16 +266,22 @@ export async function PUT(
         // Wedding and Venue Information
         const offerWeddingPackages = formData.get("offerWeddingPackages")?.toString();
         const resortCategory = formData.get("resortCategory")?.toString();
-        const weddingPackagePrice = formData.get("weddingPackagePrice")?.toString();
+        const weddingPackages = formData.get("weddingPackages")?.toString();
         const maxGuestCapacity = formData.get("maxGuestCapacity")?.toString();
-        const numberOfRooms = formData.get("numberOfRooms")?.toString();
+        const totalRooms = formData.get("totalRooms")?.toString();
         const venueAvailability = formData.get("venueAvailability")?.toString();
 
         if (offerWeddingPackages !== undefined) hotelData.offerWeddingPackages = offerWeddingPackages as 'Yes' | 'No';
         if (resortCategory !== undefined) hotelData.resortCategory = resortCategory;
-        if (weddingPackagePrice !== undefined) hotelData.weddingPackagePrice = weddingPackagePrice;
+        if (weddingPackages !== undefined) {
+            try {
+                hotelData.weddingPackages = JSON.parse(weddingPackages);
+            } catch {
+                consoleManager.warn("Failed to parse weddingPackages JSON, keeping existing packages");
+            }
+        }
         if (maxGuestCapacity !== undefined) hotelData.maxGuestCapacity = maxGuestCapacity;
-        if (numberOfRooms !== undefined) hotelData.numberOfRooms = numberOfRooms;
+        if (totalRooms !== undefined) hotelData.totalRooms = safeParseNumber(totalRooms);
         if (venueAvailability !== undefined) hotelData.venueAvailability = venueAvailability;
 
         // Services and Amenities (handle as arrays or strings)

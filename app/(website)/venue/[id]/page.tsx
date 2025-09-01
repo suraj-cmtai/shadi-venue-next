@@ -454,6 +454,7 @@ export default function HotelDetailsPage() {
               </motion.div>
             )}
 
+
             {/* Amenities */}
             {hotel?.amenities && hotel.amenities.length > 0 && (
               <motion.div
@@ -486,57 +487,6 @@ export default function HotelDetailsPage() {
                       </motion.div>
                     );
                   })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Room Types */}
-            {hotel?.rooms && hotel.rooms.length > 0 && (
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.6 }}
-              >
-                <h2 className="text-2xl font-bold text-[#212D47] mb-6">
-                  Room Types
-                </h2>
-                <div className="space-y-4">
-                  {hotel.rooms.map((room, index) => (
-                    <motion.div
-                      key={room.type}
-                      initial={{ x: -30, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{
-                        delay: 0.8 + index * 0.1,
-                        duration: 0.5,
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      className={`p-6 rounded-xl border-2 cursor-pointer transition-all border-gray-200 bg-white hover:border-[#212D47]/30`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-xl font-semibold text-[#212D47]">
-                          {room.type}
-                        </h3>
-                        <Badge
-                          variant={room.available > 0 ? "default" : "destructive"}
-                        >
-                          {room.available} available
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-6 text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          <span>Up to {room.capacity} guests</span>
-                        </div>
-                        <div className="text-2xl font-bold text-[#212D47]">
-                          ₹ {room.pricePerNight.toLocaleString()}
-                          <span className="text-sm font-normal text-gray-500">
-                            /night
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
                 </div>
               </motion.div>
             )}
@@ -600,7 +550,7 @@ export default function HotelDetailsPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Pricing Card */}
+            {/* Hotel Stats Card */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -608,20 +558,53 @@ export default function HotelDetailsPage() {
             >
               <Card className="sticky top-6 border-2 border-[#212D47]/10">
                 <CardContent className="p-6">
-                  <div className="text-center mb-6">
-                    <div className="text-4xl font-bold text-[#212D47] mb-1">
-                      ₹ {hotel?.priceRange.startingPrice.toLocaleString()}
+                  {/* Total Rooms */}
+                  <div className="text-center mb-6 pb-6 border-b border-gray-200">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
+                        <span className="text-pink-600 font-bold text-sm">🏨</span>
+                      </div>
+                      <span className="text-lg font-semibold text-[#212D47]">Total Rooms</span>
                     </div>
-                    <div className="text-gray-500 font-medium">
-                      starting from per night
-                    </div>
+                    <div className="text-3xl font-bold text-[#212D47] mb-1">{hotel?.totalRooms || 0}</div>
+                    <div className="text-gray-500 text-sm">Available for events</div>
                   </div>
-                  <Button
-                    className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
-                    onClick={() => setIsBookingOpen(true)}
-                  >
-                    Enquiry Now
-                  </Button>
+
+                  {/* Wedding Packages */}
+                  {hotel?.weddingPackages && hotel.weddingPackages.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="text-center mb-4">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
+                            <span className="text-pink-600 font-bold text-sm">💒</span>
+                          </div>
+                          <span className="text-lg font-semibold text-[#212D47]">Wedding Packages</span>
+                        </div>
+                      </div>
+                      
+                      {/* Package Cards */}
+                      <div className="space-y-3">
+                        {hotel.weddingPackages.map((pkg, index) => (
+                          <div key={index} className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-lg border border-pink-200">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-semibold text-[#212D47]">{pkg.name || `Package ${index + 1}`}</span>
+                              <Badge className="bg-pink-500 text-white">₹ {pkg.price.toLocaleString()}</Badge>
+                            </div>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div>• {pkg.rooms} Rooms Included</div>
+                              <div>• Up to {pkg.totalGuests} Guests</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="text-center pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-500 mb-2">Starting from</div>
+                        <div className="text-2xl font-bold text-[#212D47]">₹ {hotel.weddingPackages[0]?.price.toLocaleString() || 0}</div>
+                        <div className="text-gray-500 text-sm">per package</div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

@@ -32,11 +32,11 @@ export interface Hotel {
     status: 'active' | 'draft' | 'archived';
     description: string;
     amenities: string[];
-    rooms: {
-      type: string;
-      capacity: number;
-      pricePerNight: number;
-      available: number;
+    weddingPackages: {
+      name: string;
+      rooms: number;
+      price: number;
+      totalGuests: number;
     }[];
     images: string[];
     contactInfo: {
@@ -66,9 +66,8 @@ export interface Hotel {
     // Wedding Package Information
     offerWeddingPackages?: 'Yes' | 'No';
     resortCategory?: string;
-    weddingPackagePrice?: string;
     maxGuestCapacity?: string;
-    numberOfRooms?: string;
+    totalRooms?: number;
     venueAvailability?: string;
   
     // Services and Amenities - Arrays for multi-select fields
@@ -159,7 +158,7 @@ class HotelService {
             status: data.status || "draft",
             description: data.description || "",
             amenities: data.amenities || [],
-            rooms: Array.isArray(data.rooms) ? data.rooms : [],
+            weddingPackages: Array.isArray(data.weddingPackages) ? data.weddingPackages : [],
             images: Array.isArray(data.images) ? data.images : [],
             contactInfo: {
                 phone: data.contactInfo?.phone || "",
@@ -187,9 +186,8 @@ class HotelService {
             // Wedding Package Information
             offerWeddingPackages: data.offerWeddingPackages || "No",
             resortCategory: data.resortCategory || "",
-            weddingPackagePrice: data.weddingPackagePrice || "",
             maxGuestCapacity: data.maxGuestCapacity || "",
-            numberOfRooms: data.numberOfRooms || "",
+            totalRooms: data.totalRooms || "",
             venueAvailability: data.venueAvailability || "",
 
             // Arrays for multi-select fields
@@ -302,7 +300,7 @@ private static normalizeArrayOrString(value: any): string[] {
                 
                 // Ensure arrays are stored as arrays
                 amenities: Array.isArray(hotelData.amenities) ? hotelData.amenities : [],
-                rooms: Array.isArray(hotelData.rooms) ? hotelData.rooms : [],
+                weddingPackages: Array.isArray(hotelData.weddingPackages) ? hotelData.weddingPackages : [],
                 images: Array.isArray(hotelData.images) ? hotelData.images : [],
                 uploadResortPhotos: Array.isArray(hotelData.uploadResortPhotos) ? hotelData.uploadResortPhotos : [],
                 uploadMarriagePhotos: Array.isArray(hotelData.uploadMarriagePhotos) ? hotelData.uploadMarriagePhotos : [],
@@ -320,9 +318,8 @@ private static normalizeArrayOrString(value: any): string[] {
                 // Wedding Package Information
                 offerWeddingPackages: hotelData.offerWeddingPackages || "No",
                 resortCategory: hotelData.resortCategory || "",
-                weddingPackagePrice: hotelData.weddingPackagePrice || "",
                 maxGuestCapacity: hotelData.maxGuestCapacity || "",
-                numberOfRooms: hotelData.numberOfRooms || "",
+                totalRooms: hotelData.totalRooms || "",
                 venueAvailability: hotelData.venueAvailability || "",
 
                 // Services and Amenities - ensure proper storage
@@ -483,8 +480,8 @@ private static normalizeArrayOrString(value: any): string[] {
             if (updateData.amenities !== undefined) {
                 processedUpdateData.amenities = Array.isArray(updateData.amenities) ? updateData.amenities : [];
             }
-            if (updateData.rooms !== undefined) {
-                processedUpdateData.rooms = Array.isArray(updateData.rooms) ? updateData.rooms : [];
+            if (updateData.weddingPackages !== undefined) {
+                processedUpdateData.weddingPackages = Array.isArray(updateData.weddingPackages) ? updateData.weddingPackages : [];
             }
             if (updateData.images !== undefined) {
                 processedUpdateData.images = Array.isArray(updateData.images) ? updateData.images : [];
@@ -513,9 +510,9 @@ private static normalizeArrayOrString(value: any): string[] {
             // Wedding Package Information
             if (updateData.offerWeddingPackages !== undefined) processedUpdateData.offerWeddingPackages = updateData.offerWeddingPackages;
             if (updateData.resortCategory !== undefined) processedUpdateData.resortCategory = updateData.resortCategory || "";
-            if (updateData.weddingPackagePrice !== undefined) processedUpdateData.weddingPackagePrice = updateData.weddingPackagePrice || "";
+            if (updateData.weddingPackages !== undefined) processedUpdateData.weddingPackages = updateData.weddingPackages || [];
             if (updateData.maxGuestCapacity !== undefined) processedUpdateData.maxGuestCapacity = updateData.maxGuestCapacity || "";
-            if (updateData.numberOfRooms !== undefined) processedUpdateData.numberOfRooms = updateData.numberOfRooms || "";
+            if (updateData.totalRooms !== undefined) processedUpdateData.totalRooms = updateData.totalRooms || "";
             if (updateData.venueAvailability !== undefined) processedUpdateData.venueAvailability = updateData.venueAvailability || "";
 
             // Services and Amenities - handle both string and array formats
