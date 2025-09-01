@@ -51,6 +51,33 @@ export default function Hotels() {
     }));
   }, [hotels]);
 
+  // Distribute cities across rows with minimum 4 items per row
+  const rows = useMemo(() => {
+    const total = cityTiles.length;
+    const distributed: { city: string; image: string; count: number }[][] = [];
+    
+    if (total < 4) {
+      // Less than 4 items: single row
+      distributed.push(cityTiles);
+    } else if (total < 8) {
+      // 4-7 items: single row of 4+ items
+      distributed.push(cityTiles);
+    } else if (total < 12) {
+      // 8-11 items: two rows of 4+ items each
+      const itemsPerRow = Math.ceil(total / 2);
+      distributed.push(cityTiles.slice(0, itemsPerRow));
+      distributed.push(cityTiles.slice(itemsPerRow));
+    } else {
+      // 12+ items: three rows with minimum 4 items each
+      const itemsPerRow = Math.ceil(total / 3);
+      distributed.push(cityTiles.slice(0, itemsPerRow));
+      distributed.push(cityTiles.slice(itemsPerRow, itemsPerRow * 2));
+      distributed.push(cityTiles.slice(itemsPerRow * 2));
+    }
+    
+    return distributed.filter(row => row.length > 0);
+  }, [cityTiles]);
+
   return (
     <section className="relative w-full bg-neutral-50 py-16 md:py-24 overflow-hidden">
       {/* Decorative Vector (right, desktop only) */}
@@ -86,15 +113,8 @@ export default function Hotels() {
           Unforgettable Wedding Locations Across India
         </motion.h2>
 
-        {/* ✨ CHANGE HERE: Replaced grid with a horizontally scrollable flex container */}
-        <div
-          className="w-full flex flex-row gap-3 md:gap-6 mb-10 md:mb-16 overflow-x-auto scrollbar-hide py-4"
-          style={{
-            WebkitOverflowScrolling: "touch",
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
-        >
+        {/* Three independent horizontally scrollable rows */}
+        <div className="w-full flex flex-col gap-6 mb-10 md:mb-16">
           {isLoading && (
             <div className="w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">
@@ -117,42 +137,52 @@ export default function Hotels() {
             </div>
           )}
 
-          {!isLoading &&
-            !error &&
-            cityTiles.slice(0, 8).map((tile, idx) => (
-              // ✨ CHANGE HERE: Added shrink-0 and a fixed width to each card
-              <motion.div
-                key={tile.city}
-                className="relative group overflow-hidden rounded-md border border-[#212d47] shrink-0 w-64 sm:w-72"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
-              >
-                <Link
-                  href={`/venue?search=${encodeURIComponent(tile.city)}`}
-                  className="block"
+          {!isLoading && !error && rows.map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="w-full flex flex-row gap-3 md:gap-6 overflow-x-auto scrollbar-hide py-2"
+              style={{
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+            >
+              {row.map((tile, idx) => (
+                <motion.div
+                  key={`${tile.city}-${idx}`}
+                  className="relative group overflow-hidden rounded-md border border-[#212d47] shrink-0 w-64 sm:w-72"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
                 >
-                  <div
-                    className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8]"
-                    style={{ backgroundImage: `url('${tile.image}')` }}
-                    aria-label={tile.city}
+                  <Link
+                    href={`/venue?search=${encodeURIComponent(tile.city)}`}
+                    className="block"
                   >
-                    <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
-                  </div>
-                  <div className="absolute left-0 bottom-0 w-full">
-                    <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center justify-between">
-                      <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                        {tile.city}
-                      </p>
-                      <span className="text-white/80 text-sm">
-                        {tile.count}
-                      </span>
+                    <div
+                      className="relative bg-center bg-cover bg-no-repeat w-full aspect-[7/8]"
+                      style={{ backgroundImage: `url('${tile.image}')` }}
+                      aria-label={tile.city}
+                    >
+                      <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
+                      {/* Floating label */}
+                      <div className="absolute left-1/2 bottom-6 -translate-x-1/2">
+                        <div className="bg-[#212d47] rounded-lg px-4 py-3 flex items-center gap-3 shadow-lg">
+                          <p className="font-cormorant font-bold text-white text-base md:text-lg uppercase whitespace-nowrap">
+                            {tile.city}
+                          </p>
+                          <span className="text-white/90 text-sm font-medium">
+                            {tile.count}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          ))}
         </div>
 
         {/* CTA Button */}
