@@ -134,7 +134,7 @@ export default function Process() {
                 className="h-4 w-auto" 
               />
             </div>
-            <h2 className="font-dancing-script font-normal text-2xl md:text-4xl lg:text-5xl text-[#212d47] capitalize">
+            <h2 className="font-dancing-script font-normal text-3xl md:text-4xl lg:text-5xl text-[#212d47] capitalize">
               Make It Extraordinary And Memorable.
             </h2>
           </motion.div>

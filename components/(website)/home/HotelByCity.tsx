@@ -104,7 +104,7 @@ export default function Hotels() {
 
         {/* Main Heading */}
         <motion.h2
-          className="font-dancing-script font-normal text-3xl md:text-5xl lg:text-6xl text-[#212d47] text-center mb-12 leading-tight"
+          className="font-dancing-script font-normal text-3xl md:text-4xl lg:text-5xl text-[#212d47] text-center mb-12 leading-tight"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

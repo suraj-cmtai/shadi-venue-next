@@ -66,7 +66,7 @@ export default function Gallery() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           id="gallery-heading"
-          className="font-dancing-script font-normal text-3xl md:text-5xl lg:text-6xl text-[#212d47] text-center mb-12 leading-tight"
+          className="font-dancing-script font-normal text-3xl md:text-4xl lg:text-5xl text-[#212d47] text-center mb-12 leading-tight"
         >
           Memorable Wedding Highlights in Our Gallery
         </motion.h2>
