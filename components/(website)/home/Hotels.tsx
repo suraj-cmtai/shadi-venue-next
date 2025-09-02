@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
@@ -21,8 +21,10 @@ export default function Hotels() {
   const hotels = useSelector(selectPremiumHotel);
   const isLoading = useSelector(selectHotelLoading);
   const error = useSelector(selectHotelError);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     dispatch(fetchPremiumHotel());
   }, [dispatch]);
 
@@ -66,22 +68,27 @@ export default function Hotels() {
 
         {/* Grid of hotels (max 8 items) */}
         <div className="w-full mb-10 md:mb-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-          {isLoading && (
+          {!isClient && (
             <div className="col-span-full w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">Loading hotels...</span>
             </div>
           )}
-          {!isLoading && error && (
+          {isClient && isLoading && (
+            <div className="col-span-full w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">Loading hotels...</span>
+            </div>
+          )}
+          {isClient && !isLoading && error && (
             <div className="col-span-full w-full flex justify-center items-center min-h-32">
               <span className="text-red-500 font-cormorant text-lg">{error}</span>
             </div>
           )}
-          {!isLoading && !error && displayedHotels.length === 0 && (
+          {isClient && !isLoading && !error && displayedHotels.length === 0 && (
             <div className="col-span-full w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">No hotels found.</span>
             </div>
           )}
-          {!isLoading && !error && displayedHotels.slice(0, 8).map((hotel, idx) => (
+          {isClient && !isLoading && !error && displayedHotels.slice(0, 8).map((hotel, idx) => (
             <motion.div
               key={hotel.id}
               className="relative flex flex-col"

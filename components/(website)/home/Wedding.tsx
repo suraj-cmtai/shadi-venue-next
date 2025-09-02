@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
@@ -26,8 +26,10 @@ export default function Wedding() {
   const themes = useSelector(selectActiveWeddingsList);
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     dispatch(fetchActiveWeddings());
   }, [dispatch]);
 
@@ -68,21 +70,26 @@ export default function Wedding() {
         </div>
 
         {/* Error State */}
-        {error && (
+        {isClient && error && (
           <div className="flex justify-center items-center min-h-32">
             <span className="text-red-500 font-cormorant text-lg">{error}</span>
           </div>
         )}
 
         {/* Loading State */}
-        {isLoading && (
+        {!isClient && (
+          <div className="flex justify-center items-center min-h-32">
+            <span className="text-neutral-500 font-cormorant text-lg">Loading inspirations...</span>
+          </div>
+        )}
+        {isClient && isLoading && (
           <div className="flex justify-center items-center min-h-32">
             <span className="text-neutral-500 font-cormorant text-lg">Loading inspirations...</span>
           </div>
         )}
 
         {/* Themes Horizontal Scroll (All Breakpoints) */}
-        {!isLoading && !error && (
+        {isClient && !isLoading && !error && (
           <div className="relative">
             <div
               className="flex flex-nowrap gap-4 sm:gap-6 md:gap-8 items-end h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh] xl:h-[80vh] overflow-x-auto overflow-y-hidden scrollbar-hide pb-2"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
@@ -35,9 +35,11 @@ export default function About() {
   const isLoading = useSelector(selectIsLoading);
   const hasFetched = useSelector(selectHasFetched);
   const error = useSelector(selectError);
+  const [isClient, setIsClient] = useState(false);
 
   // Load data on component mount
   useEffect(() => {
+    setIsClient(true);
     if (!hasFetched) {
       dispatch(fetchActiveAboutContent());
     }
@@ -51,14 +53,19 @@ export default function About() {
   return (
     <section className="relative w-full bg-neutral-50 overflow-x-clip">
       {/* Loading State */}
-      {isLoading && (
+      {!isClient && (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      {isClient && isLoading && (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       )}
 
       {/* Error State */}
-      {error && !isLoading && (
+      {isClient && error && !isLoading && (
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-600">Error loading content: {error}</p>

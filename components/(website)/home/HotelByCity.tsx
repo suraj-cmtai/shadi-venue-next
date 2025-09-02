@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import GradientButton from "@/components/GradientButton";
@@ -22,8 +22,10 @@ export default function Hotels() {
   const hotels = useSelector(selectActiveHotels);
   const isLoading = useSelector(selectHotelLoading);
   const error = useSelector(selectHotelError);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     dispatch(fetchActiveHotels());
   }, [dispatch]);
 
@@ -115,21 +117,28 @@ export default function Hotels() {
 
         {/* Three independent horizontally scrollable rows */}
         <div className="w-full flex flex-col gap-6 mb-10 md:mb-16">
-          {isLoading && (
+          {!isClient && (
             <div className="w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">
                 Loading hotels...
               </span>
             </div>
           )}
-          {!isLoading && error && (
+          {isClient && isLoading && (
+            <div className="w-full flex justify-center items-center min-h-32">
+              <span className="text-neutral-500 font-cormorant text-lg">
+                Loading hotels...
+              </span>
+            </div>
+          )}
+          {isClient && !isLoading && error && (
             <div className="w-full flex justify-center items-center min-h-32">
               <span className="text-red-500 font-cormorant text-lg">
                 {error}
               </span>
             </div>
           )}
-          {!isLoading && !error && cityTiles.length === 0 && (
+          {isClient && !isLoading && !error && cityTiles.length === 0 && (
             <div className="w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">
                 No cities found.
@@ -137,7 +146,7 @@ export default function Hotels() {
             </div>
           )}
 
-          {!isLoading && !error && rows.map((row, rowIndex) => (
+          {isClient && !isLoading && !error && rows.map((row, rowIndex) => (
             <div
               key={rowIndex}
               className="w-full flex flex-row gap-3 md:gap-6 overflow-x-auto scrollbar-hide py-2"

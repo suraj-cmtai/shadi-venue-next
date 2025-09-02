@@ -2,7 +2,7 @@
 
 import GradientButton from "@/components/GradientButton";
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
 import {
@@ -30,10 +30,10 @@ const VECTOR_LEFT = "/images/hero-extension-vector-1.svg";
 const VECTOR_RIGHT = "/images/hero-extension-vector.svg";
 const VECTOR_SHADOW_FLOWER_TOP_RIGHT = "/images/hero-extension-vector-2.svg";
 
-// Helper function to get a random image from an array
-const getRandomImage = (images: any[]) => {
+// Helper function to get the first image from an array (deterministic for SSR)
+const getFirstImage = (images: any[]) => {
   if (!images || images.length === 0) return null;
-  return images[Math.floor(Math.random() * images.length)];
+  return images[0];
 };
 
 export default function HeroExtension() {
@@ -41,19 +41,21 @@ export default function HeroExtension() {
   const activeImages = useSelector(selectActiveImages);
   const content = useSelector(selectContent);
   const isLoading = useSelector(selectIsLoading);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     dispatch(fetchActiveImages());
     dispatch(fetchContent());
   }, [dispatch]);
 
-  // Get random images for each type, with fallbacks
+  // Get first image for each type, with fallbacks (deterministic for SSR)
   const getImageForType = (type: ImageType, fallbackIndex: number) => {
     const typeImages = activeImages[type] || [];
-    const randomImage = getRandomImage(typeImages);
-    return randomImage ? {
-      src: randomImage.imageUrl,
-      alt: randomImage.altText
+    const firstImage = getFirstImage(typeImages);
+    return firstImage ? {
+      src: firstImage.imageUrl,
+      alt: firstImage.altText
     } : {
       src: FALLBACK_IMAGES[fallbackIndex],
       alt: `Wedding image ${fallbackIndex + 1}`
@@ -77,7 +79,7 @@ export default function HeroExtension() {
     buttonLink: "/contact"
   };
 
-  if (isLoading) {
+  if (!isClient || isLoading) {
     return (
       <section className="relative w-full bg-white overflow-hidden font-cormorant">
         <div className="flex justify-center items-center py-24">
