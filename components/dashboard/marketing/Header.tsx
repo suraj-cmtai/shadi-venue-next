@@ -76,7 +76,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchValue, setSearchValue] = useState("");
   const router = useRouter();
   const auth = useAppSelector(selectAuth);
-  const displayName = (auth as any)?.data?.businessName || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
+  const displayName = (auth as any)?.data?.name || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {

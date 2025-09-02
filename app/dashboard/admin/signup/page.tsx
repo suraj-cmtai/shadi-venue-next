@@ -167,7 +167,7 @@ const AdminSignupPage = () => {
         name: editName,
         email: editEmail,
         role: editRole
-      })).unwrap();
+      }));
       toast.success("Auth entry updated successfully");
       setIsEditDialogOpen(false);
       setSelectedAuthId(null);

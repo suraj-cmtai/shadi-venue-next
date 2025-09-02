@@ -69,7 +69,7 @@ type Facility = "Rooms" | "Parking" | "Catering" | "Decor" | "DJ" | "Liquor Lice
 
 interface Vendor {
   id: string;
-  businessName: string;
+  name: string;
   category: VendorCategory;
   yearOfEstablishment?: string;
   contactPersonName: string;
@@ -219,7 +219,7 @@ export default function VendorDashboard() {
       const fd = new FormData();
 
       // Basic fields
-      fd.append("businessName", formData.businessName);
+      fd.append("name", formData.name);
       fd.append("category", formData.category);
       if (formData.yearOfEstablishment) fd.append("yearOfEstablishment", formData.yearOfEstablishment);
       fd.append("contactPersonName", formData.contactPersonName);
@@ -372,11 +372,11 @@ export default function VendorDashboard() {
                     <div className="space-y-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="businessName">Business Name *</Label>
+                          <Label htmlFor="name">Business Name *</Label>
                           <Input
-                            id="businessName"
-                            value={formData.businessName || ''}
-                            onChange={(e) => handleInputChange('businessName', e.target.value)}
+                            id="name"
+                            value={formData.name || ''}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
                             required
                           />
                         </div>
@@ -874,7 +874,7 @@ export default function VendorDashboard() {
               {vendor.logoUrl ? (
                 <img
                   src={vendor.logoUrl}
-                  alt={vendor.businessName}
+                  alt={vendor.name}
                   className="w-32 h-32 rounded-full border-4 border-white object-cover"
                 />
               ) : (
@@ -884,7 +884,7 @@ export default function VendorDashboard() {
               )}
             </div>
             <div className="flex-1 text-white mb-4">
-              <h1 className="text-3xl font-bold mb-2">{vendor.businessName}</h1>
+              <h1 className="text-3xl font-bold mb-2">{vendor.name}</h1>
               <div className="flex items-center gap-4">
                 <Badge variant="secondary" className="bg-white bg-opacity-20 text-white">
                   {vendor.category}
@@ -1107,7 +1107,7 @@ export default function VendorDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm text-gray-600">Business Name</Label>
-                      <p className="font-semibold">{vendor.businessName}</p>
+                      <p className="font-semibold">{vendor.name}</p>
                     </div>
                     <div>
                       <Label className="text-sm text-gray-600">Category</Label>

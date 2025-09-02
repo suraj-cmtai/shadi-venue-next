@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Parse other form data
     const vendorData = {
-      businessName: formData.get('businessName') as string,
+      name: formData.get('name') as string,
       category: formData.get('category') as any,
       yearOfEstablishment: formData.get('yearOfEstablishment') as string,
       contactPersonName: formData.get('contactPersonName') as string,

@@ -520,7 +520,7 @@ const DynamicVendorPage: React.FC = () => {
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={vendor.coverImageUrl || vendor.logoUrl || '/api/placeholder/400/300'}
-          alt={vendor.businessName}
+          alt={vendor.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -547,7 +547,7 @@ const DynamicVendorPage: React.FC = () => {
         <div className="space-y-3">
           <div>
             <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-[#212D47] transition-colors">
-              {vendor.businessName}
+              {vendor.name}
             </h3>
             <div className="flex items-center text-sm text-gray-600 mt-1">
               <MapPin className="w-4 h-4 mr-1" />

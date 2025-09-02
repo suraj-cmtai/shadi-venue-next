@@ -884,43 +884,7 @@ const createRequestData = async (form: HotelFormState) => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Pricing & Status</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Starting Price</Label>
-              <Input
-                type="number"
-                value={form.priceRange.startingPrice}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    priceRange: { ...prev.priceRange, startingPrice: Number(e.target.value) },
-                  }))
-                }
-                placeholder="Starting Price"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Select
-                value={form.priceRange.currency}
-                onValueChange={(value) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    priceRange: { ...prev.priceRange, currency: value as HotelFormState["priceRange"]["currency"] },
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["USD", "EUR", "CAD", "AUD", "GBP", "INR"].map((cur) => (
-                    <SelectItem key={cur} value={cur}>
-                      {cur}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          
             <div className="space-y-2">
               <Label>Rating</Label>
               <Input
@@ -1010,11 +974,27 @@ const createRequestData = async (form: HotelFormState) => {
             </div>
             <div className="space-y-2">
               <Label>Wedding Packages</Label>
-              <Input
-                value={JSON.stringify(form.weddingPackages)}
-                onChange={(e) => setForm((prev) => ({ ...prev, weddingPackages: JSON.parse(e.target.value) }))}
-                placeholder="Package Name"
-              />
+              {form.weddingPackages && form.weddingPackages.length > 0 ? (
+                <div className="space-y-3">
+                  {form.weddingPackages.map((pkg, index) => (
+                    <div key={index} className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-lg border border-pink-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-[#212D47]">{pkg.name || `Package ${index + 1}`}</span>
+                        <span className="px-3 py-1 rounded-md bg-[#e7c1c2] text-[#212d47] text-sm md:text-base font-bold">
+                          ₹ {Number(pkg.price || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div>• {pkg.rooms || 0} Rooms Included</div>
+                        <div>• Up to {pkg.totalGuests || 0} Guests</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 border rounded-md p-3">No packages added.</div>
+              )}
+              <p className="text-xs text-gray-500">Packages are managed when creating/updating via API or other tabs.</p>
             </div>
             <div className="space-y-2">
               <Label>Maximum Guest Capacity</Label>
@@ -1518,12 +1498,6 @@ const createRequestData = async (form: HotelFormState) => {
                     <TableCell className="text-muted-foreground">{hotel.category}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {hotel.location?.city || 'N/A'}, {hotel.location?.country || 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {hotel.priceRange ? new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: hotel.priceRange.currency || 'INR'
-                      }).format(hotel.priceRange.startingPrice || 0) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
                     <TableCell>

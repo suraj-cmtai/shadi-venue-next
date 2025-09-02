@@ -183,7 +183,7 @@ export default function VendorEnquiryPage() {
       return "Unknown Vendor";
     }
     const vendor = (vendors as any[]).find((v: any) => String(v?.id) == String(authId));
-    return vendor?.businessName || "Unknown Vendor";
+    return vendor?.name || "Unknown Vendor";
   };
 
   /*

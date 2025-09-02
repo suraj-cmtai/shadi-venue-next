@@ -59,7 +59,7 @@ export async function PATCH(
     const updateData: any = {};
 
     // Step 1: Basic Business Info
-    if (formData.has("businessName")) updateData.businessName = formData.get("businessName")?.toString() || "";
+    if (formData.has("name")) updateData.name = formData.get("name")?.toString() || "";
     if (formData.has("category")) updateData.category = formData.get("category")?.toString() || "Others";
     if (formData.has("yearOfEstablishment")) updateData.yearOfEstablishment = formData.get("yearOfEstablishment")?.toString() || "";
 

@@ -44,7 +44,7 @@ export interface Vendor {
   id: string;
 
   // Step 1: Basic Business Info
-  businessName: string;
+  name: string;
   category: VendorCategory;
   yearOfEstablishment?: string;
 
@@ -130,7 +130,7 @@ class VendorService {
   private static convertToType(id: string, data: any): Vendor {
     return {
       id,
-      businessName: data.businessName || "",
+      name: data.name || "",
       category: data.category || "Others",
       yearOfEstablishment: data.yearOfEstablishment || "",
       contactPersonName: data.contactPersonName || "",
@@ -299,7 +299,7 @@ class VendorService {
   static async searchVendors(query: string) {
     const searchTerm = query.toLowerCase();
     return this.vendors.filter((vendor) =>
-      vendor.businessName.toLowerCase().includes(searchTerm) ||
+      vendor.name.toLowerCase().includes(searchTerm) ||
       vendor.category.toLowerCase().includes(searchTerm) ||
       vendor.city.toLowerCase().includes(searchTerm) ||
       vendor.state.toLowerCase().includes(searchTerm) ||

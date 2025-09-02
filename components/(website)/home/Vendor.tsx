@@ -104,13 +104,13 @@ export default function FeaturedVendors() {
                     ? `url('${vendor.coverImageUrl}')`
                     : "url('/images/hotels-image.png')",
                 }}
-                aria-label={vendor.businessName}
+                aria-label={vendor.name}
               />
               <div className="absolute left-0 bottom-0 w-full">
                 <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
                   <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
                     <Link href={`/vendors/${vendor.id}`} passHref>
-                      {vendor.businessName || "Vendor Name"}
+                      {vendor.name || "Vendor Name"}
                     </Link>
                   </p>
                 </div>

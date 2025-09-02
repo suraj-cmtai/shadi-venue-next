@@ -659,20 +659,6 @@ export default function HotelDashboard() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <DollarSign className="h-8 w-8 text-green-600" />
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Starting Price</p>
-                      <p className="text-2xl font-bold">
-                        {selectedHotel.priceRange?.currency} {selectedHotel.priceRange?.startingPrice}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center">
                     <Users className="h-8 w-8 text-purple-600" />
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Max Capacity</p>
@@ -1233,29 +1219,6 @@ export default function HotelDashboard() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Starting Price</Label>
-                      <div className="flex space-x-2">
-                        <Select value={editHotelForm.priceRange.currency} onValueChange={(val: any) => setEditHotelForm(prev => prev ? { ...prev, priceRange: { ...prev.priceRange, currency: val } } : null)}>
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="USD">USD</SelectItem>
-                            <SelectItem value="EUR">EUR</SelectItem>
-                            <SelectItem value="GBP">GBP</SelectItem>
-                            <SelectItem value="CAD">CAD</SelectItem>
-                            <SelectItem value="AUD">AUD</SelectItem>
-                            <SelectItem value="INR">INR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          value={editHotelForm.priceRange.startingPrice}
-                          onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, priceRange: { ...prev.priceRange, startingPrice: Number(e.target.value) } } : null)}
-                        />
-                      </div>
-                    </div>
-                    <div>
                       <Label htmlFor="rating">Rating (1-5)</Label>
                       <Input
                         id="rating"
@@ -1264,7 +1227,18 @@ export default function HotelDashboard() {
                         max="5"
                         step="0.1"
                         value={editHotelForm.rating}
-                        onChange={(e) => setEditHotelForm(prev => prev ? { ...prev, rating: Number(e.target.value) } : null)}
+                        onChange={(e) => setEditHotelForm(prev => {
+                          if (!prev) return null;
+                          const raw = Number(e.target.value);
+                          const clamped = Math.max(0, Math.min(5, isNaN(raw) ? 0 : raw));
+                          return { ...prev, rating: clamped };
+                        })}
+                        onBlur={(e) => setEditHotelForm(prev => {
+                          if (!prev) return null;
+                          const raw = Number(e.target.value);
+                          const clamped = Math.max(0, Math.min(5, isNaN(raw) ? 0 : raw));
+                          return { ...prev, rating: clamped };
+                        })}
                       />
                     </div>
                   </div>

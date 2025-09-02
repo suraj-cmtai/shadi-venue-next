@@ -291,7 +291,7 @@ export default function HotelEnquiryPage() {
       return "Unknown Hotel";
     }
     const vendor = (hotels as any[]).find((v: any) => String(v?.id) == String(authId));
-    return vendor?.businessName || "Unknown Hotel";
+    return vendor?.name || "Unknown Hotel";
   };
 
   return (

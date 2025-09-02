@@ -45,7 +45,7 @@ export interface Vendor {
   id: string;
 
   // Step 1: Basic Business Info
-  businessName: string;
+  name: string;
   category: VendorCategory;
   yearOfEstablishment?: string;
 
@@ -411,7 +411,7 @@ export const selectFilteredVendors = createSelector(
     return activeVendors.filter(vendor => {
       // Text search
       const matchesSearch = !filters.search ||
-        vendor.businessName.toLowerCase().includes(filters.search.toLowerCase()) ||
+        vendor.name.toLowerCase().includes(filters.search.toLowerCase()) ||
         vendor.about?.toLowerCase().includes(filters.search.toLowerCase()) ||
         vendor.city.toLowerCase().includes(filters.search.toLowerCase()) ||
         vendor.category.toLowerCase().includes(filters.search.toLowerCase());

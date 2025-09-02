@@ -71,7 +71,7 @@ type Facility = "Rooms" | "Parking" | "Catering" | "Decor" | "DJ" | "Liquor Lice
 
 interface Vendor {
   id: string;
-  businessName: string;
+  name: string;
   category: VendorCategory;
   yearOfEstablishment?: string;
   contactPersonName: string;
@@ -184,7 +184,7 @@ export default function VendorDashboard () {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.businessName?.trim()) {
+    if (!formData.name?.trim()) {
       toast.error('Business name is required');
       return;
     }
@@ -255,7 +255,7 @@ export default function VendorDashboard () {
     setModalMode(mode);
     setSelectedVendor(vendor || null);
     setFormData(vendor ? { ...vendor } : {
-      businessName: '',
+      name: '',
       category: 'Others',
       contactPersonName: '',
       designation: 'Owner',
@@ -311,8 +311,8 @@ export default function VendorDashboard () {
           <input
             type="text"
             required
-            value={formData.businessName || ''}
-            onChange={(e) => handleInputChange('businessName', e.target.value)}
+            value={formData.name || ''}
+            onChange={(e) => handleInputChange('name', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Enter business name"
           />
@@ -946,7 +946,7 @@ export default function VendorDashboard () {
                     <TableCell className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-full overflow-hidden border flex-shrink-0">
                         {vendor.logoUrl ? (
-                          <img src={vendor.logoUrl} alt={vendor.businessName} className="object-cover w-full h-full" />
+                          <img src={vendor.logoUrl} alt={vendor.name} className="object-cover w-full h-full" />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <Building className="w-5 h-5 text-muted-foreground" />
@@ -954,7 +954,7 @@ export default function VendorDashboard () {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{vendor.businessName}</p>
+                        <p className="font-medium truncate">{vendor.name}</p>
                         <p className="text-xs text-gray-500 truncate">{vendor.contactPersonName || '—'}</p>
                       </div>
                     </TableCell>
@@ -1032,8 +1032,8 @@ export default function VendorDashboard () {
           <DialogHeader>
             <DialogTitle>
               {modalMode === 'create' ? 'Add New Vendor' : 
-               modalMode === 'edit' ? `Edit ${selectedVendor?.businessName}` : 
-               selectedVendor?.businessName}
+               modalMode === 'edit' ? `Edit ${selectedVendor?.name}` : 
+               selectedVendor?.name}
             </DialogTitle>
             <DialogDescription>
               {modalMode === 'create' ? 'Create a new vendor profile' : 
@@ -1051,7 +1051,7 @@ export default function VendorDashboard () {
                   {selectedVendor?.logoUrl ? (
                     <img
                       src={selectedVendor.logoUrl}
-                      alt={selectedVendor.businessName}
+                      alt={selectedVendor.name}
                       className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
                     />
                   ) : (
@@ -1061,7 +1061,7 @@ export default function VendorDashboard () {
                   )}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-2xl font-bold text-gray-900">{selectedVendor?.businessName}</h3>
+                      <h3 className="text-2xl font-bold text-gray-900">{selectedVendor?.name}</h3>
                       {selectedVendor?.isPremium && (
                         <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full border border-yellow-200">
                           <Crown className="h-4 w-4 inline mr-1" />
@@ -1166,7 +1166,7 @@ export default function VendorDashboard () {
                 ) : (
                   <button
                     type="submit"
-                    disabled={uploading || !formData.businessName?.trim()}
+                    disabled={uploading || !formData.name?.trim()}
                     className="flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                   >
                     {uploading ? (

@@ -113,7 +113,7 @@ export async function PUT(
     // All fields from Vendor interface
     const allFields = [
       // Basic Business Info
-      'businessName', 'category', 'yearOfEstablishment',
+      'name', 'category', 'yearOfEstablishment',
       // Contact Details
       'contactPersonName', 'designation', 'mobileNumber', 'mobileVerified', 
       'whatsappNumber', 'email', 'websiteOrSocial',

@@ -20,6 +20,8 @@ import {
   ArrowLeft,
   Send,
   Info,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +122,26 @@ export default function HotelDetailsPage() {
     email: "",
   });
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
+  const openGallery = (images: string[], index: number) => {
+    if (!images || images.length === 0) return;
+    setGalleryImages(images);
+    setGalleryIndex(index);
+    setIsGalleryOpen(true);
+  };
+
+  const handlePrevImage = () => {
+    if (!galleryImages.length) return;
+    setGalleryIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
+
+  const handleNextImage = () => {
+    if (!galleryImages.length) return;
+    setGalleryIndex((prev) => (prev + 1) % galleryImages.length);
+  };
 
   // Fetch hotel data on mount
   useEffect(() => {
@@ -407,7 +429,8 @@ export default function HotelDetailsPage() {
                         duration: 0.4,
                       }}
                       whileHover={{ scale: 1.05 }}
-                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
+                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => openGallery(hotel.uploadMarriagePhotos as string[], index)}
                     >
                       <img
                         src={photo}
@@ -441,7 +464,8 @@ export default function HotelDetailsPage() {
                         duration: 0.4,
                       }}
                       whileHover={{ scale: 1.05 }}
-                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all"
+                      className="aspect-video relative overflow-hidden rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => openGallery(hotel.uploadResortPhotos as string[], index)}
                     >
                       <img
                         src={photo}
@@ -588,7 +612,9 @@ export default function HotelDetailsPage() {
                           <div key={index} className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-lg border border-pink-200">
                             <div className="flex justify-between items-center mb-2">
                               <span className="font-semibold text-[#212D47]">{pkg.name || `Package ${index + 1}`}</span>
-                              <Badge className="bg-pink-500 text-white">₹ {pkg.price.toLocaleString()}</Badge>
+                              <span className="px-3 py-1 rounded-md bg-[#e7c1c2] text-[#212d47] text-lg md:text-xl font-extrabold">
+                                ₹ {pkg.price.toLocaleString()}
+                              </span>
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <div>• {pkg.rooms} Rooms Included</div>
@@ -599,8 +625,8 @@ export default function HotelDetailsPage() {
                       </div>
                       
                       <div className="text-center pt-4 border-t border-gray-200">
-                        <div className="text-sm text-gray-500 mb-2">Starting from</div>
-                        <div className="text-2xl font-bold text-[#212D47]">₹ {hotel.weddingPackages[0]?.price.toLocaleString() || 0}</div>
+                        <div className="text-sm text-[#e7c1c2] mb-2">Starting from</div>
+                        <div className="text-3xl md:text-4xl font-extrabold text-[#212d47]">₹ {hotel.weddingPackages[0]?.price.toLocaleString() || 0}</div>
                         <div className="text-gray-500 text-sm">per package</div>
                       </div>
                     </div>
@@ -738,6 +764,42 @@ export default function HotelDetailsPage() {
                 </Button>
               </form>
             )}
+          </DialogContent>
+        </Dialog>
+        {/* Image Gallery Modal */}
+        <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+          <DialogContent className="w-auto max-w-none p-0 overflow-hidden">
+            <div className="relative bg-black">
+              {galleryImages.length > 0 && (
+                <img
+                  src={galleryImages[galleryIndex]}
+                  alt={`Gallery Image ${galleryIndex + 1}`}
+                  className="w-full h-[70vh] object-contain bg-black"
+                />
+              )}
+              {/* Controls */}
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    aria-label="Previous image"
+                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    aria-label="Next image"
+                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/80 text-sm px-2 py-1 rounded bg-black/40">
+                    {galleryIndex + 1} / {galleryImages.length}
+                  </div>
+                </>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
         {/* Our Premium Venues */}

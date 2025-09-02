@@ -318,7 +318,7 @@ export interface ApprovalRequest {
   entityType: 'hotel' | 'vendor' | 'user' | 'super-admin';
   status: 'pending' | 'approved' | 'rejected';
   metadata: {
-    businessName?: string;
+    name?: string;
     email: string;
     registrationDate: string;
     documents?: string[];

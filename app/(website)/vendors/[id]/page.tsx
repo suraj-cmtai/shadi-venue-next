@@ -278,7 +278,7 @@ export default function VendorDetailsPage() {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.6 }}
                     src={displayImages[selectedImageIndex] || "/placeholder.svg?height=600&width=800"}
-                    alt={vendor?.businessName || "Vendor"}
+                    alt={vendor?.name || "Vendor"}
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#212D47]/80 via-[#212D47]/20 to-transparent" />
@@ -307,7 +307,7 @@ export default function VendorDetailsPage() {
                     className="absolute bottom-8 left-8 text-white"
                 >
                     <Badge className="mb-3 bg-pink-500/90 text-white border-0">{vendor?.category}</Badge>
-                    <h1 className="text-4xl md:text-5xl font-bold mb-2">{vendor?.businessName}</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-2">{vendor?.name}</h1>
                     <div className="flex items-center gap-4 text-lg">
                         <div className="flex items-center gap-1">
                             <MapPin className="w-5 h-5 text-pink-400" />
@@ -335,7 +335,7 @@ export default function VendorDetailsPage() {
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.4, duration: 0.6 }}
                         >
-                            <h2 className="text-2xl font-bold text-[#212D47] mb-4">About {vendor?.businessName}</h2>
+                            <h2 className="text-2xl font-bold text-[#212D47] mb-4">About {vendor?.name}</h2>
                             <p className="text-gray-700 leading-relaxed text-lg">{vendor?.about}</p>
                             
                             {vendor?.specialities && (
@@ -647,11 +647,11 @@ export default function VendorDetailsPage() {
                             {allVendors.filter(v => v.isPremium && v.id !== vendor?.id).slice(0, 6).map((v) => (
                                 <Card key={v.id} className="group cursor-pointer hover:shadow-lg transition" onClick={() => router.push(`/vendors/${v.id}`)}>
                                     <div className="relative aspect-[4/3] overflow-hidden">
-                                        <img src={v.coverImageUrl || v.logoUrl || "/api/placeholder/400/300"} alt={v.businessName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                        <img src={v.coverImageUrl || v.logoUrl || "/api/placeholder/400/300"} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                         <Badge className="absolute top-3 left-3 bg-[#212D47]/90 text-white">Premium</Badge>
                                     </div>
                                     <CardContent className="p-4">
-                                        <h3 className="font-semibold line-clamp-1 group-hover:text-[#212D47]">{v.businessName}</h3>
+                                        <h3 className="font-semibold line-clamp-1 group-hover:text-[#212D47]">{v.name}</h3>
                                         <div className="text-sm text-gray-600 mt-1 flex items-center"><MapPin className="w-4 h-4 mr-1" />{v.city}{v.state ? `, ${v.state}` : ''}</div>
                                     </CardContent>
                                 </Card>
