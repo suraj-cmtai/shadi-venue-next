@@ -55,7 +55,7 @@ export default function Hotels() {
 
         {/* Main Heading */}
         <motion.h2
-          className="font-cormorant font-bold text-3xl md:text-5xl lg:text-6xl text-[#212d47] text-center leading-tight mb-10 md:mb-16"
+          className="font-dancing-script font-normal text-3xl md:text-5xl lg:text-6xl text-[#212d47] text-center mb-12 leading-tight"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -91,7 +91,7 @@ export default function Hotels() {
               transition={{ duration: 0.6, delay: 0.05 * (idx + 1) }}
             >
               <div
-                className="bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
+                className="relative bg-center bg-cover bg-no-repeat w-full aspect-[7/8] rounded-xs border border-[#212d47]"
                 style={{
                   backgroundImage:
                     hotel.images && hotel.images.length > 0
@@ -99,14 +99,16 @@ export default function Hotels() {
                       : "url('/images/hotels-image.png')",
                 }}
                 aria-label={hotel.name}
-              />
-              <div className="absolute left-0 bottom-0 w-full">
-                <div className="bg-[#212d47] border-t-4 border-white rounded-b-lg px-4 py-3 flex items-center">
-                  <p className="font-cormorant font-bold text-lg md:text-xl text-white uppercase truncate">
-                    <Link href={`/venue/${hotel.id}`} passHref>
-                      {hotel.name || "Hotel Name"}
-                    </Link>
-                  </p>
+              >
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-x-0 bottom-6 flex justify-center px-4">
+                  <div className="bg-[#212d47] rounded-lg px-4 py-3 shadow-lg max-w-full">
+                    <p className="font-cormorant font-bold text-white text-base md:text-lg uppercase truncate text-center max-w-full">
+                      <Link href={`/venue/${hotel.id}`} passHref className="block truncate">
+                        {hotel.name || "Hotel Name"}
+                      </Link>
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -76,7 +76,6 @@ export default function Blog() {
         >
           Start Planning with Inspiration & Insights
         </motion.h2>
-
         {/* Blog Posts Horizontal Scroll */}
         <div className="w-full">
           <div

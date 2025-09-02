@@ -43,15 +43,15 @@ export default function Hero() {
     }
   }, [heroSlides, currentIndex]);
 
-  // Move slider left (prev) every 7 seconds (slower for smoother feel)
+  // Auto-advance slides (faster cadence for more energy)
   useEffect(() => {
     if (heroSlides.length === 0) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
-      setDirection(-1);
-      setCurrentIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-    }, 15000);
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 7000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -93,14 +93,10 @@ export default function Hero() {
       <AnimatePresence mode="sync" initial={false}>
         <motion.div
           key={image || currentIndex}
-          initial={
-            isFirstRenderRef.current
-              ? { x: 0, opacity: 1 }
-              : { x: direction === 1 ? "100%" : "-100%", opacity: 1 }
-          }
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: direction === 1 ? "-100%" : "100%", opacity: 1 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          initial={isFirstRenderRef.current ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0.0, scale: 1.02 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0 will-change-transform will-change-opacity"
         >
           <Image
