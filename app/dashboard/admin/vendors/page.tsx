@@ -128,19 +128,40 @@ export default function VendorDashboard () {
   const [formData, setFormData] = useState<Partial<Vendor>>({});
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const categories: VendorCategory[] = ["Venue", "Planner", "Photographer", "Decorator", "Caterer", "Makeup", "Entertainment", "Others"];
   const serviceAreas: ServiceArea[] = ["Local City", "Statewide", "Pan India", "International"];
   const paymentModes: PaymentMode[] = ["UPI", "Cash", "Bank Transfer", "Card", "Other"];
   const facilities: Facility[] = ["Rooms", "Parking", "Catering", "Decor", "DJ", "Liquor License", "Pool", "Other"];
 
-  // Fetch vendors on mount
+  // Fetch vendors on mount and when component becomes visible
   useEffect(() => {
-    if (!hasFetched) {
-      dispatch(fetchVendors());
-      dispatch(fetchActiveVendors());
-    }
-  }, [dispatch, hasFetched]);
+    // Always fetch fresh data when component mounts or becomes visible
+    dispatch(fetchVendors());
+    dispatch(fetchActiveVendors());
+    setLastRefreshTime(new Date());
+  }, [dispatch]);
+
+  // Additional effect to handle page visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible, refresh data
+        dispatch(fetchVendors());
+        dispatch(fetchActiveVendors());
+        setLastRefreshTime(new Date());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [dispatch]);
 
   // Update filters when search/filter changes
   useEffect(() => {
@@ -716,15 +737,46 @@ export default function VendorDashboard () {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Vendor Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage your wedding vendors and services</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your wedding vendors and services
+                {lastRefreshTime && (
+                  <span className="block text-xs text-gray-500 mt-1">
+                    Last updated: {lastRefreshTime.toLocaleTimeString()}
+                  </span>
+                )}
+              </p>
             </div>
-            {/* <button
-              onClick={() => openModal('create')}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <Plus size={20} />
-              Add New Vendor
-            </button> */}
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  try {
+                    await Promise.all([
+                      dispatch(fetchVendors()).unwrap(),
+                      dispatch(fetchActiveVendors()).unwrap()
+                    ]);
+                    setLastRefreshTime(new Date());
+                    toast.success('Data refreshed successfully!');
+                  } catch (error) {
+                    toast.error('Failed to refresh data');
+                  } finally {
+                    setIsRefreshing(false);
+                  }
+                }}
+                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
+                disabled={loading || isRefreshing}
+              >
+                <Loader2 className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <button
+                onClick={() => openModal('create')}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <Plus size={20} />
+                Add New Vendor
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -739,7 +791,13 @@ export default function VendorDashboard () {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Vendors</p>
-                <p className="text-2xl font-bold text-gray-900">{vendors.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  ) : (
+                    vendors.length
+                  )}
+                </p>
               </div>
             </div>
           </div>
@@ -825,11 +883,20 @@ export default function VendorDashboard () {
 
           <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
             <span>Showing {filteredVendors.length} of {vendors.length} vendors</span>
-            <span>Updated {new Date().toLocaleDateString()}</span>
+            <span>Last updated: {lastRefreshTime.toLocaleTimeString()}</span>
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Status Messages */}
+        {loading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center">
+              <Loader2 className="h-5 w-5 text-blue-600 mr-2 animate-spin" />
+              <p className="text-blue-600">Loading vendors...</p>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
             <div className="flex items-center">
