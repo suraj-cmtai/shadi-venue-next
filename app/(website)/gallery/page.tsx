@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   fetchActiveGallery,
   selectActiveGalleryList,
@@ -13,27 +15,21 @@ import {
   selectError,
 } from "@/lib/redux/features/gallerySlice";
 
-/**
- * GalleryPage displays a responsive gallery of images with decorative elements.
- * - Uses Tailwind for all sizing, spacing, and responsive utilities.
- * - Fully responsive: grid adapts from 1 to 5 columns, card heights scale, and decorative images hide on mobile.
- * - Accessible: all images have alt text, navigation uses semantic elements.
- * - No fixed pixel values except for decorative image containers (which are responsive).
- */
-
 function GalleryCard({
   imageUrl,
   altText = "Gallery image",
   spanTwo = false,
+  onClick,
 }: {
   imageUrl: string;
   altText?: string;
   spanTwo?: boolean;
+  onClick?: () => void;
 }) {
   // Responsive card: span 2 columns on md+ if spanTwo, else 1
   return (
     <motion.div
-      className={`relative overflow-hidden shadow hover:shadow-lg transition-all duration-300 w-full ${
+      className={`relative overflow-hidden shadow hover:shadow-lg transition-all duration-300 w-full cursor-pointer ${
         spanTwo ? "col-span-1 md:col-span-2" : "col-span-1"
       } h-48 xs:h-56 sm:h-64 md:h-72 lg:h-80`}
       whileHover={{ scale: 1.03 }}
@@ -41,6 +37,9 @@ function GalleryCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.4 }}
+      onClick={onClick}
+      role="button"
+      aria-label={altText}
     >
       <Image
         src={imageUrl}
@@ -57,6 +56,9 @@ function GalleryCard({
 export default function GalleryPage() {
   // Responsive logic for spanTwo: only on md+ screens
   const [isMdUp, setIsMdUp] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   // Redux
   const dispatch = useDispatch();
@@ -74,6 +76,42 @@ export default function GalleryPage() {
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
+
+  // Build image list for the modal when gallery data loads/changes
+  useEffect(() => {
+    if (Array.isArray(gallery)) {
+      const images = gallery
+        .map((g: any) => g?.image)
+        .filter((src: any) => typeof src === "string" && src.length > 0);
+      setGalleryImages(images);
+      if (images.length === 0) {
+        setIsGalleryOpen(false);
+      }
+    }
+  }, [gallery]);
+
+  const openGalleryAt = (index: number) => {
+    if (index >= 0 && index < galleryImages.length) {
+      setGalleryIndex(index);
+      setIsGalleryOpen(true);
+    }
+  };
+
+  const handlePrevImage = () => {
+    setGalleryIndex((prev) =>
+      galleryImages.length > 0
+        ? (prev - 1 + galleryImages.length) % galleryImages.length
+        : 0
+    );
+  };
+
+  const handleNextImage = () => {
+    setGalleryIndex((prev) =>
+      galleryImages.length > 0
+        ? (prev + 1) % galleryImages.length
+        : 0
+    );
+  };
 
   return (
     <>
@@ -165,6 +203,7 @@ export default function GalleryPage() {
                     imageUrl={img.image}
                     altText={img.title || img.description || "Gallery image"}
                     spanTwo={i === 0 && isMdUp}
+                    onClick={() => openGalleryAt(i)}
                   />
                 ))
               ) : (
@@ -186,6 +225,42 @@ export default function GalleryPage() {
           </div>
         </div>
       </section>
+              {/* Image Gallery Modal */}
+              <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+          <DialogContent className="w-auto max-w-none p-0 overflow-hidden">
+            <div className="relative bg-black">
+              {galleryImages.length > 0 && (
+                <img
+                  src={galleryImages[galleryIndex]}
+                  alt={`Gallery Image ${galleryIndex + 1}`}
+                  className="w-full h-[70vh] object-contain bg-black"
+                />
+              )}
+              {/* Controls */}
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    aria-label="Previous image"
+                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    aria-label="Next image"
+                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/80 text-sm px-2 py-1 rounded bg-black/40">
+                    {galleryIndex + 1} / {galleryImages.length}
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
     </>
   );
 }
