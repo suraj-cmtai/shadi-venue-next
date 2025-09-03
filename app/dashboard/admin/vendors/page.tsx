@@ -219,6 +219,8 @@ export default function VendorDashboard () {
       toast.error(err?.message || 'Failed to save vendor');
     } finally {
       setUploading(false);
+      dispatch(fetchVendors());
+      dispatch(fetchActiveVendors());
     }
   };
 
@@ -231,6 +233,9 @@ export default function VendorDashboard () {
       toast.success('Vendor deleted successfully!');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to delete vendor');
+    } finally {
+      dispatch(fetchVendors());
+      dispatch(fetchActiveVendors());
     }
   };
 
@@ -247,6 +252,9 @@ export default function VendorDashboard () {
       toast.success(`Vendor premium status ${isPremium ? 'enabled' : 'disabled'}`);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update premium status');
+    } finally {
+      dispatch(fetchVendors());
+      dispatch(fetchActiveVendors());
     }
   };
 
