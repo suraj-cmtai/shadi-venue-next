@@ -635,8 +635,7 @@ export default function HotelDetailsPage() {
               </Card>
             </motion.div>
 
-            {/* Contact Info - only for premium */}
-            {hotel?.isPremium && (
+            {/* Connect With Our Hotel */}
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -644,51 +643,17 @@ export default function HotelDetailsPage() {
             >
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-[#212D47] mb-4">
-                    Contact Information
-                  </h3>
-                  {
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-pink-500" />
-                        <span className="text-gray-700">
-                          {hotel?.contactInfo.phone}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-pink-500" />
-                        <span className="text-gray-700">
-                          {hotel?.contactInfo.email}
-                        </span>
-                      </div>
-                      {hotel?.contactInfo.website && (
-                        <div className="flex items-center gap-3">
-                          <Globe className="w-5 h-5 text-pink-500" />
-                          <span className="text-gray-700">
-                            {hotel?.contactInfo.website}
-                          </span>
-                        </div>
-                      )}
-                      {/* Google Location in Contact Info */}
-                      {hotel?.googleLocation && (
-                        <div className="flex items-center gap-3">
-                          <MapPin className="w-5 h-5 text-pink-500" />
-                          <a
-                            href={hotel.googleLocation}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-700 underline hover:text-pink-700"
-                          >
-                            View on Google Maps
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  }
+                  <h3 className="text-xl font-bold text-[#212D47] mb-2">Connect with our hotel</h3>
+                  <p className="text-gray-600 mb-4">Share your details and our team will get back to you shortly.</p>
+                  <Button 
+                    className="w-full bg-[#212D47] hover:bg-[#212D47]/90 text-white"
+                    onClick={() => setIsBookingOpen(true)}
+                  >
+                    Enquiry Now
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
-            )}
 
             {/* Policies */}
             <motion.div

@@ -1454,8 +1454,8 @@ const createRequestData = async (form: HotelFormState) => {
                 <TableHead className="min-w-[200px]">Name</TableHead>
                 <TableHead className="min-w-[120px]">Category</TableHead>
                 <TableHead className="min-w-[150px]">Location</TableHead>
-                <TableHead className="min-w-[120px]">Price</TableHead>
-                <TableHead className="min-w-[80px]">Rating</TableHead>
+                <TableHead className="min-w-[150px]">Price</TableHead>
+                <TableHead className="min-w-[120px]">Rating</TableHead>
                 <TableHead className="min-w-[90px]">Premium</TableHead>
                 <TableHead className="min-w-[100px]">Status</TableHead>
                 <TableHead className="w-[80px] text-right">Actions</TableHead>
@@ -1499,6 +1499,7 @@ const createRequestData = async (form: HotelFormState) => {
                     <TableCell className="text-muted-foreground">
                       {hotel.location?.city || 'N/A'}, {hotel.location?.country || 'N/A'}
                     </TableCell>
+                    <TableCell className="text-muted-foreground"> ${hotel.priceRange?.startingPrice || 0}</TableCell>
                     <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
