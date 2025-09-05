@@ -33,7 +33,8 @@ import {
   Mail,
   Globe,
   Settings,
-  Sparkles
+  Sparkles,
+  RefreshCcw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -277,6 +278,15 @@ export default function UserDashboard() {
     backgroundImage: ''
   });
 
+  // Edit modes per tab/section
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [themeEditing, setThemeEditing] = useState(false);
+  const [aboutEditing, setAboutEditing] = useState(false);
+  const [invitationEditing, setInvitationEditing] = useState(false);
+  const [eventsEditing, setEventsEditing] = useState(false);
+  const [loveStoryEditing, setLoveStoryEditing] = useState(false);
+  const [planningEditing, setPlanningEditing] = useState(false);
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     name: '',
@@ -334,6 +344,64 @@ export default function UserDashboard() {
         }
       });
     }
+  }, [user]);
+
+  // Helper: reset forms from current user store data (used on Cancel)
+  const resetFormsFromUser = useCallback(() => {
+    if (user?.invite) {
+      setInviteEnabled(user.invite.isEnabled || false);
+      setThemeForm(user.invite.theme || {
+        primaryColor: '#000000',
+        secondaryColor: '#ffffff',
+        titleColor: '#000000',
+        nameColor: '#000000',
+        backgroundColor: '#ffffff',
+        textColor: '#000000'
+      });
+      setAboutForm(user.invite.about || {
+        title: '',
+        subtitle: '',
+        groom: {
+          name: '',
+          description: '',
+          image: '',
+          socials: { instagram: '', facebook: '', twitter: '' }
+        },
+        bride: {
+          name: '',
+          description: '',
+          image: '',
+          socials: { instagram: '', facebook: '', twitter: '' }
+        },
+        coupleImage: ''
+      });
+      setEventsForm(user.invite.weddingEvents || []);
+      setLoveStoryForm(user.invite.loveStory || []);
+      setPlanningForm(user.invite.planning || []);
+      setInvitationForm(user.invite.invitation || {
+        heading: '',
+        subheading: '',
+        message: '',
+        rsvpLink: '',
+        backgroundImage: ''
+      });
+    }
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        phoneNumber: user.phoneNumber || '',
+        avatar: user.avatar || '',
+        address: {
+          street: user.address?.street || '',
+          city: user.address?.city || '',
+          state: user.address?.state || '',
+          country: user.address?.country || '',
+          zipCode: user.address?.zipCode || ''
+        }
+      });
+    }
+    setPreviewUrls({});
+    setUnsavedChanges(false);
   }, [user]);
 
   // Calculate completion percentage
@@ -738,7 +806,8 @@ export default function UserDashboard() {
     onChange, 
     accept = "image/*",
     previewKey,
-    description
+    description,
+    disabled = false
   }: {
     label: string;
     value: string | File;
@@ -746,6 +815,7 @@ export default function UserDashboard() {
     accept?: string;
     previewKey: string;
     description?: string;
+    disabled?: boolean;
   }) => {
     const progress = uploadProgress[previewKey];
     const currentUrl = previewUrls[previewKey] || (typeof value === 'string' ? value : '');
@@ -773,13 +843,14 @@ export default function UserDashboard() {
             onChange={handleFileSelect}
             className="hidden"
             id={`file-${previewKey}`}
+            disabled={disabled || !!progress}
           />
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => document.getElementById(`file-${previewKey}`)?.click()}
-            disabled={!!progress}
+            onClick={() => !disabled && document.getElementById(`file-${previewKey}`)?.click()}
+            disabled={disabled || !!progress}
           >
             {progress ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -794,6 +865,7 @@ export default function UserDashboard() {
               variant="ghost"
               size="sm"
               onClick={() => window.open(currentUrl, '_blank')}
+              disabled={disabled}
             >
               <Eye className="w-4 h-4 mr-2" />
               Preview
@@ -1152,18 +1224,40 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Profile Information</CardTitle>
-                  <Button 
-                    onClick={handleSaveProfile} 
-                    disabled={sectionLoading.profile}
-                    size="sm"
-                  >
-                    {sectionLoading.profile ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Profile
-                  </Button>
+                  {!profileEditing ? (
+                    <Button
+                      onClick={() => { setProfileEditing(true); }}
+                      size="sm"
+                      variant="default"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setProfileEditing(false); }}
+                        disabled={sectionLoading.profile}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSaveProfile(); setProfileEditing(false); }} 
+                        disabled={sectionLoading.profile}
+                        size="sm"
+                      >
+                        {sectionLoading.profile ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1173,6 +1267,7 @@ export default function UserDashboard() {
                     <Input 
                       id="profileName"
                       value={profileForm.name}
+                      disabled={!profileEditing}
                       onChange={(e) => {
                         setProfileForm({...profileForm, name: e.target.value});
                         setUnsavedChanges(true);
@@ -1195,6 +1290,7 @@ export default function UserDashboard() {
                     <Input 
                       id="profilePhone"
                       value={profileForm.phoneNumber}
+                      disabled={!profileEditing}
                       onChange={(e) => {
                         setProfileForm({...profileForm, phoneNumber: e.target.value});
                         setUnsavedChanges(true);
@@ -1211,6 +1307,7 @@ export default function UserDashboard() {
                     }}
                     previewKey="profileAvatar"
                     description="Upload a profile picture"
+                    disabled={!profileEditing}
                   />
                   <div className="space-y-2">
                     <Label htmlFor="profileRole">Role (Read Only)</Label>
@@ -1242,6 +1339,7 @@ export default function UserDashboard() {
                       <Input 
                         id="addressStreet"
                         value={profileForm.address.street}
+                        disabled={!profileEditing}
                         onChange={(e) => {
                           setProfileForm({
                             ...profileForm, 
@@ -1258,6 +1356,7 @@ export default function UserDashboard() {
                         <Input 
                           id="addressCity"
                           value={profileForm.address.city}
+                          disabled={!profileEditing}
                           onChange={(e) => {
                             setProfileForm({
                               ...profileForm, 
@@ -1273,6 +1372,7 @@ export default function UserDashboard() {
                         <Input 
                           id="addressState"
                           value={profileForm.address.state}
+                          disabled={!profileEditing}
                           onChange={(e) => {
                             setProfileForm({
                               ...profileForm, 
@@ -1290,6 +1390,7 @@ export default function UserDashboard() {
                         <Input 
                           id="addressCountry"
                           value={profileForm.address.country}
+                          disabled={!profileEditing}
                           onChange={(e) => {
                             setProfileForm({
                               ...profileForm, 
@@ -1305,6 +1406,7 @@ export default function UserDashboard() {
                         <Input 
                           id="addressZip"
                           value={profileForm.address.zipCode}
+                          disabled={!profileEditing}
                           onChange={(e) => {
                             setProfileForm({
                               ...profileForm, 
@@ -1461,18 +1563,36 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Custom Theme & Colors</CardTitle>
-                  <Button 
-                    onClick={handleSaveTheme} 
-                    disabled={sectionLoading.theme}
-                    size="sm"
-                  >
-                    {sectionLoading.theme ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Theme
-                  </Button>
+                  {!themeEditing ? (
+                    <Button size="sm" onClick={() => setThemeEditing(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setThemeEditing(false); }}
+                        disabled={sectionLoading.theme}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSaveTheme(); setThemeEditing(false); }} 
+                        disabled={sectionLoading.theme}
+                        size="sm"
+                      >
+                        {sectionLoading.theme ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1484,6 +1604,7 @@ export default function UserDashboard() {
                         id="primaryColor"
                         type="color" 
                         value={themeForm.primaryColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, primaryColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1492,6 +1613,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.primaryColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, primaryColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1508,6 +1630,7 @@ export default function UserDashboard() {
                         id="secondaryColor"
                         type="color" 
                         value={themeForm.secondaryColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, secondaryColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1516,6 +1639,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.secondaryColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, secondaryColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1532,6 +1656,7 @@ export default function UserDashboard() {
                         id="titleColor"
                         type="color" 
                         value={themeForm.titleColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, titleColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1540,6 +1665,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.titleColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, titleColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1556,6 +1682,7 @@ export default function UserDashboard() {
                         id="nameColor"
                         type="color" 
                         value={themeForm.nameColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, nameColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1564,6 +1691,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.nameColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, nameColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1580,6 +1708,7 @@ export default function UserDashboard() {
                         id="backgroundColor"
                         type="color" 
                         value={themeForm.backgroundColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, backgroundColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1588,6 +1717,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.backgroundColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, backgroundColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1604,6 +1734,7 @@ export default function UserDashboard() {
                         id="textColor"
                         type="color" 
                         value={themeForm.textColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, textColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1612,6 +1743,7 @@ export default function UserDashboard() {
                       />
                       <Input 
                         value={themeForm.textColor}
+                        disabled={!themeEditing}
                         onChange={(e) => {
                           setThemeForm({...themeForm, textColor: e.target.value});
                           setUnsavedChanges(true);
@@ -1674,18 +1806,36 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>About Section</CardTitle>
-                  <Button 
-                    onClick={handleSaveAbout} 
-                    disabled={sectionLoading.about}
-                    size="sm"
-                  >
-                    {sectionLoading.about ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save About Section
-                  </Button>
+                  {!aboutEditing ? (
+                    <Button size="sm" onClick={() => setAboutEditing(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setAboutEditing(false); }}
+                        disabled={sectionLoading.about}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSaveAbout(); setAboutEditing(false); }} 
+                        disabled={sectionLoading.about}
+                        size="sm"
+                      >
+                        {sectionLoading.about ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1695,6 +1845,7 @@ export default function UserDashboard() {
                     <Input 
                       id="aboutTitle"
                       value={aboutForm.title}
+                      disabled={!aboutEditing}
                       onChange={(e) => {
                         setAboutForm({...aboutForm, title: e.target.value});
                         setUnsavedChanges(true);
@@ -1707,6 +1858,7 @@ export default function UserDashboard() {
                     <Input 
                       id="aboutSubtitle"
                       value={aboutForm.subtitle}
+                      disabled={!aboutEditing}
                       onChange={(e) => {
                         setAboutForm({...aboutForm, subtitle: e.target.value});
                         setUnsavedChanges(true);
@@ -1731,6 +1883,7 @@ export default function UserDashboard() {
                         <Input 
                           id="groomName"
                           value={aboutForm.groom.name}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1753,6 +1906,7 @@ export default function UserDashboard() {
                         }}
                         previewKey="groomImage"
                         description="Upload a photo of the groom"
+                        disabled={!aboutEditing}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1760,6 +1914,7 @@ export default function UserDashboard() {
                       <Textarea 
                         id="groomDescription"
                         value={aboutForm.groom.description}
+                        disabled={!aboutEditing}
                         onChange={(e) => {
                           setAboutForm({
                             ...aboutForm, 
@@ -1777,6 +1932,7 @@ export default function UserDashboard() {
                         <Input 
                           id="groomInstagram"
                           value={aboutForm.groom.socials.instagram || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1795,6 +1951,7 @@ export default function UserDashboard() {
                         <Input 
                           id="groomFacebook"
                           value={aboutForm.groom.socials.facebook || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1813,6 +1970,7 @@ export default function UserDashboard() {
                         <Input 
                           id="groomTwitter"
                           value={aboutForm.groom.socials.twitter || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1845,6 +2003,7 @@ export default function UserDashboard() {
                         <Input 
                           id="brideName"
                           value={aboutForm.bride.name}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1867,6 +2026,7 @@ export default function UserDashboard() {
                         }}
                         previewKey="brideImage"
                         description="Upload a photo of the bride"
+                        disabled={!aboutEditing}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1874,6 +2034,7 @@ export default function UserDashboard() {
                       <Textarea 
                         id="brideDescription"
                         value={aboutForm.bride.description}
+                        disabled={!aboutEditing}
                         onChange={(e) => {
                           setAboutForm({
                             ...aboutForm, 
@@ -1891,6 +2052,7 @@ export default function UserDashboard() {
                         <Input 
                           id="brideInstagram"
                           value={aboutForm.bride.socials.instagram || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1909,6 +2071,7 @@ export default function UserDashboard() {
                         <Input 
                           id="brideFacebook"
                           value={aboutForm.bride.socials.facebook || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1927,6 +2090,7 @@ export default function UserDashboard() {
                         <Input 
                           id="brideTwitter"
                           value={aboutForm.bride.socials.twitter || ''}
+                          disabled={!aboutEditing}
                           onChange={(e) => {
                             setAboutForm({
                               ...aboutForm, 
@@ -1955,6 +2119,7 @@ export default function UserDashboard() {
                   }}
                   previewKey="coupleImage"
                   description="Upload a photo of the couple together"
+                  disabled={!aboutEditing}
                 />
               </CardContent>
             </Card>
@@ -1964,18 +2129,36 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Invitation Section</CardTitle>
-                  <Button 
-                    onClick={handleSaveInvitation} 
-                    disabled={sectionLoading.invitation}
-                    size="sm"
-                  >
-                    {sectionLoading.invitation ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Invitation
-                  </Button>
+                  {!invitationEditing ? (
+                    <Button size="sm" onClick={() => setInvitationEditing(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setInvitationEditing(false); }}
+                        disabled={sectionLoading.invitation}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSaveInvitation(); setInvitationEditing(false); }} 
+                        disabled={sectionLoading.invitation}
+                        size="sm"
+                      >
+                        {sectionLoading.invitation ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1985,6 +2168,7 @@ export default function UserDashboard() {
                     <Input 
                       id="inviteHeading"
                       value={invitationForm.heading}
+                      disabled={!invitationEditing}
                       onChange={(e) => {
                         setInvitationForm({...invitationForm, heading: e.target.value});
                         setUnsavedChanges(true);
@@ -1997,6 +2181,7 @@ export default function UserDashboard() {
                     <Input 
                       id="inviteSubheading"
                       value={invitationForm.subheading}
+                      disabled={!invitationEditing}
                       onChange={(e) => {
                         setInvitationForm({...invitationForm, subheading: e.target.value});
                         setUnsavedChanges(true);
@@ -2010,6 +2195,7 @@ export default function UserDashboard() {
                   <Textarea 
                     id="inviteMessage"
                     value={invitationForm.message}
+                    disabled={!invitationEditing}
                     onChange={(e) => {
                       setInvitationForm({...invitationForm, message: e.target.value});
                       setUnsavedChanges(true);
@@ -2028,6 +2214,7 @@ export default function UserDashboard() {
                     }}
                     previewKey="inviteBackground"
                     description="Upload a background image for the invitation"
+                    disabled={!invitationEditing}
                   />
                 </div>
               </CardContent>
@@ -2041,24 +2228,40 @@ export default function UserDashboard() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Wedding Events</CardTitle>
-                <div className="flex gap-2">
-                  <Button onClick={addWeddingEvent} size="sm" variant="outline">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Event
+                {!eventsEditing ? (
+                  <Button size="sm" onClick={() => setEventsEditing(true)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
                   </Button>
-                  <Button 
-                    onClick={handleSaveEvents} 
-                    disabled={sectionLoading.events}
-                    size="sm"
-                  >
-                    {sectionLoading.events ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save All Events
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button onClick={addWeddingEvent} size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Event
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { resetFormsFromUser(); setEventsEditing(false); }}
+                      disabled={sectionLoading.events}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={async () => { await handleSaveEvents(); setEventsEditing(false); }} 
+                      disabled={sectionLoading.events}
+                      size="sm"
+                    >
+                      {sectionLoading.events ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      Save Changes
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -2069,7 +2272,7 @@ export default function UserDashboard() {
                   <p className="text-muted-foreground mb-4">
                     Add your wedding events to let guests know when and where to celebrate with you.
                   </p>
-                  <Button onClick={addWeddingEvent}>
+                  <Button onClick={addWeddingEvent} disabled={!eventsEditing}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Your First Event
                   </Button>
@@ -2085,6 +2288,7 @@ export default function UserDashboard() {
                           size="sm"
                           onClick={() => removeWeddingEvent(index)}
                           className="text-destructive hover:text-destructive"
+                          disabled={!eventsEditing}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -2097,6 +2301,7 @@ export default function UserDashboard() {
                           <Input 
                             id={`eventTitle${index}`}
                             value={event.title}
+                            disabled={!eventsEditing}
                             onChange={(e) => {
                               const newEvents = [...eventsForm];
                               newEvents[index].title = e.target.value;
@@ -2126,8 +2331,8 @@ export default function UserDashboard() {
                             });
                             setEventsForm(newEvents);
                             setUnsavedChanges(true);
-                          }}>
-                            <SelectTrigger className="w-full">
+                          }} disabled={!eventsEditing}>
+                            <SelectTrigger className="w-full" disabled={!eventsEditing}>
                               <SelectValue placeholder="Select venue" />
                             </SelectTrigger>
                             <SelectContent>
@@ -2148,6 +2353,7 @@ export default function UserDashboard() {
                             id={`eventDate${index}`}
                             type="date"
                             value={event.date}
+                            disabled={!eventsEditing}
                             onChange={(e) => {
                               const newEvents = [...eventsForm];
                               newEvents[index].date = e.target.value;
@@ -2162,6 +2368,7 @@ export default function UserDashboard() {
                             id={`eventTime${index}`}
                             type="time"
                             value={event.time}
+                            disabled={!eventsEditing}
                             onChange={(e) => {
                               const newEvents = [...eventsForm];
                               newEvents[index].time = e.target.value;
@@ -2176,6 +2383,7 @@ export default function UserDashboard() {
                         <Textarea 
                           id={`eventDescription${index}`}
                           value={event.description}
+                          disabled={!eventsEditing}
                           onChange={(e) => {
                             const newEvents = [...eventsForm];
                             newEvents[index].description = e.target.value;
@@ -2196,6 +2404,7 @@ export default function UserDashboard() {
                               <Input 
                                 id={`venueName${index}`}
                                 value={event.selfVenue?.name || ''}
+                                disabled={!eventsEditing}
                                 onChange={(e) => {
                                   const newEvents = [...eventsForm];
                                   if (!newEvents[index].selfVenue) {
@@ -2218,6 +2427,7 @@ export default function UserDashboard() {
                               <Input 
                                 id={`venueAddress${index}`}
                                 value={event.selfVenue?.address || ''}
+                                disabled={!eventsEditing}
                                 onChange={(e) => {
                                   const newEvents = [...eventsForm];
                                   if (!newEvents[index].selfVenue) {
@@ -2240,6 +2450,7 @@ export default function UserDashboard() {
                               <Input 
                                 id={`venueGoogleLocation${index}`}
                                 value={event.selfVenue?.googleLocation || ''}
+                                disabled={!eventsEditing}
                                 onChange={(e) => {
                                   const newEvents = [...eventsForm];
                                   if (!newEvents[index].selfVenue) {
@@ -2262,6 +2473,7 @@ export default function UserDashboard() {
                               <Input 
                                 id={`venueLandmark${index}`}
                                 value={event.selfVenue?.landmark || ''}
+                                disabled={!eventsEditing}
                                 onChange={(e) => {
                                   const newEvents = [...eventsForm];
                                   if (!newEvents[index].selfVenue) {
@@ -2294,6 +2506,7 @@ export default function UserDashboard() {
                         }}
                         previewKey={`eventImage${index}`}
                         description="Upload an image for this event"
+                        disabled={!eventsEditing}
                       />
                     </CardContent>
                   </Card>
@@ -2311,24 +2524,40 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Love Story Timeline</CardTitle>
-                  <div className="flex gap-2">
-                    <Button onClick={addLoveStoryEvent} size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Milestone
+                  {!loveStoryEditing ? (
+                    <Button size="sm" onClick={() => setLoveStoryEditing(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
                     </Button>
-                    <Button 
-                      onClick={handleSaveLoveStory} 
-                      disabled={sectionLoading.loveStory}
-                      size="sm"
-                    >
-                      {sectionLoading.loveStory ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save Love Story
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button onClick={addLoveStoryEvent} size="sm" variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Milestone
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setLoveStoryEditing(false); }}
+                        disabled={sectionLoading.loveStory}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSaveLoveStory(); setLoveStoryEditing(false); }} 
+                        disabled={sectionLoading.loveStory}
+                        size="sm"
+                      >
+                        {sectionLoading.loveStory ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -2339,7 +2568,7 @@ export default function UserDashboard() {
                     <p className="text-muted-foreground mb-4">
                       Add important milestones in your relationship to create a beautiful timeline.
                     </p>
-                    <Button onClick={addLoveStoryEvent}>
+                    <Button onClick={addLoveStoryEvent} disabled={!loveStoryEditing}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Your First Milestone
                     </Button>
@@ -2370,6 +2599,7 @@ export default function UserDashboard() {
                             <Input 
                               id={`storyDate${index}`}
                               value={event.date}
+                              disabled={!loveStoryEditing}
                               onChange={(e) => {
                                 const newStory = [...loveStoryForm];
                                 newStory[index].date = e.target.value;
@@ -2384,6 +2614,7 @@ export default function UserDashboard() {
                             <Input 
                               id={`storyTitle${index}`}
                               value={event.title}
+                              disabled={!loveStoryEditing}
                               onChange={(e) => {
                                 const newStory = [...loveStoryForm];
                                 newStory[index].title = e.target.value;
@@ -2399,6 +2630,7 @@ export default function UserDashboard() {
                           <Textarea 
                             id={`storyDescription${index}`}
                             value={event.description}
+                            disabled={!loveStoryEditing}
                             onChange={(e) => {
                               const newStory = [...loveStoryForm];
                               newStory[index].description = e.target.value;
@@ -2420,6 +2652,7 @@ export default function UserDashboard() {
                           }}
                           previewKey={`storyImage${index}`}
                           description="Upload a photo from this moment"
+                          disabled={!loveStoryEditing}
                         />
                       </CardContent>
                     </Card>
@@ -2433,24 +2666,40 @@ export default function UserDashboard() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Wedding Planning Checklist</CardTitle>
-                  <div className="flex gap-2">
-                    <Button onClick={addPlanningItem} size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Item
+                  {!planningEditing ? (
+                    <Button size="sm" onClick={() => setPlanningEditing(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
                     </Button>
-                    <Button 
-                      onClick={handleSavePlanning} 
-                      disabled={sectionLoading.planning}
-                      size="sm"
-                    >
-                      {sectionLoading.planning ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Save Planning
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button onClick={addPlanningItem} size="sm" variant="outline">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Item
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { resetFormsFromUser(); setPlanningEditing(false); }}
+                        disabled={sectionLoading.planning}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={async () => { await handleSavePlanning(); setPlanningEditing(false); }} 
+                        disabled={sectionLoading.planning}
+                        size="sm"
+                      >
+                        {sectionLoading.planning ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -2461,7 +2710,7 @@ export default function UserDashboard() {
                     <p className="text-muted-foreground mb-4">
                       Keep track of your wedding planning tasks and share your progress with guests.
                     </p>
-                    <Button onClick={addPlanningItem}>
+                    <Button onClick={addPlanningItem} disabled={!planningEditing}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Your First Task
                     </Button>
@@ -2476,6 +2725,7 @@ export default function UserDashboard() {
                               type="checkbox"
                               id={`planningCompleted${index}`}
                               checked={item.completed}
+                              disabled={!planningEditing}
                               onChange={(e) => {
                                 const newPlanning = [...planningForm];
                                 newPlanning[index].completed = e.target.checked;
@@ -2491,6 +2741,7 @@ export default function UserDashboard() {
                                   <Input 
                                     id={`planningTitle${index}`}
                                     value={item.title}
+                                    disabled={!planningEditing}
                                     onChange={(e) => {
                                       const newPlanning = [...planningForm];
                                       newPlanning[index].title = e.target.value;
@@ -2506,6 +2757,7 @@ export default function UserDashboard() {
                                   <Input 
                                     id={`planningIcon${index}`}
                                     value={item.icon || ''}
+                                    disabled={!planningEditing}
                                     onChange={(e) => {
                                       const newPlanning = [...planningForm];
                                       newPlanning[index].icon = e.target.value;
@@ -2521,6 +2773,7 @@ export default function UserDashboard() {
                                 <Textarea 
                                   id={`planningDescription${index}`}
                                   value={item.description}
+                                  disabled={!planningEditing}
                                   onChange={(e) => {
                                     const newPlanning = [...planningForm];
                                     newPlanning[index].description = e.target.value;
@@ -2539,6 +2792,7 @@ export default function UserDashboard() {
                             size="sm"
                             onClick={() => removePlanningItem(index)}
                             className="text-destructive hover:text-destructive"
+                            disabled={!planningEditing}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -2616,7 +2870,7 @@ export default function UserDashboard() {
                       size="sm"
                       onClick={() => dispatch(fetchRSVPResponses(auth?.data?.roleId || ''))}
                     >
-                      <Download className="w-4 h-4 mr-2" />
+                      <RefreshCcw className="w-4 h-4 mr-2" />
                       Refresh
                     </Button>
                   </div>
