@@ -439,137 +439,137 @@ const InvitePage = ({ params }: InvitePageProps) => {
   // Enhanced safe data with more comprehensive fallbacks
   const safeAbout = about
     ? {
-        title: about.title || "About Us",
-        subtitle: about.subtitle || "Our Story",
-        groom: {
-          name: about.groom?.name || "Groom",
-          description:
-            about.groom?.description ||
-            "The amazing groom who brings joy and laughter to every moment.",
-          image: getSafeImageUrl(
-            about.groom?.image,
-            "/api/placeholder/280/360"
-          ),
-          socials: {
-            instagram: about.groom?.socials?.instagram || "",
-            facebook: about.groom?.socials?.facebook || "",
-            twitter: about.groom?.socials?.twitter || "",
-          },
-        },
-        bride: {
-          name: about.bride?.name || "Bride",
-          description:
-            about.bride?.description ||
-            "The beautiful bride who lights up every room with her presence.",
-          image: getSafeImageUrl(
-            about.bride?.image,
-            "/api/placeholder/280/360"
-          ),
-          socials: {
-            instagram: about.bride?.socials?.instagram || "",
-            facebook: about.bride?.socials?.facebook || "",
-            twitter: about.bride?.socials?.twitter || "",
-          },
-        },
-        coupleImage: getSafeImageUrl(
-          about.coupleImage,
-          "/api/placeholder/320/240"
+      title: about.title || "About Us",
+      subtitle: about.subtitle || "Our Story",
+      groom: {
+        name: about.groom?.name || "Groom",
+        description:
+          about.groom?.description ||
+          "The amazing groom who brings joy and laughter to every moment.",
+        image: getSafeImageUrl(
+          about.groom?.image,
+          "/api/placeholder/280/360"
         ),
-      }
+        socials: {
+          instagram: about.groom?.socials?.instagram || "",
+          facebook: about.groom?.socials?.facebook || "",
+          twitter: about.groom?.socials?.twitter || "",
+        },
+      },
+      bride: {
+        name: about.bride?.name || "Bride",
+        description:
+          about.bride?.description ||
+          "The beautiful bride who lights up every room with her presence.",
+        image: getSafeImageUrl(
+          about.bride?.image,
+          "/api/placeholder/280/360"
+        ),
+        socials: {
+          instagram: about.bride?.socials?.instagram || "",
+          facebook: about.bride?.socials?.facebook || "",
+          twitter: about.bride?.socials?.twitter || "",
+        },
+      },
+      coupleImage: getSafeImageUrl(
+        about.coupleImage,
+        "/api/placeholder/320/240"
+      ),
+    }
     : null;
 
   const safeInvitation = invitation
     ? {
-        heading: invitation.heading || "You're Invited",
-        subheading: invitation.subheading || "To Our Wedding",
-        message:
-          invitation.message ||
-          "Join us as we begin our journey together in love and happiness",
-        rsvpLink: invitation.rsvpLink || "",
-        backgroundImage: getSafeImageUrl(
-          invitation.backgroundImage,
-          "/api/placeholder/1920/800"
-        ),
-      }
+      heading: invitation.heading || "You're Invited",
+      subheading: invitation.subheading || "To Our Wedding",
+      message:
+        invitation.message ||
+        "Join us as we begin our journey together in love and happiness",
+      rsvpLink: invitation.rsvpLink || "",
+      backgroundImage: getSafeImageUrl(
+        invitation.backgroundImage,
+        "/api/placeholder/1920/800"
+      ),
+    }
     : null;
 
   const safeLoveStory =
     loveStory && loveStory.length > 0
       ? loveStory.map((story, index) => ({
-          id: index + 1,
-          title: story.title || `Chapter ${index + 1}`,
-          date: story.date || new Date().toLocaleDateString(),
-          description:
-            story.description || "A beautiful moment in our love story.",
-          image: getSafeImageUrl(story.image, "/api/placeholder/400/300"),
-        }))
+        id: index + 1,
+        title: story.title || `Chapter ${index + 1}`,
+        date: story.date || new Date().toLocaleDateString(),
+        description:
+          story.description || "A beautiful moment in our love story.",
+        image: getSafeImageUrl(story.image, "/api/placeholder/400/300"),
+      }))
       : [];
 
   // --- ENHANCED: Each event has its own venue details (address, googleLocation, name) ---
   const safeWeddingEvents =
     Array.isArray(weddingEvents) && weddingEvents.length > 0
       ? weddingEvents.map((event, idx) => {
-          // Check if venue is custom (ID = "0") and use selfVenue details
-          if (event.venue === "0" && event.selfVenue) {
-            return {
-              ...event,
-              date: event.date || new Date().toLocaleDateString(),
-              time: event.time || "12:00 PM",
-              address: event.selfVenue.address || "Custom Venue Address",
-              googleLocation: event.selfVenue.googleLocation || "",
-              venueName: event.selfVenue.name || "Custom Venue",
-              landmark: event.selfVenue.landmark || "",
-              description: event.description || "Join us for this special celebration",
-              image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
-              title: event.title || `Event ${idx + 1}`,
-            };
-          }
-          
-          // Try to get venue details from venueDetails state for regular venues
-          const venue = venueDetails[idx] || {};
-          // Defensive: event.venue may be string or object
-          let eventVenueObj: any = typeof event.venue === "object" && event.venue !== null ? event.venue : {};
+        // Check if venue is custom (ID = "0") and use selfVenue details
+        if (event.venue === "0" && event.selfVenue) {
           return {
             ...event,
             date: event.date || new Date().toLocaleDateString(),
             time: event.time || "12:00 PM",
-            address:
-              venue.address ||
-              eventVenueObj.address ||
-              eventVenueObj.location?.address ||
-              "Venue Address",
-            googleLocation:
-              venue.googleLocation ||
-              eventVenueObj.googleLocation ||
-              "",
-            venueName:
-              venue.name ||
-              eventVenueObj.name ||
-              "Venue",
-            landmark: "", // Regular venues don't have landmark info
-            description:
-              event.description || "Join us for this special celebration",
+            address: event.selfVenue.address || "Custom Venue Address",
+            googleLocation: event.selfVenue.googleLocation || "",
+            venueName: event.selfVenue.name || "Custom Venue",
+            landmark: event.selfVenue.landmark || "",
+            description: event.description || "Join us for this special celebration",
             image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
             title: event.title || `Event ${idx + 1}`,
           };
-        })
+        }
+
+        // Try to get venue details from venueDetails state for regular venues
+        const venue = venueDetails[idx] || {};
+        // Defensive: event.venue may be string or object
+        let eventVenueObj: any = typeof event.venue === "object" && event.venue !== null ? event.venue : {};
+        return {
+          ...event,
+          date: event.date || new Date().toLocaleDateString(),
+          time: event.time || "12:00 PM",
+          address:
+            venue.address ||
+            eventVenueObj.address ||
+            eventVenueObj.location?.address ||
+            "Venue Address",
+          googleLocation:
+            venue.googleLocation ||
+            eventVenueObj.googleLocation ||
+            "",
+          venueName:
+            venue.name ||
+            eventVenueObj.name ||
+            "Venue",
+          landmark: "", // Regular venues don't have landmark info
+          description:
+            event.description || "Join us for this special celebration",
+          image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
+          title: event.title || `Event ${idx + 1}`,
+        };
+      })
       : [];
 
   const safePlanning =
     planning && planning.length > 0
       ? planning.map((item, index) => ({
-          id: index + 1,
-          title: item.title || "Planning Item",
-          description:
-            item.description || "Important wedding preparation detail",
-          icon: getSafeImageUrl(item.icon, "/api/placeholder/56/56"),
-          completed: item.completed || false,
-          type: item.title || "Event",
-          date: new Date().toLocaleDateString(),
-          venue: item.description || "To be confirmed",
-          time: "12:00 PM",
-          phone: "+1 (555) 123-4567",
-        }))
+        id: index + 1,
+        title: item.title || "Planning Item",
+        description:
+          item.description || "Important wedding preparation detail",
+        icon: getSafeImageUrl(item.icon, "/api/placeholder/56/56"),
+        completed: item.completed || false,
+        type: item.title || "Event",
+        date: new Date().toLocaleDateString(),
+        venue: item.description || "To be confirmed",
+        time: "12:00 PM",
+        phone: "+1 (555) 123-4567",
+      }))
       : [];
 
   const countdownItems = [
@@ -588,21 +588,21 @@ const InvitePage = ({ params }: InvitePageProps) => {
   const rsvpEventCheckboxes =
     safeWeddingEvents.length > 0
       ? safeWeddingEvents.map((event, idx) => (
-          <label key={idx} className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              checked={rsvpFormData.selectedEvents.includes(idx)}
-              onChange={() => handleEventCheckboxChange(idx)}
-              className="w-5 h-5"
-            />
-            <span>
-              {event.title}{" "}
-              <span className="text-xs text-gray-500">
-                ({event.date}, {event.time})
-              </span>
+        <label key={idx} className="flex items-center gap-2 mb-2">
+          <input
+            type="checkbox"
+            checked={rsvpFormData.selectedEvents.includes(idx)}
+            onChange={() => handleEventCheckboxChange(idx)}
+            className="w-5 h-5"
+          />
+          <span>
+            {event.title}{" "}
+            <span className="text-xs text-gray-500">
+              ({event.date}, {event.time})
             </span>
-          </label>
-        ))
+          </span>
+        </label>
+      ))
       : null;
 
   return (
@@ -1066,11 +1066,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
               {safeWeddingEvents.map((_, index) => (
                 <motion.button
                   key={index}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedEventIndex === index
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedEventIndex === index
                       ? "bg-white text-gray-800 shadow-lg"
                       : "bg-white/20 text-white hover:bg-white/30"
-                  }`}
+                    }`}
                   onClick={() => setSelectedEventIndex(index)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1374,9 +1373,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 {safeLoveStory.map((milestone, index) => (
                   <motion.div
                     key={milestone.id}
-                    className={`relative flex items-center ${
-                      index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
-                    } flex-col lg:gap-16 gap-8`}
+                    className={`relative flex items-center ${index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
+                      } flex-col lg:gap-16 gap-8`}
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: index * 0.1 }}
@@ -1389,11 +1387,10 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
                     {/* Content */}
                     <div
-                      className={`flex-1 ${
-                        index % 2 === 0
+                      className={`flex-1 ${index % 2 === 0
                           ? "lg:text-right lg:pr-8"
                           : "lg:text-left lg:pl-8"
-                      } text-center lg:text-left`}
+                        } text-center lg:text-left`}
                     >
                       <motion.div
                         className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
@@ -1473,7 +1470,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       </div>
                     </motion.div>
                   ))}
-                  
+
                   {/* Wedding Event Images */}
                   {safeWeddingEvents.map((event, index) => {
                     if (event.image && event.image !== "/api/placeholder/600/400") {
@@ -1573,41 +1570,41 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full">
                   {/* Venue Details Card */}
-                {(safeWeddingEvents[selectedEventIndex]?.venueName ||
-                  safeWeddingEvents[selectedEventIndex]?.address) && (
-                  <motion.div
-                    className="mt-6 bg-white rounded-2xl p-6 shadow-lg"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
-                  >
-                    <h4
-                      className="text-xl font-bold mb-4"
-                      style={{ color: safeTheme.primaryColor }}
-                    >
-                      {safeWeddingEvents[selectedEventIndex].venueName}
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <MapPin
-                          className="w-5 h-5 mt-1"
-                          style={{ color: safeTheme.secondaryColor }}
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">Address</p>
-                          <p className="text-gray-600 text-sm">
-                            {safeWeddingEvents[selectedEventIndex].address}
-                          </p>
-                          {safeWeddingEvents[selectedEventIndex].landmark && (
-                            <p className="text-gray-500 text-xs mt-1">
-                              Near: {safeWeddingEvents[selectedEventIndex].landmark}
-                            </p>
-                          )}
+                  {(safeWeddingEvents[selectedEventIndex]?.venueName ||
+                    safeWeddingEvents[selectedEventIndex]?.address) && (
+                      <motion.div
+                        className="mt-6 bg-white rounded-2xl p-6 shadow-lg"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                      >
+                        <h4
+                          className="text-xl font-bold mb-4"
+                          style={{ color: safeTheme.primaryColor }}
+                        >
+                          {safeWeddingEvents[selectedEventIndex].venueName}
+                        </h4>
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <MapPin
+                              className="w-5 h-5 mt-1"
+                              style={{ color: safeTheme.secondaryColor }}
+                            />
+                            <div>
+                              <p className="font-medium text-gray-800">Address</p>
+                              <p className="text-gray-600 text-sm">
+                                {safeWeddingEvents[selectedEventIndex].address}
+                              </p>
+                              {safeWeddingEvents[selectedEventIndex].landmark && (
+                                <p className="text-gray-500 text-xs mt-1">
+                                  Near: {safeWeddingEvents[selectedEventIndex].landmark}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+                      </motion.div>
+                    )}
                 </div>
               </div>
 
@@ -1621,9 +1618,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
               >
                 <div className="relative h-96 lg:h-[600px] w-full rounded-2xl overflow-hidden shadow-2xl">
                   {safeWeddingEvents[selectedEventIndex]?.googleLocation &&
-                  safeWeddingEvents[selectedEventIndex].googleLocation.includes(
-                    "https://www.google.com/maps/embed"
-                  ) ? (
+                    safeWeddingEvents[selectedEventIndex].googleLocation.includes(
+                      "https://www.google.com/maps/embed"
+                    ) ? (
                     <iframe
                       src={safeWeddingEvents[selectedEventIndex].googleLocation}
                       width="100%"
@@ -1678,7 +1675,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     </div>
                   )}
                 </div>
-                
+
               </motion.div>
             </div>
           </div>
@@ -1689,9 +1686,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
       <section
         className="relative w-full min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
         style={{
-          backgroundImage: `url('${
-            safeInvitation?.backgroundImage || "/api/placeholder/1920/800"
-          }')`,
+          backgroundImage: `url('${safeInvitation?.backgroundImage || "/api/placeholder/1920/800"
+            }')`,
         }}
       >
         <div className="absolute inset-0 bg-black/40" />
@@ -1724,29 +1720,86 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
             <form className="space-y-6" onSubmit={handleRSVPSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <motion.input
-                  type="text"
-                  placeholder="Your Full Name *"
-                  value={rsvpFormData.name}
-                  onChange={(e) =>
-                    handleRSVPInputChange("name", e.target.value)
-                  }
-                  required
-                  className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
-                  whileFocus={{ scale: 1.02 }}
-                />
-                <motion.input
-                  type="email"
-                  placeholder="Email Address *"
-                  value={rsvpFormData.email}
-                  onChange={(e) =>
-                    handleRSVPInputChange("email", e.target.value)
-                  }
-                  required
-                  className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
-                  whileFocus={{ scale: 1.02 }}
-                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-name">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <motion.input
+                    id="rsvp-name"
+                    type="text"
+                    placeholder="Your Full Name"
+                    value={rsvpFormData.name}
+                    onChange={(e) =>
+                      handleRSVPInputChange("name", e.target.value)
+                    }
+                    required
+                    className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
+                    whileFocus={{ scale: 1.02 }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-email">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <motion.input
+                    id="rsvp-email"
+                    type="email"
+                    placeholder="Email Address"
+                    value={rsvpFormData.email}
+                    onChange={(e) =>
+                      handleRSVPInputChange("email", e.target.value)
+                    }
+                    required
+                    className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
+                    whileFocus={{ scale: 1.02 }}
+                  />
+                </div>
               </div>
+
+              {rsvpFormData.attendance === "yes" && (
+                <motion.div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-number-of-guests">
+                      Number of Guests <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="rsvp-number-of-guests"
+                      type="number"
+                      placeholder="Number of Guests"
+                      value={rsvpFormData.numberOfGuests}
+                      onChange={(e) =>
+                        handleRSVPInputChange(
+                          "numberOfGuests",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      min="1"
+                      max="10"
+                      className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-phone">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      id="rsvp-phone"
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={rsvpFormData.phone}
+                      onChange={(e) =>
+                        handleRSVPInputChange("phone", e.target.value)
+                      }
+                      className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              )}
 
               <div className="bg-gray-50 rounded-xl p-6">
                 <p className="font-medium text-gray-800 mb-4">
@@ -1802,48 +1855,21 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 </div>
               )}
 
-              {rsvpFormData.attendance === "yes" && (
-                <motion.div
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <input
-                    type="number"
-                    placeholder="Number of Guests *"
-                    value={rsvpFormData.numberOfGuests}
-                    onChange={(e) =>
-                      handleRSVPInputChange(
-                        "numberOfGuests",
-                        parseInt(e.target.value)
-                      )
-                    }
-                    min="1"
-                    max="10"
-                    className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Phone Number (Optional)"
-                    value={rsvpFormData.phone}
-                    onChange={(e) =>
-                      handleRSVPInputChange("phone", e.target.value)
-                    }
-                    className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
-                  />
-                </motion.div>
-              )}
-
-              <textarea
-                placeholder="Special message for the couple (Optional)"
-                value={rsvpFormData.message}
-                onChange={(e) =>
-                  handleRSVPInputChange("message", e.target.value)
-                }
-                className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors resize-none h-32"
-                rows={4}
-              />
+              <div className="flex flex-col gap-1">
+                <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-message">
+                  Special message for the couple (Optional)
+                </label>
+                <textarea
+                  id="rsvp-message"
+                  placeholder="Special message for the couple"
+                  value={rsvpFormData.message}
+                  onChange={(e) =>
+                    handleRSVPInputChange("message", e.target.value)
+                  }
+                  className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors resize-none h-32"
+                  rows={4}
+                />
+              </div>
 
               <motion.button
                 type="submit"
@@ -2055,58 +2081,58 @@ const InvitePage = ({ params }: InvitePageProps) => {
               <div className="flex justify-center items-center gap-6 mb-8 text-2xl">
                 {(safeAbout.groom.socials.instagram ||
                   safeAbout.bride.socials.instagram) && (
-                  <motion.a
-                    href={
-                      safeAbout.groom.socials.instagram ||
-                      safeAbout.bride.socials.instagram ||
-                      "#"
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                    className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-pink-100"
-                    style={{ color: safeTheme.primaryColor }}
-                    whileHover={{ scale: 1.2, rotate: 5 }}
-                  >
-                    <FaInstagram />
-                  </motion.a>
-                )}
+                    <motion.a
+                      href={
+                        safeAbout.groom.socials.instagram ||
+                        safeAbout.bride.socials.instagram ||
+                        "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Instagram"
+                      className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-pink-100"
+                      style={{ color: safeTheme.primaryColor }}
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                    >
+                      <FaInstagram />
+                    </motion.a>
+                  )}
                 {(safeAbout.groom.socials.twitter ||
                   safeAbout.bride.socials.twitter) && (
-                  <motion.a
-                    href={
-                      safeAbout.groom.socials.twitter ||
-                      safeAbout.bride.socials.twitter ||
-                      "#"
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Twitter"
-                    className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
-                    style={{ color: safeTheme.primaryColor }}
-                    whileHover={{ scale: 1.2, rotate: -5 }}
-                  >
-                    <FaTwitter />
-                  </motion.a>
-                )}
+                    <motion.a
+                      href={
+                        safeAbout.groom.socials.twitter ||
+                        safeAbout.bride.socials.twitter ||
+                        "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Twitter"
+                      className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
+                      style={{ color: safeTheme.primaryColor }}
+                      whileHover={{ scale: 1.2, rotate: -5 }}
+                    >
+                      <FaTwitter />
+                    </motion.a>
+                  )}
                 {(safeAbout.groom.socials.facebook ||
                   safeAbout.bride.socials.facebook) && (
-                  <motion.a
-                    href={
-                      safeAbout.groom.socials.facebook ||
-                      safeAbout.bride.socials.facebook ||
-                      "#"
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Facebook"
-                    className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
-                    style={{ color: safeTheme.primaryColor }}
-                    whileHover={{ scale: 1.2, rotate: 5 }}
-                  >
-                    <FaFacebookF />
-                  </motion.a>
-                )}
+                    <motion.a
+                      href={
+                        safeAbout.groom.socials.facebook ||
+                        safeAbout.bride.socials.facebook ||
+                        "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Facebook"
+                      className="transition-colors duration-300 p-3 rounded-full bg-gray-100 hover:bg-blue-100"
+                      style={{ color: safeTheme.primaryColor }}
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                    >
+                      <FaFacebookF />
+                    </motion.a>
+                  )}
               </div>
 
               {/* Thank you message */}
