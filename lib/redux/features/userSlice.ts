@@ -41,6 +41,12 @@ interface WeddingEvent {
   venue: string;
   description: string;
   image?: string;
+  selfVenue?: {
+    name: string;
+    address: string;
+    googleLocation: string;
+    landmark: string;
+  };
 }
 
 interface TimelineEvent {

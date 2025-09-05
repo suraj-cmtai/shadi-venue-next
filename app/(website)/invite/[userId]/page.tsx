@@ -509,7 +509,23 @@ const InvitePage = ({ params }: InvitePageProps) => {
   const safeWeddingEvents =
     Array.isArray(weddingEvents) && weddingEvents.length > 0
       ? weddingEvents.map((event, idx) => {
-          // Try to get venue details from venueDetails state
+          // Check if venue is custom (ID = "0") and use selfVenue details
+          if (event.venue === "0" && event.selfVenue) {
+            return {
+              ...event,
+              date: event.date || new Date().toLocaleDateString(),
+              time: event.time || "12:00 PM",
+              address: event.selfVenue.address || "Custom Venue Address",
+              googleLocation: event.selfVenue.googleLocation || "",
+              venueName: event.selfVenue.name || "Custom Venue",
+              landmark: event.selfVenue.landmark || "",
+              description: event.description || "Join us for this special celebration",
+              image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
+              title: event.title || `Event ${idx + 1}`,
+            };
+          }
+          
+          // Try to get venue details from venueDetails state for regular venues
           const venue = venueDetails[idx] || {};
           // Defensive: event.venue may be string or object
           let eventVenueObj: any = typeof event.venue === "object" && event.venue !== null ? event.venue : {};
@@ -530,6 +546,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
               venue.name ||
               eventVenueObj.name ||
               "Venue",
+            landmark: "", // Regular venues don't have landmark info
             description:
               event.description || "Join us for this special celebration",
             image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
@@ -1201,6 +1218,11 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     <p className="text-gray-600">
                       {safeWeddingEvents[selectedEventIndex].address}
                     </p>
+                    {safeWeddingEvents[selectedEventIndex].landmark && (
+                      <p className="text-gray-500 text-sm mt-1">
+                        Near: {safeWeddingEvents[selectedEventIndex].landmark}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center">
@@ -1320,7 +1342,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                Our Story
+                The Story of Us
               </motion.h3>
               <motion.h2
                 className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl"
@@ -1329,7 +1351,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                How it all started...
+                The Beginning of Our Journey Together
               </motion.h2>
               <motion.div
                 className="w-24 h-1 mx-auto mt-6 rounded-full"
@@ -1576,6 +1598,11 @@ const InvitePage = ({ params }: InvitePageProps) => {
                           <p className="text-gray-600 text-sm">
                             {safeWeddingEvents[selectedEventIndex].address}
                           </p>
+                          {safeWeddingEvents[selectedEventIndex].landmark && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              Near: {safeWeddingEvents[selectedEventIndex].landmark}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1895,6 +1922,11 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       <p className="font-semibold">
                         {safeWeddingEvents[0].address}
                       </p>
+                      {safeWeddingEvents[0].landmark && (
+                        <p className="text-white/70 text-xs">
+                          Near: {safeWeddingEvents[0].landmark}
+                        </p>
+                      )}
                       <p className="text-white/80 text-sm">Address</p>
                     </div>
                   </div>

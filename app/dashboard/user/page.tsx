@@ -121,6 +121,12 @@ interface WeddingEventForm {
   venue: string;
   description: string;
   image?: string | File;
+  selfVenue?: {
+    name: string;
+    address: string;
+    googleLocation: string;
+    landmark: string;
+  };
 }
 
 interface TimelineEventForm {
@@ -523,7 +529,8 @@ export default function UserDashboard() {
         time: event.time,
         venue: event.venue,
         description: event.description,
-        image: event.image as string | undefined
+        image: event.image as string | undefined,
+        selfVenue: event.selfVenue
       }));
       
       await dispatch(updateInvite({
@@ -678,7 +685,13 @@ export default function UserDashboard() {
       time: '',
       venue: '',
       description: '',
-      image: ''
+      image: '',
+      selfVenue: {
+        name: '',
+        address: '',
+        googleLocation: '',
+        landmark: ''
+      }
     }]);
     setUnsavedChanges(true);
   };
@@ -2096,9 +2109,21 @@ export default function UserDashboard() {
                         <div className="space-y-2">
                           <Label htmlFor={`eventVenue${index}`}>Venue</Label>
                           <Select onValueChange={(value) => {
-                            const newEvents = eventsForm.map((ev, i) => (
-                              i === index ? { ...ev, venue: value } : ev
-                            ));
+                            const newEvents = eventsForm.map((ev, i) => {
+                              if (i === index) {
+                                return { 
+                                  ...ev, 
+                                  venue: value,
+                                  selfVenue: value === '0' ? {
+                                    name: '',
+                                    address: '',
+                                    googleLocation: '',
+                                    landmark: ''
+                                  } : ev.selfVenue
+                                };
+                              }
+                              return ev;
+                            });
                             setEventsForm(newEvents);
                             setUnsavedChanges(true);
                           }}>
@@ -2111,6 +2136,9 @@ export default function UserDashboard() {
                                   {hotel.name}
                                 </SelectItem>
                               ))}
+                              <SelectItem value="0" className="cursor-pointer">
+                                Other (Custom Venue)
+                              </SelectItem>
                             </SelectContent>
                           </Select> 
                         </div>
@@ -2158,6 +2186,103 @@ export default function UserDashboard() {
                           placeholder="Provide details about this event..."
                         />
                       </div>
+                      {/* Custom Venue Fields - Show when "Other" is selected */}
+                      {event.venue === '0' && (
+                        <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+                          <h4 className="text-sm font-medium text-muted-foreground">Custom Venue Details</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor={`venueName${index}`}>Venue Name</Label>
+                              <Input 
+                                id={`venueName${index}`}
+                                value={event.selfVenue?.name || ''}
+                                onChange={(e) => {
+                                  const newEvents = [...eventsForm];
+                                  if (!newEvents[index].selfVenue) {
+                                    newEvents[index].selfVenue = {
+                                      name: '',
+                                      address: '',
+                                      googleLocation: '',
+                                      landmark: ''
+                                    };
+                                  }
+                                  newEvents[index].selfVenue!.name = e.target.value;
+                                  setEventsForm(newEvents);
+                                  setUnsavedChanges(true);
+                                }}
+                                placeholder="Enter venue name"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`venueAddress${index}`}>Address</Label>
+                              <Input 
+                                id={`venueAddress${index}`}
+                                value={event.selfVenue?.address || ''}
+                                onChange={(e) => {
+                                  const newEvents = [...eventsForm];
+                                  if (!newEvents[index].selfVenue) {
+                                    newEvents[index].selfVenue = {
+                                      name: '',
+                                      address: '',
+                                      googleLocation: '',
+                                      landmark: ''
+                                    };
+                                  }
+                                  newEvents[index].selfVenue!.address = e.target.value;
+                                  setEventsForm(newEvents);
+                                  setUnsavedChanges(true);
+                                }}
+                                placeholder="Enter full address"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`venueGoogleLocation${index}`}>Google Location</Label>
+                              <Input 
+                                id={`venueGoogleLocation${index}`}
+                                value={event.selfVenue?.googleLocation || ''}
+                                onChange={(e) => {
+                                  const newEvents = [...eventsForm];
+                                  if (!newEvents[index].selfVenue) {
+                                    newEvents[index].selfVenue = {
+                                      name: '',
+                                      address: '',
+                                      googleLocation: '',
+                                      landmark: ''
+                                    };
+                                  }
+                                  newEvents[index].selfVenue!.googleLocation = e.target.value;
+                                  setEventsForm(newEvents);
+                                  setUnsavedChanges(true);
+                                }}
+                                placeholder="Google Maps link or coordinates"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`venueLandmark${index}`}>Landmark</Label>
+                              <Input 
+                                id={`venueLandmark${index}`}
+                                value={event.selfVenue?.landmark || ''}
+                                onChange={(e) => {
+                                  const newEvents = [...eventsForm];
+                                  if (!newEvents[index].selfVenue) {
+                                    newEvents[index].selfVenue = {
+                                      name: '',
+                                      address: '',
+                                      googleLocation: '',
+                                      landmark: ''
+                                    };
+                                  }
+                                  newEvents[index].selfVenue!.landmark = e.target.value;
+                                  setEventsForm(newEvents);
+                                  setUnsavedChanges(true);
+                                }}
+                                placeholder="Nearby landmark or reference point"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <FileInput
                         label="Event Image"
                         value={event.image || ''}

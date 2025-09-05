@@ -40,6 +40,12 @@ export interface WeddingEvent {
   venue: string;
   description: string;
   image: string | null;
+  selfVenue?: {
+    name: string;
+    address: string;
+    googleLocation: string;
+    landmark: string;
+  };
 }
 
 export interface TimelineEvent {

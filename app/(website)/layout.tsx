@@ -13,7 +13,7 @@ export default function WebsiteLayout({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {pathname !== "/" && pathname !== "/login" && pathname !== "/signup" && pathname !== "/invite" && <Popup />}
+      {pathname !== "/" && pathname !== "/login" && pathname !== "/signup" && pathname !== "/invite/:userId" && <Popup />}
 
       <Header />
       <main className="flex-1">{children}</main>
