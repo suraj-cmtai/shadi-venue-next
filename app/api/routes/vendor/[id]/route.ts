@@ -89,6 +89,25 @@ export async function PUT(
     if (logoFile) {
       const newLogoUrl = await replaceImageClient(logoFile, existingVendor.logoUrl);
       if (newLogoUrl) logoUrl = newLogoUrl;
+    } else {
+      // Check if logoUrl is being cleared (empty string)
+      const logoUrlFromForm = formData.get('logoUrl') as string;
+      if (logoUrlFromForm !== null) {
+        if (logoUrlFromForm.trim() === '') {
+          // Clear logo - delete existing image and set empty string
+          if (existingVendor.logoUrl) {
+            try {
+              await replaceImageClient(null, existingVendor.logoUrl);
+            } catch (error) {
+              console.warn('Failed to delete old logo:', error);
+            }
+          }
+          logoUrl = '';
+        } else {
+          // Keep existing logo
+          logoUrl = existingVendor.logoUrl;
+        }
+      }
     }
 
     // Replace cover image if new file provided

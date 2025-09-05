@@ -48,6 +48,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -130,6 +133,8 @@ export default function VendorDashboard () {
   const [activeTab, setActiveTab] = useState("basic");
   const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const categories: VendorCategory[] = ["Venue", "Planner", "Photographer", "Decorator", "Caterer", "Makeup", "Entertainment", "Others"];
   const serviceAreas: ServiceArea[] = ["Local City", "Statewide", "Pan India", "International"];
@@ -194,9 +199,20 @@ export default function VendorDashboard () {
     try {
       const formDataToSend = new FormData();
 
-      // Add all form fields
+      // Handle logo upload/replacement - API expects logoFile, not logoUrl
+      if (logoFile) {
+        // New logo file selected - send the file directly to API
+        formDataToSend.append('logoFile', logoFile);
+      } else if (formData.logoUrl && formData.logoUrl.trim() !== '') {
+        // Keep existing logo - API will handle this automatically
+      } else {
+        // No logo - send empty string to clear logo
+        formDataToSend.append('logoUrl', '');
+      }
+
+      // Add all form fields (excluding logoUrl since it's handled above)
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && key !== 'logoUrl') {
           if (Array.isArray(value)) {
             formDataToSend.append(key, JSON.stringify(value));
           } else {
@@ -204,6 +220,7 @@ export default function VendorDashboard () {
           }
         }
       });
+
 
       if (modalMode === 'create') {
         await dispatch(createVendor(formDataToSend)).unwrap();
@@ -215,6 +232,8 @@ export default function VendorDashboard () {
       
       setShowModal(false);
       setFormData({});
+      setLogoFile(null);
+      setLogoPreview(null);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to save vendor');
     } finally {
@@ -288,6 +307,8 @@ export default function VendorDashboard () {
       isFeatured: false,
     });
     setActiveTab("basic");
+    setLogoFile(null);
+    setLogoPreview(null);
     setShowModal(true);
   };
 
@@ -297,6 +318,14 @@ export default function VendorDashboard () {
       [field]: value
     }));
   };
+
+  // Prevent form submission on Enter key press (except on account tab)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && activeTab !== 'account') {
+      e.preventDefault();
+    }
+  };
+
 
   const handleArrayChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -311,6 +340,36 @@ export default function VendorDashboard () {
     });
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be under 5MB');
+        return;
+      }
+      setLogoFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setLogoPreview(previewUrl);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoPreview(null);
+    // Clear the logoUrl from formData when removing
+    setFormData(prev => ({
+      ...prev,
+      logoUrl: ''
+    }));
+  };
+
   const renderBasicInfoTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -318,7 +377,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">Business Name *</label>
           <input
             type="text"
-            required
             value={formData.name || ''}
             onChange={(e) => handleInputChange('name', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -328,7 +386,6 @@ export default function VendorDashboard () {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
           <select
-            required
             value={formData.category || ''}
             onChange={(e) => handleInputChange('category', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -352,7 +409,6 @@ export default function VendorDashboard () {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
           <select
-            required
             value={formData.status || ''}
             onChange={(e) => handleInputChange('status', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -401,6 +457,56 @@ export default function VendorDashboard () {
           placeholder="Describe your business, specialties, and what makes you unique..."
         />
       </div>
+
+      {/* Logo Upload Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900">Business Logo</h3>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="logo-upload" className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Logo Image
+            </Label>
+            <Input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoChange}
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Upload a square logo image (max 5MB). Recommended size: 400x400px
+            </p>
+          </div>
+
+          {/* Logo Preview */}
+          {(logoPreview || formData.logoUrl) && (
+            <div className="flex items-center gap-4">
+              <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
+                <Image
+                  src={logoPreview || formData.logoUrl || ''}
+                  alt="Logo preview"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-600">
+                  {logoPreview ? 'New Logo Preview' : 'Current Logo'}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={removeLogo}
+                  className="w-fit"
+                >
+                  {logoPreview ? 'Remove New Logo' : 'Remove Logo'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -411,7 +517,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person Name *</label>
           <input
             type="text"
-            required
             value={formData.contactPersonName || ''}
             onChange={(e) => handleInputChange('contactPersonName', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -421,7 +526,6 @@ export default function VendorDashboard () {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Designation *</label>
           <select
-            required
             value={formData.designation || ''}
             onChange={(e) => handleInputChange('designation', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -435,7 +539,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
           <input
             type="tel"
-            required
             value={formData.mobileNumber || ''}
             onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -456,7 +559,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
           <input
             type="email"
-            required
             value={formData.email || ''}
             onChange={(e) => handleInputChange('email', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -482,7 +584,6 @@ export default function VendorDashboard () {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
         <textarea
-          required
           rows={3}
           value={formData.address || ''}
           onChange={(e) => handleInputChange('address', e.target.value)}
@@ -495,7 +596,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
           <input
             type="text"
-            required
             value={formData.city || ''}
             onChange={(e) => handleInputChange('city', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -506,7 +606,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">State *</label>
           <input
             type="text"
-            required
             value={formData.state || ''}
             onChange={(e) => handleInputChange('state', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -517,7 +616,6 @@ export default function VendorDashboard () {
           <label className="block text-sm font-medium text-gray-700 mb-2">Pin Code *</label>
           <input
             type="text"
-            required
             value={formData.pinCode || ''}
             onChange={(e) => handleInputChange('pinCode', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -554,7 +652,6 @@ export default function VendorDashboard () {
             <span className="absolute left-3 top-2 text-gray-500">₹</span>
             <input
               type="number"
-              required
               min="0"
               value={formData.startingPrice || ''}
               onChange={(e) => handleInputChange('startingPrice', Number(e.target.value))}
@@ -771,7 +868,7 @@ export default function VendorDashboard () {
                     setIsRefreshing(false);
                   }
                 }}
-                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
+                className="flex items-center gap-2 bg-gray-600 text-black px-4 py-2 rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50"
                 disabled={loading || isRefreshing}
               >
                 <Loader2 className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -954,7 +1051,13 @@ export default function VendorDashboard () {
                     <TableCell className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-full overflow-hidden border flex-shrink-0">
                         {vendor.logoUrl ? (
-                          <img src={vendor.logoUrl} alt={vendor.name} className="object-cover w-full h-full" />
+                          <Image
+                            src={vendor.logoUrl}
+                            alt={vendor.name}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full bg-muted flex items-center justify-center">
                             <Building className="w-5 h-5 text-muted-foreground" />
@@ -1057,11 +1160,15 @@ export default function VendorDashboard () {
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
                 <div className="flex items-start gap-6">
                   {selectedVendor?.logoUrl ? (
-                    <img
-                      src={selectedVendor.logoUrl}
-                      alt={selectedVendor.name}
-                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
-                    />
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                      <Image
+                        src={selectedVendor.logoUrl}
+                        alt={selectedVendor.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                       <Building className="text-gray-500" size={32} />
@@ -1101,7 +1208,7 @@ export default function VendorDashboard () {
               {/* We reuse the existing blocks below, so no duplication needed */}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="p-0">
+            <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="p-0">
               {/* Progress indicator */}
               {uploading && (
                 <div className="mb-6 bg-blue-50 rounded-xl p-4">
@@ -1161,7 +1268,9 @@ export default function VendorDashboard () {
                 {activeTab !== 'account' ? (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       const tabs = ['basic', 'contact', 'location', 'services', 'account'];
                       const currentIndex = tabs.indexOf(activeTab);
                       if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);

@@ -1018,24 +1018,26 @@ const createRequestData = async (form: HotelFormState) => {
         {/* Images */}
         <div className="space-y-4">
             <h3 className="text-lg font-medium">Images</h3>
-            <div className="space-y-2">
-              <Label>Hotel Images</Label>
+            <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">   
+                <Label>Hotel Profile Picture</Label>
               <Input
                 type="file"
                 multiple
                 accept="image/*"
                 onChange={(e) => handleImageChange(e, form, setForm)}
               />
+              </div>
               {form.images.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-3 gap-2 mt-2 space-y-2">
                   {form.images.map((url, index) => (
-                    <div key={index} className="relative group">
+                    <div key={index} className="relative group flex justify-center">
                       <Image
                         src={url}
                         alt={`Preview ${index + 1}`}
                         width={100}
                         height={100}
-                        className="rounded-md object-cover w-full h-24"
+                        className="rounded-full object-cover w-30 h-30 border border-gray-200"
                       />
                       <Button
                         type="button"
