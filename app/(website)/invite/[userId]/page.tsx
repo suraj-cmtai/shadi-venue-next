@@ -17,7 +17,6 @@ import {
   MapPin,
   Calendar,
   Clock,
-  Phone,
   Heart,
   Star,
 } from "lucide-react";
@@ -1321,7 +1320,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                Our Love Story
+                Our Story
               </motion.h3>
               <motion.h2
                 className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl"
@@ -1330,7 +1329,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                How we met and fell in love
+                How it all started...
               </motion.h2>
               <motion.div
                 className="w-24 h-1 mx-auto mt-6 rounded-full"
@@ -1416,8 +1415,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
               </div>
             </div>
 
-            {/* Image Gallery Thumbnails */}
-            {safeLoveStory.length > 0 && (
+            {/* Image Gallery Thumbnails - Combined Love Story + Event Images */}
+            {(safeLoveStory.length > 0 || safeWeddingEvents.length > 0) && (
               <motion.div
                 className="mt-20 text-center"
                 initial={{ opacity: 0, y: 30 }}
@@ -1428,13 +1427,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   className="text-2xl font-semibold mb-8"
                   style={{ color: safeTheme.titleColor }}
                 >
-                  Our Memory Gallery
+                  Our Memories
                 </h4>
                 <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
+                  {/* Love Story Images */}
                   {safeLoveStory.map((story, index) => (
                     <motion.div
-                      key={story.id}
-                      className="relative w-24 h-24 rounded-lg overflow-hidden cursor-pointer shadow-lg"
+                      key={`love-${story.id}`}
+                      className="relative w-48 h-48 rounded-lg overflow-hidden cursor-pointer shadow-lg"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedGalleryImage(story.image)}
@@ -1446,8 +1446,38 @@ const InvitePage = ({ params }: InvitePageProps) => {
                         className="object-cover"
                       />
                       <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition-colors duration-200"></div>
+                      <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                        Love Story
+                      </div>
                     </motion.div>
                   ))}
+                  
+                  {/* Wedding Event Images */}
+                  {safeWeddingEvents.map((event, index) => {
+                    if (event.image && event.image !== "/api/placeholder/600/400") {
+                      return (
+                        <motion.div
+                          key={`event-${index}`}
+                          className="relative w-48 h-48 rounded-lg overflow-hidden cursor-pointer shadow-lg"
+                          whileHover={{ scale: 1.1, rotate: -5 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedGalleryImage(event.image)}
+                        >
+                          <Image
+                            src={event.image}
+                            alt={event.title}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition-colors duration-200"></div>
+                          <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            {event.title}
+                          </div>
+                        </motion.div>
+                      );
+                    }
+                    return null;
+                  })}
                 </div>
               </motion.div>
             )}

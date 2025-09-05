@@ -867,38 +867,29 @@ export default function UserDashboard() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* <div className="flex items-center gap-2">
-            <Switch
-              checked={inviteEnabled}
-              onCheckedChange={handleToggleInviteStatus}
-            />
-            <Label className="text-sm font-medium">
-              {inviteEnabled ? "Live" : "Draft Mode"}
-            </Label>
-          </div> */}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Share2 className="w-4 h-4 mr-2" />
+              <Button variant="default" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-white shadow-md hover:shadow-lg transition-all duration-200">
+                <Share2 className="w-5 h-5 mr-2" />
                 Share
-                <ChevronDown className="w-4 h-4 ml-2" />
+                <ChevronDown className="w-5 h-5 ml-2" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={copyInviteLink}>
-                <Copy className="w-4 h-4 mr-2" />
+                <Copy className="w-5 h-5 mr-2" />
                 Copy Link
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/invite/${auth?.data?.roleId}`} target="_blank">
-                  <Eye className="w-4 h-4 mr-2" />
+                  <Eye className="w-5 h-5 mr-2" />
                   Preview
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/invite/${auth?.data?.roleId}`} target="_blank">
-                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <ExternalLink className="w-5 h-5 mr-2" />
                   Open in New Tab
                 </Link>
               </DropdownMenuItem>
@@ -2015,18 +2006,6 @@ export default function UserDashboard() {
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="rsvpLink">RSVP Link (Optional)</Label>
-                    <Input 
-                      id="rsvpLink"
-                      value={invitationForm.rsvpLink || ''}
-                      onChange={(e) => {
-                        setInvitationForm({...invitationForm, rsvpLink: e.target.value});
-                        setUnsavedChanges(true);
-                      }}
-                      placeholder="https://your-rsvp-link.com"
-                    />
-                  </div>
                   <FileInput
                     label="Background Image"
                     value={invitationForm.backgroundImage || ''}
