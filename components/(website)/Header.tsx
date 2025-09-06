@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MenuIcon, LogIn, UserPlus, User2, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { selectAuth, selectIsAuthenticated } from "@/lib/redux/features/authSlice";
@@ -40,6 +40,12 @@ export default function Header() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const auth = useSelector(selectAuth);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Handle hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Handler for logout
   const handleLogout = async () => {
@@ -91,7 +97,13 @@ export default function Header() {
         </nav>
         {/* Desktop Auth Buttons/User - only show on xl and up */}
         <div className="hidden xl:flex items-center gap-2 min-w-fit">
-          {!isAuthenticated ? (
+          {!isHydrated ? (
+            // Show loading state during hydration
+            <div className="flex items-center gap-2">
+              <div className="w-28 h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-28 h-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ) : !isAuthenticated ? (
             <>
               <Link href="/login">
                 <Button
@@ -169,7 +181,13 @@ export default function Header() {
                 </nav>
                 {/* Auth Buttons/User */}
                 <div className="mt-6 flex flex-col gap-3">
-                  {!isAuthenticated ? (
+                  {!isHydrated ? (
+                    // Show loading state during hydration
+                    <div className="flex flex-col gap-3">
+                      <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  ) : !isAuthenticated ? (
                     <>
                       <Link href="/login" passHref >
                         <Button
