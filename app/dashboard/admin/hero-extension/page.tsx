@@ -99,6 +99,15 @@ const HeroExtensionManagement = () => {
     dispatch(fetchContent());
   }, [dispatch]);
 
+  // Cleanup object URL on component unmount
+  useEffect(() => {
+    return () => {
+      if (imageFile) {
+        URL.revokeObjectURL(URL.createObjectURL(imageFile));
+      }
+    };
+  }, [imageFile]);
+
   useEffect(() => {
     if (content) {
       setContentFormData({
@@ -133,6 +142,10 @@ const HeroExtensionManagement = () => {
       order: filteredImages.length,
       status: 'active'
     });
+    // Clean up object URL if it exists
+    if (imageFile) {
+      URL.revokeObjectURL(URL.createObjectURL(imageFile));
+    }
     setImageFile(null);
     setUploadProgress({});
     setIsEditing(false);
@@ -187,6 +200,10 @@ const HeroExtensionManagement = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Clean up previous object URL if it exists
+      if (imageFile) {
+        URL.revokeObjectURL(URL.createObjectURL(imageFile));
+      }
       setImageFile(file);
     }
   };
@@ -646,11 +663,24 @@ const HeroExtensionManagement = () => {
                   </div>
                 )}
 
+                {/* Selected File Preview */}
+                {imageFile && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2">Selected Image Preview:</p>
+                    <img
+                      src={URL.createObjectURL(imageFile)}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded border"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">File: {imageFile.name}</p>
+                  </div>
+                )}
+
                 {/* New Image Upload */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Upload size={24} className="mx-auto text-gray-400 mb-2" />
                   <p className="text-sm text-gray-600 mb-2">
-                    Upload a new image (will replace current image)
+                    {isEditing ? 'Upload a new image (will replace current image)' : 'Upload an image'}
                   </p>
                   <input
                     type="file"
@@ -678,13 +708,6 @@ const HeroExtensionManagement = () => {
                       <p className="text-sm text-gray-600 mt-2">
                         Uploading... {Math.round(uploadProgress['hero_extension_upload'] || 0)}%
                       </p>
-                    </div>
-                  )}
-
-                  {/* Selected File Preview */}
-                  {imageFile && (
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-600">Selected: {imageFile.name}</p>
                     </div>
                   )}
                 </div>
