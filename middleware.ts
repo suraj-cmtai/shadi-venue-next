@@ -140,7 +140,7 @@ const API_ROUTES: RouteConfig[] = [
   // ===== PUBLIC API ROUTES =====
   {
     pattern: /\/api\/routes\/invite\/[^/]+\/responses$/,
-    methods: ["GET"],
+    methods: ["GET", "PATCH"],
     isPublic: true,
   },
   {

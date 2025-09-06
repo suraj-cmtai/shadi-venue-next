@@ -31,7 +31,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Mail,
-  Globe,
   Settings,
   Sparkles,
   RefreshCcw
@@ -234,6 +233,9 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({});
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [updatingRSVP, setUpdatingRSVP] = useState<string | null>(null);
 
   // Loading states for each section
   const [sectionLoading, setSectionLoading] = useState<{[key: string]: boolean}>({});
@@ -724,17 +726,83 @@ export default function UserDashboard() {
     }
   };
 
+
   const handleRSVPStatusUpdate = async (rsvpId: string, status: 'confirmed' | 'declined') => {
-    if (!auth?.data?.roleId) return;
+    if (!auth?.data?.roleId) {
+      toast.error("User not authenticated");
+      return;
+    }
+    
+    setUpdatingRSVP(rsvpId);
+    console.log("Updating RSVP status:", { rsvpId, userId: auth.data.roleId, status });
+    
     try {
-      await dispatch(updateRSVPStatus({
-        rsvpId,
-        userId: auth.data.roleId,
-        status
-      })).unwrap();
-      toast.success(`RSVP ${status}`);
+      // Direct API call to update RSVP status
+      const response = await fetch(`/api/routes/invite/${auth.data.roleId}/responses`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rsvpId,
+          status
+        })
+      });
+
+      console.log("API Response status:", response.status);
+      console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
+      
+      // Get response text first to check if it's HTML
+      const responseText = await response.text();
+      console.log("Raw API response:", responseText);
+      
+      if (!response.ok) {
+        // Try to parse as JSON, if fails show raw response
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.errorMessage || `HTTP error! status: ${response.status}`);
+        } catch (parseError) {
+          throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}. Response: ${responseText.substring(0, 200)}...`);
+        }
+      }
+
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log("Parsed API response:", data);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        throw new Error(`Server returned invalid JSON. Response: ${responseText.substring(0, 200)}...`);
+      }
+
+      if (data.statusCode === 200) {
+        // Update local state immediately for better UX
+        const updatedResponses = rsvpResponses?.map(r => 
+          r.id === rsvpId ? { ...r, status: status as any } : r
+        ) || [];
+        
+        // Dispatch Redux action to update the store
+        dispatch({
+          type: 'rsvp/fetchResponses/fulfilled',
+          payload: updatedResponses
+        });
+        
+        // Also refresh the data from server to ensure consistency
+        dispatch(fetchRSVPResponses(auth.data.roleId));
+        
+        toast.success(`RSVP ${status} successfully!`, {
+          description: `Guest response has been updated to ${status}`,
+          duration: 3000,
+        });
+      } else {
+        throw new Error(data.errorMessage || "Failed to update RSVP status");
+      }
     } catch (error: any) {
+      console.error("RSVP update error:", error);
       toast.error(error.message || "Failed to update RSVP status");
+    } finally {
+      setUpdatingRSVP(null);
     }
   };
 
@@ -898,6 +966,66 @@ export default function UserDashboard() {
     }));
   };
 
+  // Handle tab change with unsaved changes check
+  const handleTabChange = (newTab: string) => {
+    if (unsavedChanges && newTab !== activeTab) {
+      setPendingTab(newTab);
+      setShowUnsavedChangesModal(true);
+    } else {
+      setActiveTab(newTab);
+    }
+  };
+
+  // Handle unsaved changes modal actions
+  const handleSaveAndContinue = async () => {
+    try {
+      // Save current tab's data
+      switch (activeTab) {
+        case 'profile':
+          await handleSaveProfile();
+          break;
+        case 'theme':
+          await handleSaveTheme();
+          break;
+        case 'content':
+          await handleSaveAbout();
+          break;
+        case 'events':
+          await handleSaveEvents();
+          break;
+        case 'story':
+          await handleSaveLoveStory();
+          break;
+        default:
+          break;
+      }
+      
+      // Switch to pending tab
+      if (pendingTab) {
+        setActiveTab(pendingTab);
+      }
+      setShowUnsavedChangesModal(false);
+      setPendingTab(null);
+    } catch (error) {
+      toast.error("Failed to save changes. Please try again.");
+    }
+  };
+
+  const handleDiscardAndContinue = () => {
+    resetFormsFromUser();
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+    }
+    setShowUnsavedChangesModal(false);
+    setPendingTab(null);
+    setUnsavedChanges(false);
+  };
+
+  const handleCancelTabChange = () => {
+    setShowUnsavedChangesModal(false);
+    setPendingTab(null);
+  };
+
   if (userLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -1031,7 +1159,7 @@ export default function UserDashboard() {
       </Card>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="m-4 p-1">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="m-4 p-1">
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
           <TabsTrigger value="overview">
             <Settings className="w-4 h-4 mr-2" />
@@ -1076,7 +1204,7 @@ export default function UserDashboard() {
                   <Button
                     variant="outline"
                     className="h-20 flex-col"
-                    onClick={() => setActiveTab('theme')}
+                    onClick={() => handleTabChange('theme')}
                   >
                     <Palette className="w-6 h-6 mb-2" />
                     Customize Theme
@@ -1084,7 +1212,7 @@ export default function UserDashboard() {
                   <Button
                     variant="outline"
                     className="h-20 flex-col"
-                    onClick={() => setActiveTab('content')}
+                    onClick={() => handleTabChange('content')}
                   >
                     <Edit className="w-6 h-6 mb-2" />
                     Edit Content
@@ -1092,7 +1220,7 @@ export default function UserDashboard() {
                   <Button
                     variant="outline"
                     className="h-20 flex-col"
-                    onClick={() => setActiveTab('events')}
+                    onClick={() => handleTabChange('events')}
                   >
                     <Calendar className="w-6 h-6 mb-2" />
                     Add Events
@@ -2303,8 +2431,9 @@ export default function UserDashboard() {
                             value={event.title}
                             disabled={!eventsEditing}
                             onChange={(e) => {
-                              const newEvents = [...eventsForm];
-                              newEvents[index].title = e.target.value;
+                              const newEvents = eventsForm.map((ev, i) => 
+                                i === index ? { ...ev, title: e.target.value } : ev
+                              );
                               setEventsForm(newEvents);
                               setUnsavedChanges(true);
                             }}
@@ -2355,8 +2484,9 @@ export default function UserDashboard() {
                             value={event.date}
                             disabled={!eventsEditing}
                             onChange={(e) => {
-                              const newEvents = [...eventsForm];
-                              newEvents[index].date = e.target.value;
+                              const newEvents = eventsForm.map((ev, i) => 
+                                i === index ? { ...ev, date: e.target.value } : ev
+                              );
                               setEventsForm(newEvents);
                               setUnsavedChanges(true);
                             }}
@@ -2370,8 +2500,9 @@ export default function UserDashboard() {
                             value={event.time}
                             disabled={!eventsEditing}
                             onChange={(e) => {
-                              const newEvents = [...eventsForm];
-                              newEvents[index].time = e.target.value;
+                              const newEvents = eventsForm.map((ev, i) => 
+                                i === index ? { ...ev, time: e.target.value } : ev
+                              );
                               setEventsForm(newEvents);
                               setUnsavedChanges(true);
                             }}
@@ -2385,8 +2516,9 @@ export default function UserDashboard() {
                           value={event.description}
                           disabled={!eventsEditing}
                           onChange={(e) => {
-                            const newEvents = [...eventsForm];
-                            newEvents[index].description = e.target.value;
+                            const newEvents = eventsForm.map((ev, i) => 
+                              i === index ? { ...ev, description: e.target.value } : ev
+                            );
                             setEventsForm(newEvents);
                             setUnsavedChanges(true);
                           }}
@@ -2406,16 +2538,21 @@ export default function UserDashboard() {
                                 value={event.selfVenue?.name || ''}
                                 disabled={!eventsEditing}
                                 onChange={(e) => {
-                                  const newEvents = [...eventsForm];
-                                  if (!newEvents[index].selfVenue) {
-                                    newEvents[index].selfVenue = {
-                                      name: '',
-                                      address: '',
-                                      googleLocation: '',
-                                      landmark: ''
-                                    };
-                                  }
-                                  newEvents[index].selfVenue!.name = e.target.value;
+                                  const newEvents = eventsForm.map((ev, i) => {
+                                    if (i === index) {
+                                      const selfVenue = ev.selfVenue || {
+                                        name: '',
+                                        address: '',
+                                        googleLocation: '',
+                                        landmark: ''
+                                      };
+                                      return {
+                                        ...ev,
+                                        selfVenue: { ...selfVenue, name: e.target.value }
+                                      };
+                                    }
+                                    return ev;
+                                  });
                                   setEventsForm(newEvents);
                                   setUnsavedChanges(true);
                                 }}
@@ -2429,16 +2566,21 @@ export default function UserDashboard() {
                                 value={event.selfVenue?.address || ''}
                                 disabled={!eventsEditing}
                                 onChange={(e) => {
-                                  const newEvents = [...eventsForm];
-                                  if (!newEvents[index].selfVenue) {
-                                    newEvents[index].selfVenue = {
-                                      name: '',
-                                      address: '',
-                                      googleLocation: '',
-                                      landmark: ''
-                                    };
-                                  }
-                                  newEvents[index].selfVenue!.address = e.target.value;
+                                  const newEvents = eventsForm.map((ev, i) => {
+                                    if (i === index) {
+                                      const selfVenue = ev.selfVenue || {
+                                        name: '',
+                                        address: '',
+                                        googleLocation: '',
+                                        landmark: ''
+                                      };
+                                      return {
+                                        ...ev,
+                                        selfVenue: { ...selfVenue, address: e.target.value }
+                                      };
+                                    }
+                                    return ev;
+                                  });
                                   setEventsForm(newEvents);
                                   setUnsavedChanges(true);
                                 }}
@@ -2452,16 +2594,21 @@ export default function UserDashboard() {
                                 value={event.selfVenue?.googleLocation || ''}
                                 disabled={!eventsEditing}
                                 onChange={(e) => {
-                                  const newEvents = [...eventsForm];
-                                  if (!newEvents[index].selfVenue) {
-                                    newEvents[index].selfVenue = {
-                                      name: '',
-                                      address: '',
-                                      googleLocation: '',
-                                      landmark: ''
-                                    };
-                                  }
-                                  newEvents[index].selfVenue!.googleLocation = e.target.value;
+                                  const newEvents = eventsForm.map((ev, i) => {
+                                    if (i === index) {
+                                      const selfVenue = ev.selfVenue || {
+                                        name: '',
+                                        address: '',
+                                        googleLocation: '',
+                                        landmark: ''
+                                      };
+                                      return {
+                                        ...ev,
+                                        selfVenue: { ...selfVenue, googleLocation: e.target.value }
+                                      };
+                                    }
+                                    return ev;
+                                  });
                                   setEventsForm(newEvents);
                                   setUnsavedChanges(true);
                                 }}
@@ -2475,16 +2622,21 @@ export default function UserDashboard() {
                                 value={event.selfVenue?.landmark || ''}
                                 disabled={!eventsEditing}
                                 onChange={(e) => {
-                                  const newEvents = [...eventsForm];
-                                  if (!newEvents[index].selfVenue) {
-                                    newEvents[index].selfVenue = {
-                                      name: '',
-                                      address: '',
-                                      googleLocation: '',
-                                      landmark: ''
-                                    };
-                                  }
-                                  newEvents[index].selfVenue!.landmark = e.target.value;
+                                  const newEvents = eventsForm.map((ev, i) => {
+                                    if (i === index) {
+                                      const selfVenue = ev.selfVenue || {
+                                        name: '',
+                                        address: '',
+                                        googleLocation: '',
+                                        landmark: ''
+                                      };
+                                      return {
+                                        ...ev,
+                                        selfVenue: { ...selfVenue, landmark: e.target.value }
+                                      };
+                                    }
+                                    return ev;
+                                  });
                                   setEventsForm(newEvents);
                                   setUnsavedChanges(true);
                                 }}
@@ -2499,8 +2651,9 @@ export default function UserDashboard() {
                         label="Event Image"
                         value={event.image || ''}
                         onChange={(file) => {
-                          const newEvents = [...eventsForm];
-                          newEvents[index].image = file || '';
+                          const newEvents = eventsForm.map((ev, i) => 
+                            i === index ? { ...ev, image: file || '' } : ev
+                          );
                           setEventsForm(newEvents);
                           setUnsavedChanges(true);
                         }}
@@ -2601,8 +2754,9 @@ export default function UserDashboard() {
                               value={event.date}
                               disabled={!loveStoryEditing}
                               onChange={(e) => {
-                                const newStory = [...loveStoryForm];
-                                newStory[index].date = e.target.value;
+                                const newStory = loveStoryForm.map((story, i) => 
+                                  i === index ? { ...story, date: e.target.value } : story
+                                );
                                 setLoveStoryForm(newStory);
                                 setUnsavedChanges(true);
                               }}
@@ -2616,8 +2770,9 @@ export default function UserDashboard() {
                               value={event.title}
                               disabled={!loveStoryEditing}
                               onChange={(e) => {
-                                const newStory = [...loveStoryForm];
-                                newStory[index].title = e.target.value;
+                                const newStory = loveStoryForm.map((story, i) => 
+                                  i === index ? { ...story, title: e.target.value } : story
+                                );
                                 setLoveStoryForm(newStory);
                                 setUnsavedChanges(true);
                               }}
@@ -2632,8 +2787,9 @@ export default function UserDashboard() {
                             value={event.description}
                             disabled={!loveStoryEditing}
                             onChange={(e) => {
-                              const newStory = [...loveStoryForm];
-                              newStory[index].description = e.target.value;
+                              const newStory = loveStoryForm.map((story, i) => 
+                                i === index ? { ...story, description: e.target.value } : story
+                              );
                               setLoveStoryForm(newStory);
                               setUnsavedChanges(true);
                             }}
@@ -2645,8 +2801,9 @@ export default function UserDashboard() {
                           label="Memory Photo"
                           value={event.image || ''}
                           onChange={(file) => {
-                            const newStory = [...loveStoryForm];
-                            newStory[index].image = file || '';
+                            const newStory = loveStoryForm.map((story, i) => 
+                              i === index ? { ...story, image: file || '' } : story
+                            );
                             setLoveStoryForm(newStory);
                             setUnsavedChanges(true);
                           }}
@@ -2727,8 +2884,9 @@ export default function UserDashboard() {
                               checked={item.completed}
                               disabled={!planningEditing}
                               onChange={(e) => {
-                                const newPlanning = [...planningForm];
-                                newPlanning[index].completed = e.target.checked;
+                                const newPlanning = planningForm.map((item, i) => 
+                                  i === index ? { ...item, completed: e.target.checked } : item
+                                );
                                 setPlanningForm(newPlanning);
                                 setUnsavedChanges(true);
                               }}
@@ -2743,8 +2901,9 @@ export default function UserDashboard() {
                                     value={item.title}
                                     disabled={!planningEditing}
                                     onChange={(e) => {
-                                      const newPlanning = [...planningForm];
-                                      newPlanning[index].title = e.target.value;
+                                      const newPlanning = planningForm.map((item, i) => 
+                                        i === index ? { ...item, title: e.target.value } : item
+                                      );
                                       setPlanningForm(newPlanning);
                                       setUnsavedChanges(true);
                                     }}
@@ -2759,8 +2918,9 @@ export default function UserDashboard() {
                                     value={item.icon || ''}
                                     disabled={!planningEditing}
                                     onChange={(e) => {
-                                      const newPlanning = [...planningForm];
-                                      newPlanning[index].icon = e.target.value;
+                                      const newPlanning = planningForm.map((item, i) => 
+                                        i === index ? { ...item, icon: e.target.value } : item
+                                      );
                                       setPlanningForm(newPlanning);
                                       setUnsavedChanges(true);
                                     }}
@@ -2775,8 +2935,9 @@ export default function UserDashboard() {
                                   value={item.description}
                                   disabled={!planningEditing}
                                   onChange={(e) => {
-                                    const newPlanning = [...planningForm];
-                                    newPlanning[index].description = e.target.value;
+                                    const newPlanning = planningForm.map((item, i) => 
+                                      i === index ? { ...item, description: e.target.value } : item
+                                    );
                                     setPlanningForm(newPlanning);
                                     setUnsavedChanges(true);
                                   }}
@@ -2953,25 +3114,39 @@ export default function UserDashboard() {
                                   size="sm"
                                   variant={response.status === 'confirmed' ? 'default' : 'outline'}
                                   onClick={() => handleRSVPStatusUpdate(response.id, 'confirmed')}
-                                  disabled={response.status === 'confirmed'}
-                                  className="min-w-[100px]"
+                                  disabled={response.status === 'confirmed' || updatingRSVP === response.id}
+                                  className={`min-w-[100px] ${
+                                    response.status === 'confirmed' 
+                                      ? 'bg-green-600 hover:bg-green-700' 
+                                      : 'hover:bg-green-50 hover:border-green-300'
+                                  }`}
                                 >
-                                  {response.status === 'confirmed' ? (
+                                  {updatingRSVP === response.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : response.status === 'confirmed' ? (
                                     <CheckCircle2 className="w-4 h-4 mr-2" />
                                   ) : (
                                     <Check className="w-4 h-4 mr-2" />
                                   )}
-                                  Confirm
+                                  {updatingRSVP === response.id ? 'Updating...' : response.status === 'confirmed' ? 'Confirmed' : 'Confirm'}
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant={response.status === 'declined' ? 'destructive' : 'outline'}
                                   onClick={() => handleRSVPStatusUpdate(response.id, 'declined')}
-                                  disabled={response.status === 'declined'}
-                                  className="min-w-[100px]"
+                                  disabled={response.status === 'declined' || updatingRSVP === response.id}
+                                  className={`min-w-[100px] ${
+                                    response.status === 'declined' 
+                                      ? 'bg-red-600 hover:bg-red-700' 
+                                      : 'hover:bg-red-50 hover:border-red-300'
+                                  }`}
                                 >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Decline
+                                  {updatingRSVP === response.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <X className="w-4 h-4 mr-2" />
+                                  )}
+                                  {updatingRSVP === response.id ? 'Updating...' : response.status === 'declined' ? 'Declined' : 'Decline'}
                                 </Button>
                               </div>
                             </div>
@@ -2999,6 +3174,11 @@ export default function UserDashboard() {
                               Preview Your Invite
                             </Link>
                           </Button>
+                        </div>
+                        <div className="mt-6 p-4 bg-muted/30 rounded-lg max-w-md mx-auto">
+                          <p className="text-sm text-muted-foreground">
+                            💡 <strong>Tip:</strong> Send the invite link via WhatsApp, email, or social media to get started!
+                          </p>
                         </div>
                       </div>
                     )}
@@ -3078,42 +3258,40 @@ export default function UserDashboard() {
         </TabsContent>
       </Tabs>
 
-      {/* Fixed bottom bar for unsaved changes */}
-      {unsavedChanges && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-background border border-border rounded-lg shadow-lg p-4 z-50">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
-              <span className="text-sm font-medium">You have unsaved changes</span>
+
+      {/* Unsaved Changes Modal */}
+      {showUnsavedChangesModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background border border-border rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-yellow-600" />
+              <h3 className="text-lg font-semibold">Unsaved Changes</h3>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setUnsavedChanges(false)}>
-                Discard
+            <p className="text-muted-foreground mb-6">
+              You have unsaved changes in the current tab. What would you like to do?
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleDiscardAndContinue}
+                className="flex-1"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Discard Changes
               </Button>
-              <Button size="sm" onClick={() => {
-                // Save current tab's data
-                switch (activeTab) {
-                  case 'profile':
-                    handleSaveProfile();
-                    break;
-                  case 'theme':
-                    handleSaveTheme();
-                    break;
-                  case 'content':
-                    handleSaveAbout();
-                    break;
-                  case 'events':
-                    handleSaveEvents();
-                    break;
-                  case 'story':
-                    handleSaveLoveStory();
-                    break;
-                  default:
-                    setUnsavedChanges(false);
-                }
-              }}>
+              <Button 
+                variant="outline" 
+                onClick={handleCancelTabChange}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveAndContinue}
+                className="flex-1"
+              >
                 <Save className="w-4 h-4 mr-2" />
-                Save Changes
+                Save & Continue
               </Button>
             </div>
           </div>

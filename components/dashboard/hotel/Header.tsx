@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { 
-  Bell, 
-  Search, 
+import {
+  Bell,
+  Search,
   Menu,
   Settings,
   User,
@@ -66,16 +66,11 @@ const searchSuggestions = [
   // {label: "Test", value: "test", href: "/dashboard/test" },
 ];
 
-const notifications = [
-  { id: 1, title: "New user registered", time: "2 min ago", type: "info" },
-  { id: 2, title: "Lead converted", time: "5 min ago", type: "success" },
-  { id: 3, title: "System maintenance", time: "1 hour ago", type: "warning" },
-];
 
-const headerVariants : Variants= {
+const headerVariants: Variants = {
   hidden: { y: -20, opacity: 0 },
-  visible: { 
-    y: 0, 
+  visible: {
+    y: 0,
     opacity: 1,
     transition: { duration: 0.3, ease: "easeOut" }
   }
@@ -89,7 +84,6 @@ const searchVariants = {
 const Header = ({ title, onMenuClick, className }: HeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const router = useRouter();
   const auth = useAppSelector(selectAuth);
   const displayName = (auth as any)?.data?.name || (auth as any)?.data?.companyName || (auth as any)?.data?.name || "User";
@@ -164,8 +158,8 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0" align="start">
                 <Command>
-                  <CommandInput 
-                    placeholder="Search..." 
+                  <CommandInput
+                    placeholder="Search..."
                     value={searchValue}
                     onValueChange={setSearchValue}
                   />
@@ -173,7 +167,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                     <CommandEmpty>No results found.</CommandEmpty>
                     <CommandGroup heading="Quick Navigation">
                       {searchSuggestions
-                        .filter(item => 
+                        .filter(item =>
                           item.label.toLowerCase().includes(searchValue.toLowerCase())
                         )
                         .map((item) => (
@@ -187,7 +181,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                             }}
                             value={item.value}
                             className="cursor-pointer"
-                            
+
                           >
                             {item.label}
                           </CommandItem>
@@ -211,61 +205,12 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
             <Search className="h-5 w-5" />
           </Button>
 
-          {/* Notifications */}
-          {/* <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <AnimatePresence>
-                  {notifications.length > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1 -right-1"
-                    >
-                      <Badge variant="destructive" className="h-5 w-5 p-0 text-xs flex items-center justify-center">
-                        {notifications.length}
-                      </Badge>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Notifications</h4>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    Mark all read
-                  </Button>
-                </div>
-                <Separator />
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {notifications.map((notification, index) => (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-start space-x-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-                    >
-                      <div className={cn(
-                        "w-2 h-2 rounded-full mt-2 flex-shrink-0",
-                        notification.type === "info" && "bg-blue-500",
-                        notification.type === "success" && "bg-green-500",
-                        notification.type === "warning" && "bg-yellow-500"
-                      )} />
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">{notification.title}</p>
-                        <p className="text-xs text-muted-foreground">{notification.time}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover> */}
+          {/* Welcome Name - Desktop */}
+          <div className="hidden md:block">
+            <p className="text-sm font-medium text-muted-foreground">
+              Welcome, {displayName}
+            </p>
+          </div>
 
           {/* User Menu */}
           <DropdownMenu>
@@ -286,7 +231,7 @@ const Header = ({ title, onMenuClick, className }: HeaderProps) => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem  onClick={() => router.push('/logout')} className="text-red-600 focus:text-red-600 cursor-pointer">
+              <DropdownMenuItem onClick={() => router.push('/logout')} className="text-red-600 focus:text-red-600 cursor-pointer">
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

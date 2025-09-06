@@ -72,14 +72,26 @@ export const updateRSVPStatus = createAsyncThunk<
   "rsvp/updateStatus",
   async ({ rsvpId, userId, status }, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`/api/routes/invite/${userId}/responses/${rsvpId}`, {
+      console.log("Redux: Updating RSVP status", { rsvpId, userId, status });
+      const url = `/api/routes/invite/${userId}/responses`;
+      console.log("Redux: Making request to", url);
+      
+      const response = await axios.patch(url, {
+        rsvpId,
         status,
       });
+      
+      console.log("Redux: API response", response.data);
+      
       if (response.data.statusCode === 200) {
         return response.data.data;
       }
+      
+      console.error("Redux: API returned error", response.data);
       return rejectWithValue(response.data.errorMessage || "Failed to update RSVP status");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Redux: RSVP update error", error);
+      console.error("Redux: Error response", error.response?.data);
       return rejectWithValue(getErrorMessage(error));
     }
   }
