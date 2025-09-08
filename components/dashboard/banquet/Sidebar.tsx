@@ -10,17 +10,13 @@ import {
   Users, 
   Image, 
   LogOut, 
+  MapPin, 
   Package, 
+  Menu,
   X,
   ChevronLeft,
+  ChevronRight,
   ContactRound,
-  Newspaper,
-  Users2,
-  GalleryVerticalEnd,
-  MailCheck,
-  HotelIcon,
-  User,
-  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,91 +26,14 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const links = [
-  {
-    name: "Dashboard",
-    href: "/dashboard/admin",
-    icon: LayoutDashboard,
-    badge: null,
-  },
-  // { name: "Courses", href: "/dashboard/admin/courses", icon: BookOpenText, badge: null },
-  {
-    name: "Blogs",
-    href: "/dashboard/admin/blogs",
-    icon: Newspaper,
-    badge: null,
-  },
-  { name: "Signup", href: "/dashboard/admin/signup", icon: User, badge: null },
-  {
-    name: "Gallery",
-    href: "/dashboard/admin/gallery",
-    icon: GalleryVerticalEnd,
-    badge: null,
-  },
-  {
-    name: "Leads",
-    href: "/dashboard/admin/contact",
-    icon: MailCheck,
-    badge: null,
-  },
-  {
-    name: "Vendor Enquiry",
-    href: "/dashboard/admin/vendor-enquiry",
-    icon: MailCheck,
-    badge: null,
-  },
-  {
-    name: "Hotel Enquiry",
-    href: "/dashboard/admin/hotel-enquiry",
-    icon: MailCheck,
-    badge: null,
-  },
-  {
-    name: "Banquet Enquiry",
-    href: "/dashboard/admin/banquet-enquiry",
-    icon: MailCheck,
-    badge: null,
-  },
-  {
-    name: "Hotel",
-    href: "/dashboard/admin/hotel",
-    icon: HotelIcon,
-    badge: null,
-  },
-  { name: "Users", href: "/dashboard/admin/users", icon: Users, badge: null },
-  {
-    name: "Vendors",
-    href: " /dashboard/admin/vendors",
-    icon: Package,
-    badge: null,
-  },
-  {
-    name: "Banquet",
-    href: "/dashboard/admin/banquet",
-    icon: Building2,
-    badge: null,
-  },
-  { name: "Hero", href: "/dashboard/admin/hero", icon: Image, badge: null },
-  {
-    name: "Hero Extension",
-    href: "/dashboard/admin/hero-extension",
-    icon: ContactRound,
-    badge: null,
-  },
-  {
-    name: "Testimonials",
-    href: "/dashboard/admin/testimonials",
-    icon: Users2,
-    badge: null,
-  },
-  {
-    name: "About",
-    href: "/dashboard/admin/about",
-    icon: FileText,
-    badge: null,
-  },
-  // { name: "Vendors", href: "/dashboard/admin/vendors", icon: Package, badge: null },
-  // { name: "Map", href: "/dashboard/admin/map", icon: MapPin, badge: null },
-  // { name: "Settings", href: "/dashboard/admin/settings", icon: Menu, badge: null },
+  { name: "Dashboard", href: "/dashboard/banquet", icon: LayoutDashboard, badge: null },
+  { name: "Banquet Enquiry", href: "/dashboard/banquet/banquet-enquiry", icon: ContactRound, badge: null },
+  // { name: "Courses", href: "/dashboard/courses", icon: BookOpenText, badge: null },
+  // { name: "Blogs", href: "/dashboard/blogs", icon: Newspaper, badge: null },
+  // { name: "Subscribers", href: "/dashboard/subscribers", icon: Users2, badge: null },
+  // { name: "Gallery", href: "/dashboard/gallery", icon: GalleryVerticalEnd, badge: null },
+  // { name: "Contact", href: "/dashboard/contact", icon: MailCheck, badge: null },
+  // { name: "Test", href: "/dashboard/test", icon: FileText, badge: null },
 ];
 
 interface SidebarProps {

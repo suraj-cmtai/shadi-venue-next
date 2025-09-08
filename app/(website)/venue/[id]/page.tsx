@@ -514,62 +514,7 @@ export default function HotelDetailsPage() {
                 </div>
               </motion.div>
             )}
-            {/* Location Map */}
-            {hotel?.googleLocation && (
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 1.0, duration: 0.6 }}
-              >
-                <h2 className="text-2xl font-bold text-[#212D47] mb-6">
-                  Location
-                </h2>
-                {(() => {
-                  const isEmbedUrl = hotel.googleLocation.includes('embed') || 
-                    hotel.googleLocation.includes('maps.google.com') ||
-                    hotel.googleLocation.includes('google.com/maps');
-                  
-                  if (isEmbedUrl) {
-                    return (
-                      <div className="w-full h-64 rounded-xl overflow-hidden shadow-md border border-gray-200">
-                        <iframe
-                          src={hotel.googleLocation}
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          allowFullScreen
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          title="Hotel Location"
-                        />
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="w-full h-64 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200 flex items-center justify-center shadow-md">
-                        <div className="text-center space-y-3">
-                          <MapPin className="w-12 h-12 text-[#212D47] mx-auto" />
-                          <div>
-                            <p className="text-lg font-semibold text-[#212D47] mb-2">
-                              View Location
-                            </p>
-                            <a
-                              href={hotel.googleLocation}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium underline"
-                            >
-                              <Globe className="w-4 h-4" />
-                              Open in Maps
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                })()}
-              </motion.div>
-            )}
+
           </div>
 
           {/* Sidebar */}

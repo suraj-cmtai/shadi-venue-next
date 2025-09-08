@@ -38,6 +38,8 @@ import heroExtensionReducer from "./features/heroExtensionSlice";
 import aboutReducer from "./features/aboutSlice";
 import vendorEnquiryReducer from "./features/vendorEnquirySlice";
 import hotelEnquiryReducer from "./features/hotelEnquirySlice";
+import banquetReducer from "./features/banquetSlice";
+import banquetEnquiryReducer from "./features/banquetEnquirySlice";
 
 // Configuration for redux-persist
 const persistConfig = {
@@ -68,6 +70,8 @@ const rootReducer = combineReducers({
   about: aboutReducer,
   vendorEnquiry: vendorEnquiryReducer,
   hotelEnquiry: hotelEnquiryReducer,
+  banquet: banquetReducer,
+  banquetEnquiry: banquetEnquiryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

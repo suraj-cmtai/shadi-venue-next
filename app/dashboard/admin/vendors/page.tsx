@@ -277,6 +277,25 @@ export default function VendorDashboard () {
     }
   };
 
+  // Handle featured toggle
+  const handleFeaturedToggle = async (vendorId: string, isFeatured: boolean) => {
+    try {
+      const vendor = vendors.find((v: Vendor) => v.id === vendorId);
+      if (!vendor) return;
+
+      const formData = new FormData();
+      formData.append('isFeatured', isFeatured.toString());
+
+      await dispatch(updateVendor({ id: vendorId, data: formData })).unwrap();
+      toast.success(`Vendor featured status ${isFeatured ? 'enabled' : 'disabled'}`);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to update featured status');
+    } finally {
+      dispatch(fetchVendors());
+      dispatch(fetchActiveVendors());
+    }
+  };
+
   // Open modal
   const openModal = (mode: 'view' | 'edit' | 'create', vendor?: Vendor) => {
     setModalMode(mode);
@@ -1083,7 +1102,17 @@ export default function VendorDashboard () {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-600">{vendor.isFeatured ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={Boolean(vendor.isFeatured)}
+                          onCheckedChange={(checked) => handleFeaturedToggle(vendor.id, checked)}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {Boolean(vendor.isFeatured)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${vendor.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                         {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}

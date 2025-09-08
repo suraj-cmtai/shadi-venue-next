@@ -7,35 +7,35 @@ import Image from "next/image";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-    fetchHotels,
-    selectHotels,
-    selectHotelLoading,
-    selectHotelError,
-    Hotel,
-} from "@/lib/redux/features/hotelSlice";
+    fetchBanquets,
+    selectBanquets,
+    selectBanquetLoading,
+    selectBanquetError,
+    type Banquet,
+} from "@/lib/redux/features/banquetSlice";
 import { AppDispatch } from "@/lib/redux/store";
 
 interface VenueCardProps {
-    venue: Hotel;
+    venue: Banquet;
     onVenueClick: (venueId: string) => void;
 }
 
 export const VenueCard = ({ venue, onVenueClick }: VenueCardProps) => {
     const dispatch = useDispatch<AppDispatch>();
-    const hotels = useSelector(selectHotels) || [];
-    const loading = useSelector(selectHotelLoading);
-    const error = useSelector(selectHotelError);
+    const banquets = useSelector(selectBanquets) || [];
+    const loading = useSelector(selectBanquetLoading);
+    const error = useSelector(selectBanquetError);
 
     useEffect(() => {
-        if (!hotels.length) dispatch(fetchHotels());
-    }, [dispatch, hotels.length]);
+        if (!banquets.length) dispatch(fetchBanquets());
+    }, [dispatch, banquets.length]);
 
     if (loading) {
-        return <p className="text-center text-lg mt-6">Loading hotels...</p>;
+        return <p className="text-center text-lg mt-6">Loading banquets...</p>;
     }
 
     if (error) {
-        return <p className="text-center text-red-500 mt-6">Error loading hotels: {error}</p>;
+        return <p className="text-center text-red-500 mt-6">Error loading banquets: {error}</p>;
     }
 
     return (
@@ -48,7 +48,7 @@ export const VenueCard = ({ venue, onVenueClick }: VenueCardProps) => {
                     src={venue.images?.[0] || "/placeholder.svg"}
                     width={64}
                     height={64}
-                    alt={venue.name}
+                    alt={venue.venueName}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -65,7 +65,7 @@ export const VenueCard = ({ venue, onVenueClick }: VenueCardProps) => {
                 <div className="space-y-3">
                     <div>
                         <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-                            {venue.name}
+                            {venue.venueName}
                         </h3>
                         <div className="flex items-center text-sm text-muted-foreground mt-1">
                             <MapPin className="w-4 h-4 mr-1" />
@@ -79,13 +79,13 @@ export const VenueCard = ({ venue, onVenueClick }: VenueCardProps) => {
                         <div className="flex items-center gap-2">
                             <div className="flex items-center">
                                 <Star className="w-4 h-4 text-accent fill-current" />
-                                <span className="font-semibold ml-1">{venue.rating.toFixed(1)}</span>
+                                <span className="font-semibold ml-1">{(venue.rating || 0).toFixed(1)}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                        {venue.amenities?.slice(0, 2).map((type, index) => (
+                        {venue.amenities?.slice(0, 2).map((type: string, index: number) => (
                             <Badge key={index} variant="outline" className="text-xs">
                                 {type}
                             </Badge>
@@ -100,7 +100,7 @@ export const VenueCard = ({ venue, onVenueClick }: VenueCardProps) => {
                     <div className="flex items-center justify-between pt-2 border-t">
                         <div className="flex items-center text-sm text-muted-foreground">
                             <Users className="w-4 h-4 mr-1" />
-                            <span>{venue.maxGuestCapacity || "N/A"} guests</span>
+                            <span>{venue.maxGuestCapacity || venue.capacity || "N/A"} guests</span>
                         </div>
                         <div className="text-right">
                             <div className="text-sm text-muted-foreground">Starting from</div>

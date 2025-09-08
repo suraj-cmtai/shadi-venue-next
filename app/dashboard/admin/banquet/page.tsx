@@ -1,16 +1,16 @@
 "use client";
-// dashboard/admin/hotel/page.tsx
+// dashboard/admin/banquet/page.tsx
 import { AppDispatch } from '@/lib/redux/store';
-import { 
-  selectHotels, 
-  selectHotelLoading, 
-  selectHotelError,
-  fetchHotels,
-  createHotel,
-  updateHotel,
-  deleteHotel,
-  type Hotel
-} from '@/lib/redux/features/hotelSlice';
+import {
+  selectBanquets,
+  selectBanquetLoading,
+  selectBanquetError,
+  fetchBanquets,
+  createBanquet,
+  updateBanquet,
+  deleteBanquet,
+  type Banquet
+} from '@/lib/redux/features/banquetSlice';
 import { uploadImageClient, uploadPDFClient } from '@/lib/firebase-client';
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -93,7 +93,7 @@ async function uploadFiles(files: File[]): Promise<string[]> {
   }
 }
 
-interface HotelFormState {
+interface BanquetFormState {
   name: string;
   category: string;
   location: {
@@ -105,7 +105,7 @@ interface HotelFormState {
   };
   priceRange: {
     startingPrice: number;
-    currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
+    currency: string;
   };
   rating: number;
   status: 'active' | 'draft' | 'archived';
@@ -163,9 +163,9 @@ interface HotelFormState {
   isFeatured: boolean;
 }
 
-const initialFormState: HotelFormState = {
+const initialFormState: BanquetFormState = {
   name: "",
-  category: "Resort",
+  category: "Banquet Hall",
   location: {
     address: "",
     city: "",
@@ -200,11 +200,11 @@ const initialFormState: HotelFormState = {
   firstName: "",
   lastName: "",
   companyName: "",
-  venueType: "Hotel Resort",
+  venueType: "Banquet Hall",
   position: "Manager",
   websiteLink: "",
   offerWeddingPackages: "Yes",
-  resortCategory: "Luxury",
+  resortCategory: "Premium",
   servicesOffered: "Wedding Planning, Catering, Photography",
   maxGuestCapacity: "200",
   venueAvailability: "Year Round",
@@ -233,7 +233,7 @@ const initialFormState: HotelFormState = {
   isFeatured: false,
 };
 
-const statusColors: Record<Hotel["status"], string> = {
+const statusColors: Record<BanquetFormState["status"], string> = {
   active: "bg-green-100 text-green-800",
   draft: "bg-yellow-100 text-yellow-800",
   archived: "bg-gray-100 text-gray-800",
@@ -242,63 +242,66 @@ const statusColors: Record<Hotel["status"], string> = {
 // Define valid sort keys type
   type SortKey = 'name' | 'category' | 'rating' | 'status' | 'createdAt' | 'updatedAt' | 'city' | 'country' | 'startingPrice' | 'currency';
 
-export default function HotelDashboard() {
+export default function BanquetDashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const hotels = useSelector(selectHotels);
-  const isLoading = useSelector(selectHotelLoading);
-  const error = useSelector(selectHotelError);  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const banquets = useSelector(selectBanquets);
+  const isLoading = useSelector(selectBanquetLoading);
+  const error = useSelector(selectBanquetError); 
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [sortBy, setSortBy] = useState<SortKey>("createdAt");
-  const [newHotelForm, setNewHotelForm] = useState<HotelFormState>(initialFormState);
-  const [editHotelForm, setEditHotelForm] = useState<HotelFormState>(initialFormState);
-  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(null);
+  const [newBanquetForm, setNewBanquetForm] = useState<BanquetFormState>(initialFormState);
+  const [editBanquetForm, setEditBanquetForm] = useState<BanquetFormState>(initialFormState);
+  const [selectedBanquetId, setSelectedBanquetId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchHotels());
+    dispatch(fetchBanquets());
   }, [dispatch]);
+
+  console.log(banquets);
 
   // Clean up object URLs when component unmounts or form changes
   useEffect(() => {
     return () => {
-      if (newHotelForm.imageFiles.length > 0) {
-        newHotelForm.images.forEach((image) => {
+      if (newBanquetForm.imageFiles.length > 0) {
+        newBanquetForm.images.forEach((image) => {
           if (image.startsWith("blob:")) {
             URL.revokeObjectURL(image);
           }
         });
       }
     };
-  }, [newHotelForm.imageFiles, newHotelForm.images]);
+  }, [newBanquetForm.imageFiles, newBanquetForm.images]);
 
   useEffect(() => {
     return () => {
-      if (editHotelForm?.imageFiles && editHotelForm.imageFiles.length > 0) {
-        editHotelForm.images.forEach((image) => {
+      if (editBanquetForm?.imageFiles && editBanquetForm.imageFiles.length > 0) {
+        editBanquetForm.images.forEach((image) => {
           if (image.startsWith("blob:")) {
             URL.revokeObjectURL(image);
           }
         });
       }
     };
-  }, [editHotelForm?.imageFiles, editHotelForm?.images]);
+  }, [editBanquetForm?.imageFiles, editBanquetForm?.images]);
 
-  const filteredAndSortedHotels = useMemo(() => {
-    // Ensure hotels is an array and has items
-    if (!Array.isArray(hotels)) {
-      console.warn('hotels is not an array:', hotels);
+  const filteredAndSortedBanquets = useMemo(() => {
+    // Ensure banquets is an array and has items
+    if (!Array.isArray(banquets)) {
+      console.warn('banquets is not an array:', banquets);
       return [];
     }
 
-    let result = hotels.filter(
-      (hotel) =>
-        (hotel?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (hotel?.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (hotel?.location?.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (hotel?.location?.country || '').toLowerCase().includes(searchQuery.toLowerCase())
+    let result = banquets.filter(
+      (banquet) =>
+        (banquet?.venueName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (banquet?.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (banquet?.location?.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (banquet?.location?.country || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     result.sort((a, b) => {
@@ -345,34 +348,34 @@ export default function HotelDashboard() {
       return 0;
     });
     return result;
-  }, [hotels, searchQuery, sortBy, sortOrder]);
+  }, [banquets, searchQuery, sortBy, sortOrder]);
 
   const resetCreateForm = () => {
-    if (newHotelForm.imageFiles.length > 0) {
-      newHotelForm.images.forEach((image) => {
+    if (newBanquetForm.imageFiles.length > 0) {
+      newBanquetForm.images.forEach((image) => {
         if (image.startsWith("blob:")) {
           URL.revokeObjectURL(image);
         }
       });
     }
-    setNewHotelForm(initialFormState);
+    setNewBanquetForm(initialFormState);
   };
 
   const resetEditForm = () => {
-    if (editHotelForm.imageFiles.length > 0) {
-      editHotelForm.images.forEach((image) => {
+    if (editBanquetForm.imageFiles.length > 0) {
+      editBanquetForm.images.forEach((image) => {
         if (image.startsWith("blob:")) {
           URL.revokeObjectURL(image);
         }
       });
     }
-    setEditHotelForm(initialFormState);
-    setSelectedHotelId(null);
+    setEditBanquetForm(initialFormState);
+    setSelectedBanquetId(null);
   };
 
   // Create request data with uploaded file URLs
-  // Updated createRequestData function for your hotel dashboard
-const createRequestData = async (form: HotelFormState) => {
+  // Updated createRequestData function for your banquet dashboard
+const createRequestData = async (form: BanquetFormState) => {
   try {
     // Upload all files first
     const [
@@ -392,8 +395,8 @@ const createRequestData = async (form: HotelFormState) => {
     // Create FormData object
     const formData = new FormData();
     
-    // Basic hotel information
-    formData.append('name', form.name);
+    // Basic banquet information
+    formData.append('venueName', form.name);
     formData.append('category', form.category);
     formData.append('description', form.description);
     formData.append('rating', form.rating.toString());
@@ -438,7 +441,7 @@ const createRequestData = async (form: HotelFormState) => {
     formData.append('position', form.position);
     formData.append('websiteLink', form.websiteLink);
     
-    // Wedding and Venue Information
+    // Wedding and Banquet Information
     formData.append('offerWeddingPackages', form.offerWeddingPackages);
     formData.append('resortCategory', form.resortCategory);
     formData.append('weddingPackages', JSON.stringify(form.weddingPackages));
@@ -503,27 +506,27 @@ const createRequestData = async (form: HotelFormState) => {
     if (isSubmitting) return;
 
     // Validation
-    if (!newHotelForm.name.trim()) {
+    if (!newBanquetForm.name.trim()) {
       toast.error("Name is required");
       return;
     }
-    if (!newHotelForm.description.trim()) {
+    if (!newBanquetForm.description.trim()) {
       toast.error("Description is required");
       return;
     }
-    if (!newHotelForm.category.trim()) {
+    if (!newBanquetForm.category.trim()) {
       toast.error("Category is required");
       return;
     }
-    if (!newHotelForm.location.address.trim()) {
+    if (!newBanquetForm.location.address.trim()) {
       toast.error("Address is required");
       return;
     }
-    if (!newHotelForm.location.city.trim()) {
+    if (!newBanquetForm.location.city.trim()) {
       toast.error("City is required");
       return;
     }
-    if (!newHotelForm.location.country.trim()) {
+    if (!newBanquetForm.location.country.trim()) {
       toast.error("Country is required");
       return;
     }
@@ -531,44 +534,44 @@ const createRequestData = async (form: HotelFormState) => {
     setIsSubmitting(true);
 
     try {
-      toast.loading("Uploading files and creating hotel...");
-      const data = await createRequestData(newHotelForm);
-      await dispatch(createHotel(data)).unwrap();
+      toast.loading("Uploading files and creating banquet...");
+      const data = await createRequestData(newBanquetForm);
+      await dispatch(createBanquet(data)).unwrap();
       resetCreateForm();
       setIsCreateDialogOpen(false);
-      toast.success("Hotel created successfully!");
+      toast.success("Banquet created successfully!");
     } catch (err: any) {
-      toast.error(err?.message || err || "Failed to create hotel");
+      toast.error(err?.message || err || "Failed to create banquet");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleEdit = async () => {
-    if (!selectedHotelId || isSubmitting) return;
+    if (!selectedBanquetId || isSubmitting) return;
 
     // Validation
-    if (!editHotelForm.name.trim()) {
+    if (!editBanquetForm.name.trim()) {
       toast.error("Name is required");
       return;
     }
-    if (!editHotelForm.description.trim()) {
+    if (!editBanquetForm.description.trim()) {
       toast.error("Description is required");
       return;
     }
-    if (!editHotelForm.category.trim()) {
+    if (!editBanquetForm.category.trim()) {
       toast.error("Category is required");
       return;
     }
-    if (!editHotelForm.location.address.trim()) {
+    if (!editBanquetForm.location.address.trim()) {
       toast.error("Address is required");
       return;
     }
-    if (!editHotelForm.location.city.trim()) {
+    if (!editBanquetForm.location.city.trim()) {
       toast.error("City is required");
       return;
     }
-    if (!editHotelForm.location.country.trim()) {
+    if (!editBanquetForm.location.country.trim()) {
       toast.error("Country is required");
       return;
     }
@@ -576,65 +579,65 @@ const createRequestData = async (form: HotelFormState) => {
     setIsSubmitting(true);
 
     try {
-      toast.loading("Uploading files and updating hotel...");
-      const data = await createRequestData(editHotelForm);
-      await dispatch(updateHotel({ id: selectedHotelId, data })).unwrap();
+      toast.loading("Uploading files and updating banquet...");
+      const data = await createRequestData(editBanquetForm);
+      await dispatch(updateBanquet({ id: selectedBanquetId, data })).unwrap();
       setIsEditDialogOpen(false);
       resetEditForm();
-      toast.success("Hotel updated successfully!");
+      toast.success("Banquet updated successfully!");
     } catch (err: any) {
-      toast.error(err?.message || err || "Failed to update hotel");
+      toast.error(err?.message || err || "Failed to update banquet");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!selectedHotelId || isSubmitting) return;
+    if (!selectedBanquetId || isSubmitting) return;
 
     setIsSubmitting(true);
 
     try {
-      await dispatch(deleteHotel(selectedHotelId)).unwrap();
+      await dispatch(deleteBanquet(selectedBanquetId)).unwrap();
       setIsDeleteDialogOpen(false);
-      setSelectedHotelId(null);
-      toast.success("Hotel deleted successfully!");
+      setSelectedBanquetId(null);
+      toast.success("Banquet deleted successfully!");
     } catch (error: any) {
-      toast.error(error?.message || "Failed to delete hotel");
+      toast.error(error?.message || "Failed to delete banquet");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleQuickStatusUpdate = async (hotelId: string, newStatus: Hotel["status"]) => {
+  const handleQuickStatusUpdate = async (banquetId: string, newStatus: BanquetFormState["status"]) => {
     try {
       setIsSubmitting(true);
-      const hotel = hotels.find((h: Hotel) => h.id === hotelId);
-      if (!hotel) return;
+      const banquet = banquets.find((h: Banquet) => h.id === banquetId);
+      if (!banquet) return;
       
       const formData = new FormData();
       formData.append('status', newStatus);
       
-      await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
-      toast.success(`Hotel status updated to ${newStatus}`);
+      await dispatch(updateBanquet({ id: banquetId, data: formData })).unwrap();
+      toast.success(`Banquet status updated to ${newStatus}`);
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update hotel status');
+      toast.error(error?.message || 'Failed to update banquet status');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handlePremiumToggle = async (hotelId: string, isPremium: boolean) => {
+  const handlePremiumToggle = async (banquetId: string, isPremium: boolean) => {
     try {
       setIsSubmitting(true);
-      const hotel = hotels.find((h: Hotel) => h.id === hotelId);
-      if (!hotel) return;
+      const banquet = banquets.find((h: Banquet) => h.id === banquetId);
+      if (!banquet) return;
       
       const formData = new FormData();
       formData.append('isPremium', isPremium.toString());
       
-      await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
-      toast.success(`Hotel premium status ${isPremium ? 'enabled' : 'disabled'}`);
+      await dispatch(updateBanquet({ id: banquetId, data: formData })).unwrap();
+      toast.success(`Banquet premium status ${isPremium ? 'enabled' : 'disabled'}`);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update premium status');
     } finally {
@@ -642,17 +645,17 @@ const createRequestData = async (form: HotelFormState) => {
     }
   };
 
-  const handleFeaturedToggle = async (hotelId: string, isFeatured: boolean) => {
+  const handleFeaturedToggle = async (banquetId: string, isFeatured: boolean) => {
     try {
       setIsSubmitting(true);
-      const hotel = hotels.find((h: Hotel) => h.id === hotelId);
-      if (!hotel) return;
+      const banquet = banquets.find((h: Banquet) => h.id === banquetId);
+      if (!banquet) return;
       
       const formData = new FormData();
       formData.append('isFeatured', isFeatured.toString());
       
-      await dispatch(updateHotel({ id: hotelId, data: formData })).unwrap();
-      toast.success(`Hotel featured status ${isFeatured ? 'enabled' : 'disabled'}`);
+      await dispatch(updateBanquet({ id: banquetId, data: formData })).unwrap();
+      toast.success(`Banquet featured status ${isFeatured ? 'enabled' : 'disabled'}`);
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update featured status');
     } finally {
@@ -660,7 +663,7 @@ const createRequestData = async (form: HotelFormState) => {
     }
   };
 
-  const getStatusIcon = (status: Hotel["status"]) => {
+  const getStatusIcon = (status: BanquetFormState["status"]) => {
     switch (status) {
       case 'active':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -674,8 +677,8 @@ const createRequestData = async (form: HotelFormState) => {
   };
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    formState: HotelFormState,
-    setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
+    formState: BanquetFormState,
+    setFormState: React.Dispatch<React.SetStateAction<BanquetFormState>>
   ) => {
     const files = Array.from(e.target.files || []);
     
@@ -702,13 +705,13 @@ const createRequestData = async (form: HotelFormState) => {
       // Create new blob URLs for preview
       const newObjectUrls = files.map((file) => URL.createObjectURL(file));
       
-      setFormState((prev: HotelFormState) => ({
+      setFormState((prev: BanquetFormState) => ({
         ...prev,
         imageFiles: files,
         images: newObjectUrls,
       }));
     } else {
-      setFormState((prev: HotelFormState) => ({
+      setFormState((prev: BanquetFormState) => ({
         ...prev,
         imageFiles: [],
         images: [],
@@ -718,8 +721,8 @@ const createRequestData = async (form: HotelFormState) => {
 
   const removeImage = (
     index: number,
-    formState: HotelFormState,
-    setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
+    formState: BanquetFormState,
+    setFormState: React.Dispatch<React.SetStateAction<BanquetFormState>>
   ) => {
     const imageUrl = formState.images[index];
     
@@ -728,7 +731,7 @@ const createRequestData = async (form: HotelFormState) => {
       URL.revokeObjectURL(imageUrl);
     }
     
-    setFormState((prev: HotelFormState) => ({
+    setFormState((prev: BanquetFormState) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
       imageFiles: prev.imageFiles.filter((_, i) => i !== index),
@@ -737,11 +740,11 @@ const createRequestData = async (form: HotelFormState) => {
 
   // Render all form fields
   const renderFormFields = (
-    form: HotelFormState,
-    setForm: React.Dispatch<React.SetStateAction<HotelFormState>>
+    form: BanquetFormState,
+    setForm: React.Dispatch<React.SetStateAction<BanquetFormState>>
   ) => {
     return (
-      <div className="space-y-8">
+      <div className="space-y-4">
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Basic Information</h3>
@@ -797,16 +800,16 @@ const createRequestData = async (form: HotelFormState) => {
           </div>
         </div>
 
-        {/* Hotel Details */}
+        {/* Banquet Details */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Hotel Details</h3>
+          <h3 className="text-lg font-medium">Banquet Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Hotel Name *</Label>
+              <Label>Banquet Name *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Hotel Name"
+                placeholder="Banquet Hall Name"
               />
             </div>
             <div className="space-y-2">
@@ -814,7 +817,7 @@ const createRequestData = async (form: HotelFormState) => {
               <Input
                 value={form.category}
                 onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-                placeholder="Hotel Category"
+                placeholder="Banquet Category"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -822,15 +825,15 @@ const createRequestData = async (form: HotelFormState) => {
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Hotel Description"
+                placeholder="Banquet Description"
               />
             </div>
             <div className="space-y-2">
-              <Label>Resort Category</Label>
+              <Label>Venue Category</Label>
               <Input
                 value={form.resortCategory}
                 onChange={(e) => setForm((prev) => ({ ...prev, resortCategory: e.target.value }))}
-                placeholder="Resort Category"
+                placeholder="Venue Category"
               />
             </div>
           </div>
@@ -927,7 +930,7 @@ const createRequestData = async (form: HotelFormState) => {
                 onValueChange={(value) =>
                   setForm((prev) => ({
                     ...prev,
-                    status: value as HotelFormState["status"],
+                    status: value as BanquetFormState["status"],
                   }))
                 }
               >
@@ -1038,7 +1041,7 @@ const createRequestData = async (form: HotelFormState) => {
             <h3 className="text-lg font-medium">Images</h3>
             <div className="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">   
-                <Label>Hotel Profile Picture</Label>
+                <Label>Banquet Profile Picture</Label>
               <Input
                 type="file"
                 multiple
@@ -1447,23 +1450,23 @@ const createRequestData = async (form: HotelFormState) => {
       transition={{ duration: 0.5 }}
       className="w-full"
     >
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+      <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Hotels</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Banquets</h1>
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search hotels..."
+                placeholder="Search banquets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 w-full"
               />
             </div>
-            {/* <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center justify-center gap-2">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center justify-center gap-2">
               <Plus className="h-5 w-5" />
-              <span className="hidden sm:inline">Add Hotel</span>
-            </Button> */}
+              <span className="hidden sm:inline">Add Banquet</span>
+            </Button>
           </div>
         </div>
 
@@ -1489,21 +1492,21 @@ const createRequestData = async (form: HotelFormState) => {
                     <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
-              ) : filteredAndSortedHotels.length === 0 ? (
+              ) : filteredAndSortedBanquets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
-                    No hotels found.
+                    No banquets found.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAndSortedHotels.map((hotel: Hotel) => (
-                  <TableRow key={hotel.id} className="hover:bg-muted/50">
+                filteredAndSortedBanquets.map((banquet: Banquet) => (
+                  <TableRow key={banquet.id} className="hover:bg-muted/50">
                     <TableCell className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-md overflow-hidden border flex-shrink-0">
-                        {hotel.images?.[0] ? (
+                        {banquet.images?.[0] ? (
                           <Image
-                            src={hotel.images[0]}
-                            alt={hotel.name}
+                            src={banquet.images[0]}
+                            alt={banquet.venueName}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
@@ -1514,45 +1517,45 @@ const createRequestData = async (form: HotelFormState) => {
                           </div>
                         )}
                       </div>
-                      <span className="font-medium truncate">{hotel.name}</span>
+                      <span className="font-medium truncate">{banquet.venueName}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{hotel.category}</TableCell>
+                    <TableCell className="text-muted-foreground">{banquet.category}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {hotel.location?.city || 'N/A'}, {hotel.location?.country || 'N/A'}
+                      {banquet.location?.city || 'N/A'}, {banquet.location?.country || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-muted-foreground"> ${hotel.priceRange?.startingPrice || 0}</TableCell>
-                    <TableCell className="text-muted-foreground">{(hotel.rating || 0).toFixed(1)}</TableCell>
+                    <TableCell className="text-muted-foreground"> ${banquet.priceRange?.startingPrice || 0}</TableCell>
+                    <TableCell className="text-muted-foreground">{(banquet.rating || 0).toFixed(1)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Switch
-                          checked={Boolean((hotel as any).isPremium)}
-                          onCheckedChange={(checked) => handlePremiumToggle(hotel.id, checked)}
+                          checked={Boolean((banquet as any).isPremium)}
+                          onCheckedChange={(checked) => handlePremiumToggle(banquet.id, checked)}
                           disabled={isSubmitting}
                         />
                         <span className="text-sm text-muted-foreground">
-                          {Boolean((hotel as any).isPremium)}
+                          {Boolean((banquet as any).isPremium)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Switch
-                          checked={Boolean((hotel as any).isFeatured)}
-                          onCheckedChange={(checked) => handleFeaturedToggle(hotel.id, checked)}
+                          checked={Boolean((banquet as any).isFeatured)}
+                          onCheckedChange={(checked) => handleFeaturedToggle(banquet.id, checked)}
                           disabled={isSubmitting}
                         />
                         <span className="text-sm text-muted-foreground">
-                          {Boolean((hotel as any).isFeatured)}
+                          {Boolean((banquet as any).isFeatured)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {getStatusIcon(hotel.status)}
+                        {getStatusIcon(banquet.status)}
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[hotel.status]}`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[banquet.status]}`}
                         >
-                          {hotel.status.charAt(0).toUpperCase() + hotel.status.slice(1)}
+                          {banquet.status.charAt(0).toUpperCase() + banquet.status.slice(1)}
                         </span>
                       </div>
                     </TableCell>
@@ -1567,116 +1570,116 @@ const createRequestData = async (form: HotelFormState) => {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
                             onSelect={() => {
-                              const hotelForEdit: HotelFormState = {
-                                name: hotel.name || "",
-                                category: hotel.category || "",
-                                location: hotel.location || initialFormState.location,
-                                priceRange: hotel.priceRange || initialFormState.priceRange,
-                                rating: hotel.rating || 0,
-                                status: hotel.status || "draft",
-                                description: hotel.description || "",
-                                weddingPackages: hotel.weddingPackages || [],
-                                totalRooms: hotel.totalRooms || 0,
-                                amenities: Array.isArray(hotel.amenities) ? hotel.amenities.join(", ") : (hotel.amenities || ""),
-                                servicesOffered: Array.isArray(hotel.servicesOffered) 
-                                  ? hotel.servicesOffered.join(", ") 
-                                  : (hotel.servicesOffered || ""),
-                                diningOptions: Array.isArray(hotel.diningOptions) 
-                                  ? hotel.diningOptions.join(", ") 
-                                  : (hotel.diningOptions || ""),
-                                otherAmenities: Array.isArray(hotel.otherAmenities) 
-                                  ? hotel.otherAmenities.join(", ") 
-                                  : (hotel.otherAmenities || ""),
-                                  allInclusivePackages: typeof hotel.allInclusivePackages === 'string' 
-                                  ? hotel.allInclusivePackages 
-                                  : (Array.isArray(hotel.allInclusivePackages) 
-                                    ? hotel.allInclusivePackages[0] || "Yes"
+                              const banquetForEdit: BanquetFormState = {
+                                name: (banquet as any).name || banquet.venueName || "",
+                                category: banquet.category || "",
+                                location: banquet.location || initialFormState.location,
+                                priceRange: banquet.priceRange || initialFormState.priceRange,
+                                rating: banquet.rating || 0,
+                                status: banquet.status as BanquetFormState["status"] || "draft",
+                                description: banquet.description || "",
+                                weddingPackages: (banquet as any).weddingPackages || [],
+                                totalRooms: (banquet as any).totalRooms || 0,
+                                amenities: Array.isArray(banquet.amenities) ? banquet.amenities.join(", ") : (banquet.amenities || ""),
+                                servicesOffered: Array.isArray(banquet.servicesOffered) 
+                                  ? banquet.servicesOffered.join(", ") 
+                                  : (banquet.servicesOffered || ""),
+                                diningOptions: Array.isArray(banquet.diningOptions) 
+                                  ? banquet.diningOptions.join(", ") 
+                                  : (banquet.diningOptions || ""),
+                                otherAmenities: Array.isArray(banquet.otherAmenities) 
+                                  ? banquet.otherAmenities.join(", ") 
+                                  : (banquet.otherAmenities || ""),
+                                  allInclusivePackages: typeof (banquet as any).allInclusivePackages === 'string' 
+                                  ? (banquet as any).allInclusivePackages 
+                                  : (Array.isArray((banquet as any).allInclusivePackages) 
+                                    ? (banquet as any).allInclusivePackages[0] || "Yes"
                                     : "Yes"),
                                     
-                                staffAccommodation: typeof hotel.staffAccommodation === 'string'
-                                  ? hotel.staffAccommodation
-                                  : (Array.isArray(hotel.staffAccommodation) 
-                                    ? hotel.staffAccommodation[0] || "Yes"
+                                staffAccommodation: typeof (banquet as any).staffAccommodation === 'string'
+                                  ? (banquet as any).staffAccommodation
+                                  : (Array.isArray((banquet as any).staffAccommodation) 
+                                    ? (banquet as any).staffAccommodation[0] || "Yes"
                                     : "Yes"),
                                     
-                                preferredContactMethod: typeof hotel.preferredContactMethod === 'string'
-                                  ? hotel.preferredContactMethod
-                                  : (Array.isArray(hotel.preferredContactMethod) 
-                                    ? hotel.preferredContactMethod[0] || "Email"
+                                preferredContactMethod: typeof (banquet as any).preferredContactMethod === 'string'
+                                  ? (banquet as any).preferredContactMethod
+                                  : (Array.isArray((banquet as any).preferredContactMethod) 
+                                    ? (banquet as any).preferredContactMethod[0] || "Email"
                                     : "Email"),
-                                images: hotel.images || [],
+                                images: banquet.images || [],
                                 imageFiles: [],
-                                contactInfo: hotel.contactInfo || initialFormState.contactInfo,
-                                policies: hotel.policies || initialFormState.policies,
-                                firstName: hotel.firstName || "",
-                                lastName: hotel.lastName || "",
-                                companyName: hotel.companyName || "",
-                                venueType: hotel.venueType || "",
-                                position: hotel.position || "",
-                                websiteLink: hotel.websiteLink || "",
-                                offerWeddingPackages: hotel.offerWeddingPackages || "No",
-                                resortCategory: hotel.resortCategory || "",
-                                // servicesOffered: Array.isArray(hotel.servicesOffered) 
-                                //   ? hotel.servicesOffered.join(", ") 
-                                //   : hotel.servicesOffered || "",
-                                maxGuestCapacity: hotel.maxGuestCapacity || "",
-                                venueAvailability: hotel.venueAvailability || "",
-                                // allInclusivePackages: hotel.allInclusivePackages?.toString() || "",
-                                // staffAccommodation: hotel.staffAccommodation?.toString() || "",
-                                 // diningOptions: Array.isArray(hotel.diningOptions) 
-                                //   ? hotel.diningOptions.join(", ") 
-                                //   : hotel.diningOptions || "",
-                                // otherAmenities: Array.isArray(hotel.otherAmenities) 
-                                //   ? hotel.otherAmenities.join(", ") 
-                                //   : hotel.otherAmenities || "",
-                                bookingLeadTime: hotel.bookingLeadTime || "",
-                                // preferredContactMethod: Array.isArray(hotel.preferredContactMethod) 
-                                //   ? hotel.preferredContactMethod.join(", ") 
-                                //   : hotel.preferredContactMethod || "",
-                                weddingDepositRequired: hotel.weddingDepositRequired || "",
-                                refundPolicy: hotel.refundPolicy || "",
-                                referralSource: hotel.referralSource || "",
-                                partnershipInterest: hotel.partnershipInterest || "",
+                                contactInfo: banquet.contactInfo || initialFormState.contactInfo,
+                                policies: banquet.policies || initialFormState.policies,
+                                firstName: banquet.firstName || "",
+                                lastName: banquet.lastName || "",
+                                companyName: banquet.companyName || "",
+                                venueType: banquet.venueType || "",
+                                position: banquet.position || "",
+                                websiteLink: banquet.websiteLink || "",
+                                offerWeddingPackages: (banquet as any).offerWeddingPackages || "No",
+                                resortCategory: banquet.resortCategory || "",
+                                // servicesOffered: Array.isArray(banquet.servicesOffered) 
+                                //   ? banquet.servicesOffered.join(", ") 
+                                //   : banquet.servicesOffered || "",
+                                maxGuestCapacity: banquet.maxGuestCapacity || "",
+                                venueAvailability: banquet.venueAvailability || "",
+                                // allInclusivePackages: banquet.allInclusivePackages?.toString() || "",
+                                // staffAccommodation: banquet.staffAccommodation?.toString() || "",
+                                 // diningOptions: Array.isArray(banquet.diningOptions) 
+                                //   ? banquet.diningOptions.join(", ") 
+                                //   : banquet.diningOptions || "",
+                                // otherAmenities: Array.isArray(banquet.otherAmenities) 
+                                //   ? banquet.otherAmenities.join(", ") 
+                                //   : banquet.otherAmenities || "",
+                                bookingLeadTime: banquet.bookingLeadTime || "",
+                                // preferredContactMethod: Array.isArray(banquet.preferredContactMethod) 
+                                //   ? banquet.preferredContactMethod.join(", ") 
+                                //   : banquet.preferredContactMethod || "",
+                                weddingDepositRequired: banquet.weddingDepositRequired || "",
+                                refundPolicy: banquet.refundPolicy || "",
+                                referralSource: banquet.referralSource || "",
+                                partnershipInterest: banquet.partnershipInterest || "",
                                 uploadResortPhotos: [],
                                 uploadMarriagePhotos: [],
                                 uploadWeddingBrochure: [],
                                 uploadCancelledCheque: [],
-                                agreeToTerms: hotel.agreeToTerms || false,
-                                agreeToPrivacy: hotel.agreeToPrivacy || false,
-                                signature: hotel.signature || "",
-                                isPremium: Boolean((hotel as any).isPremium),
-                                isFeatured: Boolean((hotel as any).isFeatured),
-                                googleLocation: hotel.googleLocation || "", 
+                                agreeToTerms: banquet.agreeToTerms || false,
+                                agreeToPrivacy: banquet.agreeToPrivacy || false,
+                                signature: banquet.signature || "",
+                                isPremium: Boolean((banquet as any).isPremium),
+                                isFeatured: Boolean((banquet as any).isFeatured),
+                                googleLocation: banquet.googleLocation || "", 
                               };
-                              setEditHotelForm(hotelForEdit);
-                              setSelectedHotelId(hotel.id);
+                              setEditBanquetForm(banquetForEdit);
+                              setSelectedBanquetId(banquet.id);
                               setIsEditDialogOpen(true);
                             }}
                           >
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          {hotel.status !== 'active' && (
+                          {banquet.status !== 'active' && (
                             <DropdownMenuItem
-                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'active')}
+                              onSelect={() => handleQuickStatusUpdate(banquet.id, 'active')}
                               className="text-green-600"
                             >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Mark as Active
                             </DropdownMenuItem>
                           )}
-                          {hotel.status !== 'draft' && (
+                          {banquet.status !== 'draft' && (
                             <DropdownMenuItem
-                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'draft')}
+                              onSelect={() => handleQuickStatusUpdate(banquet.id, 'draft')}
                               className="text-yellow-600"
                             >
                               <AlertCircle className="mr-2 h-4 w-4" />
                               Mark as Draft
                             </DropdownMenuItem>
                           )}
-                          {hotel.status !== 'archived' && (
+                          {banquet.status !== 'archived' && (
                             <DropdownMenuItem
-                              onSelect={() => handleQuickStatusUpdate(hotel.id, 'archived')}
+                              onSelect={() => handleQuickStatusUpdate(banquet.id, 'archived')}
                               className="text-gray-600"
                             >
                               <Archive className="mr-2 h-4 w-4" />
@@ -1686,7 +1689,7 @@ const createRequestData = async (form: HotelFormState) => {
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 focus:bg-red-50"
                             onSelect={() => {
-                              setSelectedHotelId(hotel.id);
+                              setSelectedBanquetId(banquet.id);
                               setIsDeleteDialogOpen(true);
                             }}
                           >
@@ -1708,13 +1711,13 @@ const createRequestData = async (form: HotelFormState) => {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Hotel</DialogTitle>
+            <DialogTitle>Add Banquet</DialogTitle>
             <DialogDescription>
-              Fill in the details to add a new hotel. Click create when you're done.
+              Fill in the details to add a new banquet hall. Click create when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            {renderFormFields(newHotelForm, setNewHotelForm)}
+            {renderFormFields(newBanquetForm, setNewBanquetForm)}
           </div>
           <DialogFooter>
             <Button
@@ -1728,7 +1731,7 @@ const createRequestData = async (form: HotelFormState) => {
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={isSubmitting || !newHotelForm.name.trim() || !newHotelForm.description.trim()}
+              disabled={isSubmitting || !newBanquetForm.name.trim() || !newBanquetForm.description.trim()}
             >
               {isSubmitting ? (
                 <>
@@ -1747,13 +1750,13 @@ const createRequestData = async (form: HotelFormState) => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Hotel</DialogTitle>
+              <DialogTitle>Edit Banquet</DialogTitle>
               <DialogDescription>
-                Update the details for this hotel. Click save when you're done.
+                Update the details for this banquet hall. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              {renderFormFields(editHotelForm, setEditHotelForm)}
+              {renderFormFields(editBanquetForm, setEditBanquetForm)}
             </div>
             <DialogFooter>
               <Button
@@ -1767,7 +1770,7 @@ const createRequestData = async (form: HotelFormState) => {
               </Button>
               <Button
                 onClick={handleEdit}
-                disabled={isSubmitting || !editHotelForm.name.trim() || !editHotelForm.description.trim()}
+                disabled={isSubmitting || !editBanquetForm.name.trim() || !editBanquetForm.description.trim()}
               >
                 {isSubmitting ? (
                   <>
@@ -1788,7 +1791,7 @@ const createRequestData = async (form: HotelFormState) => {
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the hotel and remove its data from our servers.
+              This action cannot be undone. This will permanently delete the banquet hall and remove its data from our servers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1796,7 +1799,7 @@ const createRequestData = async (form: HotelFormState) => {
               variant="outline"
               onClick={() => {
                 setIsDeleteDialogOpen(false);
-                setSelectedHotelId(null);
+                setSelectedBanquetId(null);
               }}
             >
               Cancel

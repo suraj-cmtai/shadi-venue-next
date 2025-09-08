@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import consoleManager from "../utils/consoleManager";
 import { UserRole } from "./userServices";
-import { Hotel } from "./hotelServices";
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 const SALT_ROUNDS = 10;
@@ -17,6 +16,8 @@ function getRoleCollection(role: UserRole) {
             return "hotels";
         case "vendor":
             return "vendors";
+        case "banquet":
+            return "banquets";
         case "blog":
             return "blog";
         case "marketing":
@@ -139,7 +140,13 @@ class AuthService {
                     campaigns: [],
                     description: "",
                 };
-            }
+            } else if (role === "banquet") {
+                // Minimal banquet doc, can be expanded later
+                roleDocData = {
+                    ...roleDocData,
+                    venueName: "",
+                };
+                }
 
             // Create the role-specific document
             const roleCollection = getRoleCollection(role);

@@ -7,7 +7,7 @@ export interface Auth {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
+  role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing" | "banquet";
   roleId: string;
   status: "active" | "inactive";
   createdOn: string;
@@ -16,6 +16,7 @@ export interface Auth {
   adminId?: string;
   hotelId?: string;
   vendorId?: string;
+  banquetId?: string;
   userId?: string;
   blogId?: string;
   marketingId?: string;

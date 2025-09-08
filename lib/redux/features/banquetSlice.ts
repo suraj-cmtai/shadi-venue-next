@@ -4,11 +4,10 @@ import { RootState } from "../store";
 import { getErrorMessage } from "@/lib/utils";
 
 // Define interfaces
-export interface Hotel {
-  // Existing fields
+export interface Banquet {
+  // Basic Details
   id: string;
-  name: string;
-  category: string; // e.g., 'luxury', 'business', 'resort', etc.
+  category: string;
   location: {
     address: string;
     city: string;
@@ -18,128 +17,140 @@ export interface Hotel {
   };
   priceRange: {
     startingPrice: number;
-    currency: 'EUR' | 'CAD' | 'AUD' | 'GBP' | 'USD' | 'INR';
+    currency: string;
   };
   rating: number;
-  status: 'active' | 'draft' | 'archived';
+  status: "draft" | "active" | "archived";
   description: string;
   amenities: string[];
-  totalRooms: number;
-  weddingPackages: {
-    name: string;
-    rooms: number;
-    price: number;
-    totalGuests: number;
-  }[];
+
+  // Venue Details
+  venueName: string;
+  capacity: number;
+  area: string;
+  venueType: "Indoor" | "Outdoor" | "Both";
+  facilities: string[];
+
+  // Pricing & Packages
+  pricingRange: string;
+  packages?: string;
+  rentalOptions: string;
+
+  // Photos & Media
   images: string[];
   contactInfo: {
     phone: string;
     email: string;
-    website?: string;
+    website: string;
   };
-  policies: { 
+  policies: {
     checkIn: string;
     checkOut: string;
     cancellation: string;
   };
+  googleLocation: string;
   createdAt: string;
   updatedAt: string;
-
-  // New field
-  googleLocation?: string;
-
-  // Premium field
-  isPremium?: boolean;
+  isPremium: boolean;
   isFeatured?: boolean;
-  // New form fields
-  firstName?: string;
-  lastName?: string;
-  companyName?: string;
-  venueType?: string;
-  position?: string;
-  websiteLink?: string;
-  offerWeddingPackages?: 'Yes' | 'No';
-  resortCategory?: string;
-  servicesOffered?: string[];
-  maxGuestCapacity?: string;
-  venueAvailability?: string;
-  allInclusivePackages?: ('Yes' | 'No' | 'Partially')[];
-  staffAccommodation?: ('Yes' | 'No' | 'Limited')[];
-  diningOptions?: string[];
-  otherAmenities?: string[];
-  bookingLeadTime?: string;
-  preferredContactMethod?: string[];
-  weddingDepositRequired?: string;
-  refundPolicy?: string;
-  referralSource?: string;
-  partnershipInterest?: string;
-  uploadResortPhotos?: string[];
-  uploadMarriagePhotos?: string[];
-  uploadWeddingBrochure?: string[];
-  uploadCancelledCheque?: string[];
-  agreeToTerms?: boolean;
-  agreeToPrivacy?: boolean;
-  signature?: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  position: string;
+  websiteLink: string;
+
+  // Wedding Package Information
+  offerWeddingPackages: string;
+  resortCategory: string;
+  maxGuestCapacity: string;
+  totalRooms: string;
+  venueAvailability: string;
+
+  // Arrays for multi-select fields
+  servicesOffered: string[];
+  diningOptions: string[];
+  otherAmenities: string[];
+  preferredContactMethod: string[];
+
+  // Strings/arrays for boolean-like fields
+  allInclusivePackages: string[];
+  staffAccommodation: string;
+
+  // Business and Booking Information
+  bookingLeadTime: string;
+  weddingDepositRequired: string;
+  refundPolicy: string;
+  referralSource: string;
+  partnershipInterest: string;
+
+  // File uploads
+  uploadResortPhotos: string[];
+  uploadMarriagePhotos: string[];
+  uploadWeddingBrochure: string[];
+  uploadCancelledCheque: string[];
+
+  // Agreement fields
+  agreeToTerms: boolean;
+  agreeToPrivacy: boolean;
+  signature: string;
 }
 
-interface HotelState {
-  hotels: Hotel[];
-  activeHotels: Hotel[];
-  premiumHotels: Hotel[];
+// Utility: Featured first sorting
+const sortFeaturedFirst = (items: Banquet[]) =>
+  [...items].sort((a, b) => ((b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)));
+
+interface BanquetState {
+  banquets: Banquet[];
+  activeBanquets: Banquet[];
+  premiumBanquets: Banquet[];
   loading: boolean;
   hasFetched: boolean;
   error: string | null;
-  selectedHotel: Hotel | null;
+  selectedBanquet: Banquet | null;
   filters: {
-    category: string;
     city: string;
-    priceRange: [number, number];
-    rating: number;
-    isPremium?: boolean;
-    isFeatured?: boolean;
-    status?: string;
+    venueType: string;
+    minCapacity: number;
+    maxCapacity: number;
   };
   searchQuery: string;
 }
 
-const initialState: HotelState = {
-  hotels: [],
-  activeHotels: [],
-  premiumHotels: [],
+const initialState: BanquetState = {
+  banquets: [],
+  activeBanquets: [],
+  premiumBanquets: [],
   loading: false,
   hasFetched: false,
   error: null,
-  selectedHotel: null,
+  selectedBanquet: null,
   filters: {
-    category: '',
     city: '',
-    priceRange: [0, 10000],
-    rating: 0,
-    isPremium: undefined,
-    isFeatured: undefined,
-    status: undefined,
+    venueType: '',
+    minCapacity: 0,
+    maxCapacity: 10000,
   },
   searchQuery: '',
 };
 
 import { Auth } from './authSlice';
 
-// Listen for auth actions to handle hotel selection
+// Listen for auth actions to handle banquet selection
 export const listenToAuth = createAsyncThunk(
-  'hotel/listenToAuth',
+  'banquet/listenToAuth',
   async (auth: Auth | null, { dispatch }) => {
     if (auth?.role === 'hotel' && auth?.roleId) {
-      dispatch(fetchHotelById(auth.roleId));
+      dispatch(fetchBanquetById(auth.roleId));
     }
   }
 );
 
-// Fetch all hotels
-export const fetchHotels = createAsyncThunk<Hotel[]>(
-  "hotel/fetchHotels",
+// Fetch all banquets
+export const fetchBanquets = createAsyncThunk<Banquet[]>(
+  "banquet/fetchBanquets",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/routes/hotel");
+      const response = await axios.get("/api/routes/banquet");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -147,12 +158,12 @@ export const fetchHotels = createAsyncThunk<Hotel[]>(
   }
 );
 
-// Fetch all premium hotels (GET_PREMIUM)
-export const fetchPremiumHotels = createAsyncThunk<Hotel[]>(
-  "hotel/fetchPremiumHotels",
+// Fetch all premium banquets (GET_PREMIUM)
+export const fetchPremiumBanquets = createAsyncThunk<Banquet[]>(
+  "banquet/fetchPremiumBanquets",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/routes/hotel/premium");
+      const response = await axios.get("/api/routes/banquet/premium");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -160,12 +171,12 @@ export const fetchPremiumHotels = createAsyncThunk<Hotel[]>(
   }
 );
 
-// Fetch hotel by ID
-export const fetchHotelById = createAsyncThunk<Hotel, string>(
-  "hotel/fetchHotelById",
+// Fetch banquet by ID
+export const fetchBanquetById = createAsyncThunk<Banquet, string>(
+  "banquet/fetchBanquetById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/routes/hotel/${id}`);
+      const response = await axios.get(`/api/routes/banquet/${id}`);
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -173,12 +184,12 @@ export const fetchHotelById = createAsyncThunk<Hotel, string>(
   }
 );
 
-// Create a new hotel
-export const createHotel = createAsyncThunk<Hotel, FormData>(
-  "hotel/createHotel",
-  async (hotelData, { rejectWithValue }) => {
+// Create a new banquet
+export const createBanquet = createAsyncThunk<Banquet, FormData>(
+  "banquet/createBanquet",
+  async (banquetData, { rejectWithValue }) => {
     try {
-      const response = await axios.post("/api/routes/hotel", hotelData, {
+      const response = await axios.post("/api/routes/banquet", banquetData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -190,12 +201,12 @@ export const createHotel = createAsyncThunk<Hotel, FormData>(
   }
 );
 
-// Update a hotel
-export const updateHotel = createAsyncThunk<Hotel, { id: string; data: FormData }>(
-  "hotel/updateHotel",
+// Update a banquet
+export const updateBanquet = createAsyncThunk<Banquet, { id: string; data: FormData }>(
+  "banquet/updateBanquet",
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`/api/routes/hotel/${id}`, data, {
+      const response = await axios.put(`/api/routes/banquet/${id}`, data, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -207,12 +218,12 @@ export const updateHotel = createAsyncThunk<Hotel, { id: string; data: FormData 
   }
 );
 
-// Delete a hotel
-export const deleteHotel = createAsyncThunk<string, string>(
-  "hotel/deleteHotel",
+// Delete a banquet
+export const deleteBanquet = createAsyncThunk<string, string>(
+  "banquet/deleteBanquet",
   async (id, { rejectWithValue }) => {
     try {
-      await axios.delete(`/api/routes/hotel/${id}`);
+      await axios.delete(`/api/routes/banquet/${id}`);
       return id;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -220,12 +231,12 @@ export const deleteHotel = createAsyncThunk<string, string>(
   }
 );
 
-// Fetch all active hotels
-export const fetchActiveHotels = createAsyncThunk<Hotel[]>(
-  "hotel/fetchActiveHotels",
+// Fetch all active banquets
+export const fetchActiveBanquets = createAsyncThunk<Banquet[]>(
+  "banquet/fetchActiveBanquets",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("/api/routes/hotel/active");
+      const response = await axios.get("/api/routes/banquet/active");
       return response.data.data;
     } catch (error: unknown) {
       return rejectWithValue(getErrorMessage(error));
@@ -233,33 +244,20 @@ export const fetchActiveHotels = createAsyncThunk<Hotel[]>(
   }
 );
 
-// Fetch all premium hotels and store in premiumHotels
-export const fetchPremiumHotel = createAsyncThunk<Hotel[]>(
-  "hotel/fetchPremiumHotel",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get("/api/routes/hotel/premium");
-      return response.data.data;
-    } catch (error: unknown) {
-      return rejectWithValue(getErrorMessage(error));
-    }
-  }
-);
-
-const hotelSlice = createSlice({
-  name: "hotel",
+const banquetSlice = createSlice({
+  name: "banquet",
   initialState,
   reducers: {
-    clearSelectedHotel: (state) => {
-      state.selectedHotel = null;
+    clearSelectedBanquet: (state) => {
+      state.selectedBanquet = null;
     },
-    setSelectedHotel: (state, action: PayloadAction<Hotel>) => {
-      state.selectedHotel = action.payload;
+    setSelectedBanquet: (state, action: PayloadAction<Banquet>) => {
+      state.selectedBanquet = action.payload;
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
-    setFilters: (state, action: PayloadAction<Partial<HotelState['filters']>>) => {
+    setFilters: (state, action: PayloadAction<Partial<BanquetState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
     clearFilters: (state) => {
@@ -272,114 +270,116 @@ const hotelSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Hotels
-      .addCase(fetchHotels.pending, (state) => {
+      // Fetch Banquets
+      .addCase(fetchBanquets.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchHotels.fulfilled, (state, action: PayloadAction<Hotel[]>) => {
-        state.hotels = action.payload;
+      .addCase(fetchBanquets.fulfilled, (state, action: PayloadAction<Banquet[]>) => {
+        state.banquets = sortFeaturedFirst(action.payload);
         state.loading = false;
         state.hasFetched = true;
       })
-      .addCase(fetchHotels.rejected, (state, action) => {
+      .addCase(fetchBanquets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.hasFetched = true;
       })
 
-      // Fetch Premium Hotels
-      .addCase(fetchPremiumHotel.pending, (state) => {
+      // Fetch Premium Banquets
+      .addCase(fetchPremiumBanquets.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchPremiumHotel.fulfilled, (state, action: PayloadAction<Hotel[]>) => {
-        state.premiumHotels = action.payload;
+      .addCase(fetchPremiumBanquets.fulfilled, (state, action: PayloadAction<Banquet[]>) => {
+        state.premiumBanquets = sortFeaturedFirst(action.payload);
         state.loading = false;
       })
-      .addCase(fetchPremiumHotel.rejected, (state, action) => {
+      .addCase(fetchPremiumBanquets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Fetch Hotel by ID
-      .addCase(fetchHotelById.pending, (state) => {
+      // Fetch Banquet by ID
+      .addCase(fetchBanquetById.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchHotelById.fulfilled, (state, action: PayloadAction<Hotel>) => {
-        state.selectedHotel = action.payload;
+      .addCase(fetchBanquetById.fulfilled, (state, action: PayloadAction<Banquet>) => {
+        state.selectedBanquet = action.payload;
         state.loading = false;
         state.hasFetched = true;
       })
-      .addCase(fetchHotelById.rejected, (state, action) => {
+      .addCase(fetchBanquetById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.hasFetched = true;
       })
 
-      // Create Hotel
-      .addCase(createHotel.pending, (state) => {
+      // Create Banquet
+      .addCase(createBanquet.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(createHotel.fulfilled, (state, action: PayloadAction<Hotel>) => {
-        state.hotels.unshift(action.payload);
+      .addCase(createBanquet.fulfilled, (state, action: PayloadAction<Banquet>) => {
+        state.banquets.unshift(action.payload);
+        state.banquets = sortFeaturedFirst(state.banquets);
         state.loading = false;
       })
-      .addCase(createHotel.rejected, (state, action) => {
+      .addCase(createBanquet.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Update Hotel
-      .addCase(updateHotel.pending, (state) => {
+      // Update Banquet
+      .addCase(updateBanquet.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateHotel.fulfilled, (state, action: PayloadAction<Hotel>) => {
-        const index = state.hotels.findIndex(hotel => hotel.id === action.payload.id);
+      .addCase(updateBanquet.fulfilled, (state, action: PayloadAction<Banquet>) => {
+        const index = state.banquets.findIndex(banquet => banquet.id === action.payload.id);
         if (index !== -1) {
-          state.hotels[index] = action.payload;
+          state.banquets[index] = action.payload;
         }
-        if (state.selectedHotel?.id === action.payload.id) {
-          state.selectedHotel = action.payload;
+        if (state.selectedBanquet?.id === action.payload.id) {
+          state.selectedBanquet = action.payload;
         }
+        state.banquets = sortFeaturedFirst(state.banquets);
         state.loading = false;
       })
-      .addCase(updateHotel.rejected, (state, action) => {
+      .addCase(updateBanquet.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Delete Hotel
-      .addCase(deleteHotel.pending, (state) => {
+      // Delete Banquet
+      .addCase(deleteBanquet.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(deleteHotel.fulfilled, (state, action: PayloadAction<string>) => {
-        state.hotels = state.hotels.filter(hotel => hotel.id !== action.payload);
-        if (state.selectedHotel?.id === action.payload) {
-          state.selectedHotel = null;
+      .addCase(deleteBanquet.fulfilled, (state, action: PayloadAction<string>) => {
+        state.banquets = state.banquets.filter(banquet => banquet.id !== action.payload);
+        if (state.selectedBanquet?.id === action.payload) {
+          state.selectedBanquet = null;
         }
         state.loading = false;
       })
-      .addCase(deleteHotel.rejected, (state, action) => {
+      .addCase(deleteBanquet.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
 
-      // Fetch active Hotels
-      .addCase(fetchActiveHotels.pending, (state) => {
+      // Fetch active Banquets
+      .addCase(fetchActiveBanquets.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchActiveHotels.fulfilled, (state, action: PayloadAction<Hotel[]>) => {
-        state.activeHotels = action.payload;
+      .addCase(fetchActiveBanquets.fulfilled, (state, action: PayloadAction<Banquet[]>) => {
+        state.activeBanquets = sortFeaturedFirst(action.payload);
         state.loading = false;
         state.hasFetched = true;
       })
-      .addCase(fetchActiveHotels.rejected, (state, action) => {
+      .addCase(fetchActiveBanquets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
         state.hasFetched = true;
@@ -388,89 +388,103 @@ const hotelSlice = createSlice({
 });
 
 export const { 
-  clearSelectedHotel, 
-  setSelectedHotel, 
+  clearSelectedBanquet, 
+  setSelectedBanquet, 
   setSearchQuery, 
   setFilters, 
   clearFilters,
   clearError 
-} = hotelSlice.actions;
+} = banquetSlice.actions;
 
 // Selectors
-export const selectHotels = (state: RootState) => state.hotel.hotels;
-export const selectActiveHotels = (state: RootState) => state.hotel.activeHotels;
-export const selectPremiumHotel = (state: RootState) => state.hotel.premiumHotels;
-export const selectHotelLoading = (state: RootState) => state.hotel.loading;
-export const selectHotelError = (state: RootState) => state.hotel.error;
-export const selectSelectedHotel = (state: RootState) => state.hotel.selectedHotel;
-export const selectSearchQuery = (state: RootState) => state.hotel.searchQuery;
-export const selectFilters = (state: RootState) => state.hotel.filters;
-export const selectHotelHasFetched = (state: RootState) => state.hotel.hasFetched;
+const selectBanquetSlice = (state: any) => state.banquet ?? state.hotel ?? {};
+
+export const selectBanquets = (state: RootState) =>
+  (selectBanquetSlice(state).banquets ?? selectBanquetSlice(state).hotels ?? []) as Banquet[];
+
+export const selectActiveBanquets = (state: RootState) =>
+  (selectBanquetSlice(state).activeBanquets ?? selectBanquetSlice(state).activeHotels ?? []) as Banquet[];
+
+export const selectPremiumBanquets = (state: RootState) =>
+  (selectBanquetSlice(state).premiumBanquets ?? selectBanquetSlice(state).premiumHotels ?? []) as Banquet[];
+
+export const selectBanquetLoading = (state: RootState) =>
+  Boolean(selectBanquetSlice(state).loading);
+
+export const selectBanquetError = (state: RootState) =>
+  (selectBanquetSlice(state).error ?? null) as string | null;
+
+export const selectSelectedBanquet = (state: RootState) =>
+  (selectBanquetSlice(state).selectedBanquet ?? selectBanquetSlice(state).selectedHotel ?? null) as Banquet | null;
+
+export const selectSearchQuery = (state: RootState) =>
+  (selectBanquetSlice(state).searchQuery ?? '') as string;
+
+export const selectFilters = (state: RootState) =>
+  (selectBanquetSlice(state).filters ?? {
+    city: '',
+    venueType: '',
+    minCapacity: 0,
+    maxCapacity: 10000,
+  }) as BanquetState['filters'];
+
+export const selectBanquetHasFetched = (state: RootState) =>
+  Boolean(selectBanquetSlice(state).hasFetched);
 
 // Advanced selectors with filtering and searching
-export const selectFilteredHotels = createSelector(
-  [selectHotels, selectSearchQuery, selectFilters],
-  (hotels, searchQuery, filters) => {
-    return hotels.filter(hotel => {
+export const selectFilteredBanquets = createSelector(
+  [selectBanquets, selectSearchQuery, selectFilters],
+  (banquets: Banquet[], searchQuery: string, filters: any) => {
+    return banquets.filter((banquet: Banquet) => {
       // Text search
       const matchesSearch = !searchQuery || 
-        hotel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.category.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Category filter
-      const matchesCategory = !filters.category || hotel.category === filters.category;
+        banquet.venueName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.location.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${banquet.firstName} ${banquet.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.location.address.toLowerCase().includes(searchQuery.toLowerCase());
       
       // City filter
-      const matchesCity = !filters.city || hotel.location.city === filters.city;
+      const matchesCity = !filters.city || banquet.location.city === filters.city;
       
-      // Price range filter
-      const matchesPrice = hotel.priceRange.startingPrice >= filters.priceRange[0] && 
-                          hotel.priceRange.startingPrice <= filters.priceRange[1];
+      // Venue type filter
+      const matchesVenueType = !filters.venueType || banquet.venueType === filters.venueType;
       
-      // Rating filter
-      const matchesRating = !filters.rating || hotel.rating >= filters.rating;
-
-      // isPremium filter
-      const matchesIsPremium = typeof filters.isPremium === "undefined" || hotel.isPremium === filters.isPremium;
-
-      // isFeatured filter
-      const matchesIsFeatured = typeof filters.isFeatured === "undefined" || hotel.isFeatured === filters.isFeatured;
-
-      // status filter
-      const matchesStatus = !filters.status || hotel.status === filters.status;
+      // Capacity filter
+      const matchesCapacity = banquet.capacity >= filters.minCapacity && 
+                             banquet.capacity <= filters.maxCapacity;
       
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating && matchesIsPremium && matchesStatus && matchesIsFeatured;
+      return matchesSearch && matchesCity && matchesVenueType && matchesCapacity;
     });
   }
 );
 
-export const selectHotelsByCategory = createSelector(
-  [selectHotels],
-  (hotels) => {
-    return hotels.reduce((acc, hotel) => {
-      if (!acc[hotel.category]) {
-        acc[hotel.category] = [];
+export const selectBanquetsByVenueType = createSelector(
+  [selectBanquets],
+  (banquets: Banquet[]) => {
+    return banquets.reduce((acc: Record<string, Banquet[]>, banquet: Banquet) => {
+      const key = banquet.venueType;
+      if (!acc[key]) {
+        acc[key] = [];
       }
-      acc[hotel.category].push(hotel);
+      acc[key].push(banquet);
       return acc;
-    }, {} as Record<string, Hotel[]>);
+    }, {} as Record<string, Banquet[]>);
   }
 );
 
-export const selectHotelsByCity = createSelector(
-  [selectHotels],
-  (hotels) => {
-    return hotels.reduce((acc, hotel) => {
-      const city = hotel.location.city;
+export const selectBanquetsByCity = createSelector(
+  [selectBanquets],
+  (banquets: Banquet[]) => {
+    return banquets.reduce((acc: Record<string, Banquet[]>, banquet: Banquet) => {
+      const city = banquet.location.city;
       if (!acc[city]) {
         acc[city] = [];
       }
-      acc[city].push(hotel);
+      acc[city].push(banquet);
       return acc;
-    }, {} as Record<string, Hotel[]>);
+    }, {} as Record<string, Banquet[]>);
   }
 );
 
-export default hotelSlice.reducer;
+export default banquetSlice.reducer;

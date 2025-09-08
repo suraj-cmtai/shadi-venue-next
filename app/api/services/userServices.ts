@@ -82,7 +82,7 @@ export interface Invite {
   invitation: InviteSection;
 }
 
-export type UserRole = 'user' | 'super-admin' | 'admin' | 'hotel' | 'vendor' | 'blog' | 'marketing';
+export type UserRole = 'user' | 'super-admin' | 'admin' | 'hotel' | 'vendor' | 'blog' | 'marketing' | 'banquet';
 
 export interface User {
   id: string;

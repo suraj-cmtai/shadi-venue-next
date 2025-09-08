@@ -5,12 +5,13 @@ export interface Auth {
     id: string;
     email: string;
     name: string;
-    role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
+    role: "admin" | "super-admin" | "hotel" | "vendor" | "user" | "blog" | "marketing" | "banquet";
     status: "active" | "inactive";
     userId?: string;
     hotelId?: string;
     adminId?: string;
     vendorId?: string;
+    banquetId?: string;
     "super-adminId"?: string;
     blogId?: string;
     marketingId?: string;
@@ -203,6 +204,8 @@ export default class AuthService {
                 return "users";
             case "hotel":
                 return "hotels";
+            case "banquet":
+                return "banquets";
             case "vendor":
                 return "vendors";
             case "blog":

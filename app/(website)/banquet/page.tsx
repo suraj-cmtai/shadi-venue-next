@@ -19,25 +19,25 @@ import { useRouter, useSearchParams } from 'next/navigation';
 // Redux imports
 import { useAppDispatch, useAppSelector } from '@/lib/redux/store';
 import {
-  fetchActiveHotels,
-  selectActiveHotels,
-  selectHotelLoading,
-  selectHotelError,
+  fetchActiveBanquets,
+  selectActiveBanquets,
+  selectBanquetLoading,
+  selectBanquetError,
   selectSearchQuery,
   selectFilters,
-  selectHotelHasFetched,
+  selectBanquetHasFetched,
   setSearchQuery,
   setFilters,
   clearFilters,
   clearError,
-  Hotel
-} from '@/lib/redux/features/hotelSlice';
+  type Banquet
+} from '@/lib/redux/features/banquetSlice';
 
 
 type ViewMode = 'list' | 'grid';
 
 interface VenueCardProps {
-  venue: Hotel;
+  venue: Banquet;
   onVenueClick: (venueId: string) => void;
 }
 
@@ -48,12 +48,12 @@ const DynamicVenuePage: React.FC = () => {
   const dispatch = useAppDispatch();
 
   // Redux state selectors
-  const activeHotels = useAppSelector(selectActiveHotels);
-  const loading = useAppSelector(selectHotelLoading);
-  const error = useAppSelector(selectHotelError);
+  const activeBanquets = useAppSelector(selectActiveBanquets);
+  const loading = useAppSelector(selectBanquetLoading);
+  const error = useAppSelector(selectBanquetError);
   const searchQuery = useAppSelector(selectSearchQuery);
   const filters = useAppSelector(selectFilters);
-  const hasFetched = useAppSelector(selectHotelHasFetched);
+  const hasFetched = useAppSelector(selectBanquetHasFetched);
 
   // Local state
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -62,10 +62,10 @@ const DynamicVenuePage: React.FC = () => {
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // On mount, fetch hotels and reset filters
+  // On mount, fetch banquets and reset filters
   useEffect(() => {
     if (!hasFetched) {
-      dispatch(fetchActiveHotels());
+      dispatch(fetchActiveBanquets());
     }
     // Clear filters and search by default
     dispatch(clearFilters());
@@ -84,27 +84,30 @@ const DynamicVenuePage: React.FC = () => {
 
   // Avoid syncing redux search back into input to prevent focus jumps
 
-  // Dynamic filter options derived from active hotels only
+  // Dynamic filter options derived from active banquets only
   const filterOptions = useMemo(() => {
     const categories = Array.from(
-      new Set(activeHotels.map(hotel => hotel.category).filter(cat => cat && cat.trim() !== ''))
+      new Set(activeBanquets.map(b => b.category).filter(cat => cat && cat.trim() !== ''))
     );
     
     const cities = Array.from(
-      new Set(activeHotels.map(hotel => hotel.location?.city).filter(city => city && city.trim() !== ''))
+      new Set(activeBanquets.map(b => b.location?.city).filter(city => city && city.trim() !== ''))
+    );
+    const venueTypes = Array.from(
+      new Set(activeBanquets.map(b => b.venueType).filter(v => v && String(v).trim() !== ''))
     );
     
     const countries = Array.from(
-      new Set(activeHotels.map(hotel => hotel.location?.country).filter(country => country && country.trim() !== ''))
+      new Set(activeBanquets.map(b => b.location?.country).filter(country => country && country.trim() !== ''))
     );
     
     const states = Array.from(
-      new Set(activeHotels.map(hotel => hotel.location?.state).filter(state => state && state.trim() !== ''))
+      new Set(activeBanquets.map(b => b.location?.state).filter(state => state && state.trim() !== ''))
     );
 
     // Dynamic price ranges based on actual venue prices (exclude 0 prices)
-    const prices = activeHotels
-      .map(hotel => hotel.priceRange?.startingPrice)
+    const prices = activeBanquets
+      .map(b => b.priceRange?.startingPrice)
       .filter(price => price !== undefined && price !== null && price > 0)
       .sort((a, b) => a - b);
     
@@ -118,10 +121,8 @@ const DynamicVenuePage: React.FC = () => {
       `> ₹ ${maxPrice}`
     ] : [];
 
-    // Dynamic ratings based on actual venue ratings
-    const ratings = Array.from(
-      new Set(activeHotels.map(hotel => hotel.rating).filter(rating => rating > 0))
-    ).sort((a, b) => b - a);
+    // Dynamic ratings based on actual venue ratings (not used in filters now)
+    const ratings: number[] = [];
 
     return {
       categories,
@@ -130,51 +131,43 @@ const DynamicVenuePage: React.FC = () => {
       states,
       priceRanges,
       ratings: ['All Ratings', ...ratings.map(rating => `${rating}+`)],
+      venueTypes,
       minPrice,
       maxPrice,
       midPrice
     };
-  }, [activeHotels]);
+  }, [activeBanquets]);
 
-  // Filter active hotels based on current filters and search
+  // Filter active banquets based on current filters and search
   const filteredVenues = useMemo(() => {
-    return activeHotels.filter(hotel => {
+    return activeBanquets.filter(banquet => {
       // Text search across multiple fields
       const matchesSearch = !searchQuery ||
-        hotel.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location?.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.location?.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.amenities?.some(amenity => 
+        banquet.venueName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.location?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.location?.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.location?.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        banquet.amenities?.some(amenity => 
           amenity.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-      // Category filter - show all venues if no filter is applied
-      const matchesCategory = !filters.category || 
-        (hotel.category && hotel.category.trim() !== '' && hotel.category === filters.category);
-
       // City filter - show all venues if no filter is applied
       const matchesCity = !filters.city || 
-        (hotel.location?.city && hotel.location.city.trim() !== '' && hotel.location.city === filters.city);
+        (banquet.location?.city && banquet.location.city.trim() !== '' && banquet.location.city === filters.city);
 
-      // Price range filter - show all venues if default range (0, 10000) or venue has no price data
-      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
-      const matchesPrice = isDefaultPriceRange || 
-        !hotel.priceRange?.startingPrice || 
-        hotel.priceRange.startingPrice === 0 ||
-        (hotel.priceRange.startingPrice >= filters.priceRange[0] &&
-         hotel.priceRange.startingPrice <= filters.priceRange[1]);
+      // Venue type filter
+      const matchesVenueType = !filters.venueType || (banquet.venueType && banquet.venueType === filters.venueType);
 
-      // Rating filter - show all venues if no rating filter is applied
-      const matchesRating = !filters.rating || filters.rating === 0 || 
-        hotel.rating === 0 || 
-        hotel.rating >= filters.rating;
+      // Capacity filter
+      const matchesCapacity =
+        (typeof filters.minCapacity === 'number' ? banquet.capacity >= filters.minCapacity : true) &&
+        (typeof filters.maxCapacity === 'number' ? banquet.capacity <= filters.maxCapacity : true);
 
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating;
+      return matchesSearch && matchesCity && matchesVenueType && matchesCapacity;
     });
-  }, [activeHotels, searchQuery, filters]);
+  }, [activeBanquets, searchQuery, filters]);
 
   // Apply-only search to avoid re-rendering while typing
   const applySearch = () => {
@@ -191,36 +184,14 @@ const DynamicVenuePage: React.FC = () => {
     if (!checked) {
       // Reset to default values that show all venues
       const resetFilter: any = {};
-      if (category === 'priceRange') {
-        resetFilter[category] = [0, 10000] as [number, number];
-      } else if (category === 'rating') {
-        resetFilter[category] = 0;
-      } else {
-        resetFilter[category] = '';
-      }
+      if (category === 'city' || category === 'venueType') resetFilter[category] = '';
       dispatch(setFilters(resetFilter));
       return;
     }
 
     const updatedFilter: any = {};
 
-    if (category === 'priceRange') {
-      if (value.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`)) {
-        updatedFilter[category] = [filterOptions.minPrice, filterOptions.midPrice] as [number, number];
-      } else if (value.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`)) {
-        updatedFilter[category] = [filterOptions.midPrice + 1, filterOptions.maxPrice] as [number, number];
-      } else {
-        updatedFilter[category] = [filterOptions.maxPrice + 1, 999999] as [number, number];
-      }
-    } else if (category === 'rating') {
-      if (value === 'All Ratings') {
-        updatedFilter[category] = 0;
-      } else {
-        updatedFilter[category] = parseFloat(value.replace('+', '')) || 0;
-      }
-    } else {
-      updatedFilter[category] = value;
-    }
+    if (category === 'city' || category === 'venueType') updatedFilter[category] = value;
 
     dispatch(setFilters(updatedFilter));
   };
@@ -236,21 +207,19 @@ const DynamicVenuePage: React.FC = () => {
   // Handle retry on error
   const handleRetry = () => {
     dispatch(clearError());
-    dispatch(fetchActiveHotels());
+    dispatch(fetchActiveBanquets());
   };
 
   // Handle venue click
   const handleVenueClick = (venueId: string) => {
-    router.push(`/venue/${venueId}`);
+    router.push(`/banquet/${venueId}`);
   };
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.category) count++;
     if (filters.city) count++;
-    if (filters.rating > 0) count++;
-    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 10000) count++;
+    if (filters.venueType) count++;
     return count;
   }, [filters]);
 
@@ -348,10 +317,8 @@ const DynamicVenuePage: React.FC = () => {
   // Venue Filters Component
   const VenueFilters: React.FC = () => {
     const filterCategories = {
-      category: { title: 'Category', options: filterOptions.categories },
       city: { title: 'City', options: filterOptions.cities },
-      priceRange: { title: 'Price Range', options: filterOptions.priceRanges },
-      rating: { title: 'Rating', options: filterOptions.ratings }
+      venueType: { title: 'Venue Type', options: filterOptions.venueTypes },
     };
 
     return (
@@ -380,19 +347,7 @@ const DynamicVenuePage: React.FC = () => {
                     <div key={option} className="flex items-center space-x-2">
                       <Checkbox
                         id={`${key}-${option}`}
-                        checked={
-                          key === 'rating'
-                            ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
-                            : key === 'priceRange'
-                              ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
-                                 filters.priceRange[0] === filterOptions.minPrice && 
-                                 filters.priceRange[1] === filterOptions.midPrice) ||
-                                (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
-                                 filters.priceRange[0] === filterOptions.midPrice + 1 && 
-                                 filters.priceRange[1] === filterOptions.maxPrice) ||
-                                (option.startsWith('>') && filters.priceRange[0] > filterOptions.maxPrice)
-                              : (filters as any)[key] === option
-                        }
+                        checked={(filters as any)[key] === option}
                         onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
                       />
                       <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
@@ -500,7 +455,7 @@ const DynamicVenuePage: React.FC = () => {
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={venue.images?.[0] || '/api/placeholder/400/300'}
-          alt={venue.name}
+          alt={venue.venueName}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -522,7 +477,7 @@ const DynamicVenuePage: React.FC = () => {
         <div className="space-y-3">
           <div>
             <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-[#212D47] transition-colors">
-              {venue.name}
+              {venue.venueName}
             </h3>
             <div className="flex items-center text-sm text-gray-600 mt-1">
               <MapPin className="w-4 h-4 mr-1" />
@@ -586,14 +541,7 @@ const DynamicVenuePage: React.FC = () => {
           <div className="flex items-center justify-between pt-2 border-t">
             <div className="flex items-center text-sm text-gray-600">
               <Users className="w-4 h-4 mr-1" />
-              <span>
-                {venue.totalRooms && venue.totalRooms !== 0 
-                  ? `${venue.totalRooms} rooms` 
-                  : venue.weddingPackages && venue.weddingPackages.length > 0 
-                    ? `${venue.weddingPackages.length} packages`
-                    : 'Rooms: N/A'
-                }
-              </span>
+              <span>{(venue as any).maxGuestCapacity || venue.capacity || 'N/A'} guests</span>
             </div>
             {venue.priceRange && venue.priceRange.startingPrice > 0 && (
               <div className="text-right">

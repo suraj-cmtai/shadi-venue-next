@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // ===== TYPES =====
-export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user" | "blog" | "marketing";
+export type Role = "super-admin" | "admin" | "hotel" | "vendor" | "user" | "blog" | "marketing" | "banquet";
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
 
 interface Auth {
@@ -37,6 +37,7 @@ const ROLE_DASHBOARDS: Record<Role, string> = {
   "user": "/dashboard/user",
   "blog": "/dashboard/blog",
   "marketing": "/dashboard/marketing",
+  "banquet": "/dashboard/banquet",
 };
 
 // Dashboard Access Configuration
@@ -69,38 +70,17 @@ const DASHBOARD_ROUTES: DashboardConfig[] = [
     path: "/dashboard/marketing",
     allowedRoles: ["marketing", "admin", "super-admin"],
   },
+  {
+    path: "/dashboard/banquet",
+    allowedRoles: ["banquet", "admin", "super-admin"],
+  },
 ];
 
 // Public Routes (accessible without authentication)
 const PUBLIC_ROUTES = ["/login", "/signup"];
 
-// Marketing Routes Configuration
-const MARKETING_ROUTES: DashboardConfig[] = [
-  {
-    path: "/dashboard/marketing/contact",
-    allowedRoles: ["marketing", "admin", "super-admin"],
-  },
-  {
-    path: "/dashboard/marketing/hotel-enquiry",
-    allowedRoles: ["marketing", "admin", "super-admin"],
-  },
-  {
-    path: "/dashboard/marketing/vendor-enquiry",
-    allowedRoles: ["marketing", "admin", "super-admin"],
-  },
-];
-
-// Blog Routes Configuration
-const BLOG_ROUTES: DashboardConfig[] = [
-  {
-    path: "/dashboard/blog",
-    allowedRoles: ["blog", "admin", "super-admin"],
-  },
-];
-
 // API Routes Configuration
 const API_ROUTES: RouteConfig[] = [
-
     // Marketing access to contact routes
     {
       pattern: "/api/routes/contact",
@@ -135,6 +115,17 @@ const API_ROUTES: RouteConfig[] = [
       pattern: /^\/api\/routes\/vendor-enquiry\/[^/]+$/,
       methods: ["GET", "PUT", "PATCH", "DELETE"],
       roles: ["marketing", "vendor", "admin", "super-admin"],
+    },
+    // Banquet access to banquet-enquiry routes
+    {
+      pattern: "/api/routes/banquet-enquiry",
+      methods: ["GET", "PUT", "PATCH", "DELETE"],  // Remove POST - it's public
+      roles: ["banquet", "marketing", "admin", "super-admin"],
+    },
+    {
+      pattern: /^\/api\/routes\/banquet-enquiry\/[^/]+$/,
+      methods: ["GET", "PUT", "PATCH", "DELETE"],
+      roles: ["banquet", "marketing", "admin", "super-admin"],
     },
   
   // ===== PUBLIC API ROUTES =====
@@ -187,6 +178,12 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["POST"],
     isPublic: true,
   }, 
+  // /api/routes/banquet-enquiry - public for POST
+  {
+    pattern: /\/api\/routes\/banquet-enquiry$/,
+    methods: ["POST"],
+    isPublic: true,
+  },
   {
     // This covers /api/routes/(published|active|login|signup|logout|public|auth) for any method
     pattern: /\/api\/routes\/(published|active|login|signup|logout|public|auth)/,
@@ -241,6 +238,26 @@ const API_ROUTES: RouteConfig[] = [
     methods: ["GET"],
     isPublic: true,
   },
+  // /api/routes/banquet/[id] - public for GET
+  {
+    pattern: /\/api\/routes\/banquet\/[^/]+$/,
+    methods: ["GET"],
+    isPublic: true,
+  },
+
+  // /api/routes/banquet/active - public, only GET
+  {
+    pattern: "/api/routes/banquet/active",
+    methods: ["GET"],
+    isPublic: true,
+  },
+
+  // /api/routes/banquet/premium - public, only GET
+  {
+    pattern: "/api/routes/banquet/premium",
+    methods: ["GET"],
+    isPublic: true,
+  },
 
   // ===== VENDOR API ROUTES =====
 
@@ -276,6 +293,21 @@ const API_ROUTES: RouteConfig[] = [
     roles: ["admin", "vendor"],
   },
 
+  // ===== BANQUET API ROUTES =====
+
+  // /api/routes/banquet/[id] - public for GET, banquet/admin for other methods
+  {
+    pattern: /^\/api\/routes\/banquet\/[^/]+$/,
+    methods: ["PUT", "DELETE", "PATCH"],
+    roles: ["banquet", "admin", "super-admin"],
+  },
+
+  // /api/routes/banquet - banquet, admin, super-admin, hotel
+  {
+    pattern: "/api/routes/banquet",
+    roles: ["banquet", "hotel", "admin", "super-admin"],
+  },
+
   // ===== ROLE-BASED API ROUTES =====
   
   // Super Admin Only Routes
@@ -300,9 +332,6 @@ const API_ROUTES: RouteConfig[] = [
     pattern: "/api/routes/hotel",
     roles: ["hotel", "admin", "super-admin"],
   },
-
-  // Marketing Routes
-  // GET requests are public, other methods for marketing role
 
   // Blog Routes
   {

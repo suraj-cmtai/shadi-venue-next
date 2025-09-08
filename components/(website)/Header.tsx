@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { label: "About Us", href: "/about" },
   { label: "Venue", href: "/venue" },
   { label: "Vendors", href: "/vendors" },
-  // { label: "Inspiration", href: "/inspiration" },
+  { label: "Banquet", href: "/banquet" },
   { label: "Blog", href: "/blogs" },
   { label: "Gallery", href: "/gallery" },
   { label: "Contact", href: "/contact" },

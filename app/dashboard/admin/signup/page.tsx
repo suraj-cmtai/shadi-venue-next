@@ -37,6 +37,7 @@ const ROLES = [
   { value: "admin", label: "Admin" },
   { value: "hotel", label: "Hotel Manager" },
   { value: "vendor", label: "Vendor" },
+  { value: "banquet", label: "Banquet Manager" },
   { value: "user", label: "User" },
   { value: "blog", label: "Blog" },
   { value: "marketing", label: "Marketing" },
@@ -59,6 +60,8 @@ const AdminSignupPage = () => {
         return "Create a new administrator account with full system access";
       case "hotel":
         return "Add a new hotel manager to manage venue listings";
+      case "banquet":
+        return "Add a new banquet manager to manage venue listings";
       case "vendor":
         return "Register a new vendor for wedding services";
       case "user":
@@ -100,7 +103,7 @@ const AdminSignupPage = () => {
     setError("");
 
     try {
-      const result = await dispatch(signup({ name, email, password, role })).unwrap();
+       await dispatch(signup({ name, email, password, role })).unwrap();
       toast.success("Account created successfully!");
       
       // Send welcome email
