@@ -33,17 +33,23 @@ export default function Hotels() {
   const cityTiles = useMemo(() => {
     if (!hotels || hotels.length === 0)
       return [] as { city: string; image: string; count: number }[];
-    const map = new Map<string, { image: string; count: number }>();
+    const map = new Map<string, { image: string; count: number; hasFeaturedImage: boolean }>();
     for (const h of hotels) {
       const city = h?.location?.city?.trim();
       if (!city) continue;
       const firstImage =
         (h.images && h.images[0]) || "/images/hotels-image.png";
+      const isFeatured = Boolean((h as any)?.isFeatured);
       if (!map.has(city)) {
-        map.set(city, { image: firstImage, count: 1 });
+        map.set(city, { image: firstImage, count: 1, hasFeaturedImage: isFeatured });
       } else {
         const entry = map.get(city)!;
         entry.count += 1;
+        // Prefer featured hotel's image as representative
+        if (isFeatured && !entry.hasFeaturedImage) {
+          entry.image = firstImage;
+          entry.hasFeaturedImage = true;
+        }
       }
     }
     return Array.from(map.entries()).map(([city, { image, count }]) => ({
