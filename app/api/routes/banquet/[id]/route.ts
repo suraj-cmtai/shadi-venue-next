@@ -124,7 +124,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const formData = await req.formData();
 
         // Extract basic banquet information
-        const name = formData.get("name")?.toString();
+        const name = formData.get("companyName")?.toString();
         const category = formData.get("category")?.toString();
         const description = formData.get("description")?.toString();
         const rating = formData.get("rating")?.toString();
@@ -232,7 +232,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const updateData: any = {};
 
         // Only include fields that are provided
-        if (name !== undefined) updateData.name = name;
+        if (name !== undefined) updateData.venueName = name;
         if (category !== undefined) updateData.category = category;
         if (description !== undefined) updateData.description = description;
         if (rating !== undefined) updateData.rating = safeParseNumber(rating);

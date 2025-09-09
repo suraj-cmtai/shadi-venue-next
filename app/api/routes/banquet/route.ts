@@ -152,26 +152,26 @@ export async function POST(req: Request) {
 
         // Price range
         const priceRange = {
-            startingPrice: Number(formData.get("priceRange[startingPrice]")?.toString() || 0),
-            currency: formData.get("priceRange[currency]")?.toString() || "INR",
+            startingPrice: Number(formData.get("startingPrice")?.toString() || formData.get("priceRange[startingPrice]")?.toString() || 0),
+            currency: formData.get("currency")?.toString() || formData.get("priceRange[currency]")?.toString() || "INR",
         };
 
         // Contact info
         const contactInfo = {
-            phone: formData.get("contactInfo[phone]")?.toString() || "",
-            email: formData.get("contactInfo[email]")?.toString() || "",
-            website: formData.get("contactInfo[website]")?.toString() || "",
+            phone: formData.get("phone")?.toString() || formData.get("contactInfo[phone]")?.toString() || "",
+            email: formData.get("email")?.toString() || formData.get("contactInfo[email]")?.toString() || "",
+            website: formData.get("website")?.toString() || formData.get("contactInfo[website]")?.toString() || "",
         };
 
         // Policies
         const policies = {
-            checkIn: formData.get("policies[checkIn]")?.toString() || "",
-            checkOut: formData.get("policies[checkOut]")?.toString() || "",
-            cancellation: formData.get("policies[cancellation]")?.toString() || "",
+            checkIn: formData.get("checkIn")?.toString() || formData.get("policies[checkIn]")?.toString() || "",
+            checkOut: formData.get("checkOut")?.toString() || formData.get("policies[checkOut]")?.toString() || "",
+            cancellation: formData.get("cancellation")?.toString() || formData.get("policies[cancellation]")?.toString() || "",
         };
 
         // Venue details
-        const venueName = formData.get("venueName")?.toString() || "";
+        const venueName = formData.get("companyName")?.toString() || "";
         const capacity = Number(formData.get("capacity")?.toString() || 0);
         const area = formData.get("area")?.toString() || "";
         const venueType = (formData.get("venueType")?.toString() as "Indoor" | "Outdoor" | "Both") || "Indoor";

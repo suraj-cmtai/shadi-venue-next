@@ -298,7 +298,7 @@ export default function BanquetDashboard() {
 
     let result = banquets.filter(
       (banquet) =>
-        (banquet?.venueName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (banquet?.companyName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (banquet?.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (banquet?.location?.city || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (banquet?.location?.country || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -396,7 +396,7 @@ const createRequestData = async (form: BanquetFormState) => {
     const formData = new FormData();
     
     // Basic banquet information
-    formData.append('venueName', form.name);
+    formData.append('companyName', form.name);
     formData.append('category', form.category);
     formData.append('description', form.description);
     formData.append('rating', form.rating.toString());
@@ -412,26 +412,26 @@ const createRequestData = async (form: BanquetFormState) => {
     formData.append('otherAmenities', form.otherAmenities);
     formData.append('preferredContactMethod', form.preferredContactMethod);
         
-    // Location - use nested field names to match API expectation
-    formData.append('location[address]', form.location.address);
-    formData.append('location[city]', form.location.city);
-    formData.append('location[state]', form.location.state);
-    formData.append('location[country]', form.location.country);
-    formData.append('location[zipCode]', form.location.zipCode);
+    // Location - use individual field names to match API expectation
+    formData.append('address', form.location.address);
+    formData.append('city', form.location.city);
+    formData.append('state', form.location.state);
+    formData.append('country', form.location.country);
+    formData.append('zipCode', form.location.zipCode);
     
-    // Price Range - use nested field names
-    formData.append('priceRange[startingPrice]', form.priceRange.startingPrice.toString());
-    formData.append('priceRange[currency]', form.priceRange.currency);
+    // Price Range - use individual field names
+    formData.append('startingPrice', form.priceRange.startingPrice.toString());
+    formData.append('currency', form.priceRange.currency);
     
-    // Contact Info - use nested field names
-    formData.append('contactInfo[phone]', form.contactInfo.phone);
-    formData.append('contactInfo[email]', form.contactInfo.email);
-    formData.append('contactInfo[website]', form.contactInfo.website || "");
+    // Contact Info - use individual field names
+    formData.append('phone', form.contactInfo.phone);
+    formData.append('email', form.contactInfo.email);
+    formData.append('website', form.contactInfo.website || "");
     
-    // Policies - use nested field names
-    formData.append('policies[checkIn]', form.policies.checkIn);
-    formData.append('policies[checkOut]', form.policies.checkOut);
-    formData.append('policies[cancellation]', form.policies.cancellation);
+    // Policies - use individual field names
+    formData.append('checkIn', form.policies.checkIn);
+    formData.append('checkOut', form.policies.checkOut);
+    formData.append('cancellation', form.policies.cancellation);
     
     // Additional fields - Personal/Business Information
     formData.append('firstName', form.firstName);
@@ -1506,7 +1506,7 @@ const createRequestData = async (form: BanquetFormState) => {
                         {banquet.images?.[0] ? (
                           <Image
                             src={banquet.images[0]}
-                            alt={banquet.venueName}
+                            alt={banquet.companyName}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
@@ -1517,7 +1517,7 @@ const createRequestData = async (form: BanquetFormState) => {
                           </div>
                         )}
                       </div>
-                      <span className="font-medium truncate">{banquet.venueName}</span>
+                      <span className="font-medium truncate">{banquet.companyName}</span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{banquet.category}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -1571,7 +1571,7 @@ const createRequestData = async (form: BanquetFormState) => {
                           <DropdownMenuItem
                             onSelect={() => {
                               const banquetForEdit: BanquetFormState = {
-                                name: (banquet as any).name || banquet.venueName || "",
+                                name: banquet.companyName || "",
                                 category: banquet.category || "",
                                 location: banquet.location || initialFormState.location,
                                 priceRange: banquet.priceRange || initialFormState.priceRange,
@@ -1579,7 +1579,7 @@ const createRequestData = async (form: BanquetFormState) => {
                                 status: banquet.status as BanquetFormState["status"] || "draft",
                                 description: banquet.description || "",
                                 weddingPackages: (banquet as any).weddingPackages || [],
-                                totalRooms: (banquet as any).totalRooms || 0,
+                                totalRooms: typeof banquet.totalRooms === 'string' ? parseInt(banquet.totalRooms) || 0 : (banquet.totalRooms || 0),
                                 amenities: Array.isArray(banquet.amenities) ? banquet.amenities.join(", ") : (banquet.amenities || ""),
                                 servicesOffered: Array.isArray(banquet.servicesOffered) 
                                   ? banquet.servicesOffered.join(", ") 
