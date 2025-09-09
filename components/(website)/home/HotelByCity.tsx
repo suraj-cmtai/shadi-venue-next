@@ -149,7 +149,7 @@ export default function Hotels() {
           {isClient && !isLoading && !error && rows.map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className="w-full flex flex-row gap-3 md:gap-6 overflow-x-auto scrollbar-hide py-2"
+              className="w-full grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-3 md:gap-6 md:overflow-x-auto py-2"
               style={{
                 WebkitOverflowScrolling: "touch",
                 scrollbarWidth: "none",
@@ -159,7 +159,7 @@ export default function Hotels() {
               {row.map((tile, idx) => (
                 <motion.div
                   key={`${tile.city}-${idx}`}
-                  className="relative group overflow-hidden rounded-md border border-[#212d47] shrink-0 w-64 sm:w-72"
+                  className="relative group overflow-hidden rounded-md border border-[#212d47] w-full md:shrink-0 md:w-64 lg:w-72"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
