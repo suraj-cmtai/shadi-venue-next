@@ -155,9 +155,11 @@ const DynamicVenuePage: React.FC = () => {
       const matchesCategory = !filters.category || 
         (hotel.category && hotel.category.trim() !== '' && hotel.category === filters.category);
 
-      // City filter - show all venues if no filter is applied
-      const matchesCity = !filters.city || 
-        (hotel.location?.city && hotel.location.city.trim() !== '' && hotel.location.city === filters.city);
+      // City filter - normalize whitespace and case to avoid mismatches
+      const matchesCity = !filters.city || (
+        !!hotel.location?.city &&
+        hotel.location.city.trim().toLowerCase() === String(filters.city).trim().toLowerCase()
+      );
 
       // Price range filter - show all venues if default range (0, 10000) or venue has no price data
       const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
