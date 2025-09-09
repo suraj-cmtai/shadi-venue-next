@@ -428,7 +428,6 @@ private static normalizeArrayOrString(value: any): string[] {
             const snapshot = await db
                 .collection(this.collection)
                 .where("isPremium", "==", true)
-                .where("isFeatured", "==", true)
                 .where("status", "==", status)
                 .orderBy("createdAt", "desc")
                 .get();
