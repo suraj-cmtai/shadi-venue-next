@@ -30,6 +30,8 @@ export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [direction, setDirection] = useState<1 | -1>(-1);
+  // Keep fallback visible until first real slide has fully loaded
+  const [showFallbackBg, setShowFallbackBg] = useState(true);
 
   // Fetch active hero slides on mount
   useEffect(() => {
@@ -74,12 +76,36 @@ export default function Hero() {
     isFirstRenderRef.current = false;
   }, []);
 
-  // If loading or no slides, show a dark placeholder to avoid white flash
+  // If loading or no slides, show a fallback hero with image and text
   if (isLoading || heroSlides.length === 0) {
     return (
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
-        <div className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center">
-          <span className="text-lg text-gray-400">Loading...</span>
+        {/* Fallback Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/herofallback.avif"
+            alt="Wedding inspiration"
+            fill
+            className="object-cover"
+            priority
+            unoptimized
+          />
+        </div>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        {/* Fallback Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center text-white flex flex-col items-center justify-center w-full">
+          <h1 className="font-dancing-script font-bold text-4xl md:text-6xl mb-6 md:mb-8 leading-tight">
+            Plan Your Perfect Wedding
+          </h1>
+          <p className="font-cormorant text-lg md:text-2xl mb-8 opacity-95">
+            Discover venues, vendors, and inspiration—loading your experience…
+          </p>
+          <Link href="/venue" className="w-full max-w-xs">
+            <GradientButton>
+              Explore Venues
+            </GradientButton>
+          </Link>
         </div>
       </section>
     );
@@ -89,14 +115,28 @@ export default function Hero() {
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-black">
-      {/* Background Image with smooth crossfade and subtle zoom (Ken Burns) */}
+      {/* Fallback background underneath to avoid visible swap */}
+      {showFallbackBg && (
+        <div className="absolute inset-0">
+          <Image
+            src="/herofallback.avif"
+            alt="Wedding inspiration"
+            fill
+            className="object-cover"
+            priority
+            unoptimized
+          />
+          <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        </div>
+      )}
+      {/* Background Image with smooth crossfade (no black gap) */}
       <AnimatePresence mode="sync" initial={false}>
         <motion.div
           key={image || currentIndex}
-          initial={isFirstRenderRef.current ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0.0, scale: 1.02 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          initial={isFirstRenderRef.current ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0 will-change-transform will-change-opacity"
         >
           <Image
@@ -106,12 +146,15 @@ export default function Hero() {
             className="object-cover"
             priority
             unoptimized
+            onLoadingComplete={() => setShowFallbackBg(false)}
           />
         </motion.div>
       </AnimatePresence>
 
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      {/* Overlay for better text readability over real slide */}
+      {!showFallbackBg && (
+        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      )}
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center text-white flex flex-col items-center justify-center w-full">

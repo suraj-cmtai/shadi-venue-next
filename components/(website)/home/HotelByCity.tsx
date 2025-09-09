@@ -180,7 +180,7 @@ export default function Hotels() {
                       style={{ backgroundImage: `url('${tile.image}')` }}
                       aria-label={tile.city}
                     >
-                      <div className="absolute inset-0 bg-black/30 transition-opacity group-hover:bg-black/40" />
+                      <div className="absolute inset-0 transition-opacity group-hover:bg-black/40" />
                       {/* Floating label */}
                       <div className="absolute left-1/2 bottom-6 -translate-x-1/2">
                         <div className="bg-[#212d47] rounded-lg px-4 py-3 flex items-center gap-3 shadow-lg">

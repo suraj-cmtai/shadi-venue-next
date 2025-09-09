@@ -740,9 +740,17 @@ const DynamicVendorPage: React.FC = () => {
 
         {/* Vendors Grid */}
         {!loading && !error && filteredVendors.length > 0 && (() => {
-          const normal = filteredVendors.filter(v => !v.isPremium);
-          const premium = filteredVendors.filter(v => v.isPremium);
-          const ordered = [...normal.slice(0, 6), ...premium, ...normal.slice(6)];
+          // New ordering:
+          // 1) Featured vendors first
+          // 2) Then two rows of normal (~6 cards on lg)
+          // 3) Then premium vendors
+          // 4) Then remaining normal vendors
+          const featured = filteredVendors.filter(v => v.isFeatured);
+          const premium = filteredVendors.filter(v => v.isPremium && !v.isFeatured);
+          const normal = filteredVendors.filter(v => !v.isPremium && !v.isFeatured);
+          const firstNormalChunk = normal.slice(0, 6);
+          const remainingNormal = normal.slice(6);
+          const ordered = [...featured, ...firstNormalChunk, ...premium, ...remainingNormal];
           return (
             <div className={`grid gap-6 ${viewMode === 'grid' 
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 

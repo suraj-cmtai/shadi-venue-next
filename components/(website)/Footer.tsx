@@ -17,7 +17,7 @@ import { AppDispatch } from "@/lib/redux/store";
  * - Decorative flower image is visually hidden on mobile.
  * - All images and icons are accessible.
  * - Social links updated to real URLs as per @file_context_0.
- * - Hotel images shown in place of static images, click navigates to /venue.
+ * - Hotel images shown in place of static images, click navigates to /venue/[id].
  */
 
 const LOGO_IMG = "/images/footer.png";
@@ -87,7 +87,7 @@ export default function Footer() {
               {(hotels && hotels.length > 0) ? (
                 hotels.slice(0, 6).map((hotel, i) => (
                   <Link
-                    href="/venue"
+                    href={`/venue/${hotel.id}`}
                     key={hotel.id || i}
                     className="group"
                     aria-label={hotel.name || `Hotel ${i + 1}`}

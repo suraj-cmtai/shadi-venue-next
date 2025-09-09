@@ -743,9 +743,17 @@ const DynamicVenuePage: React.FC = () => {
 
         {/* Venues Grid */}
         {!loading && !error && filteredVenues.length > 0 && (() => {
-          const normal = filteredVenues.filter(v => !v.isPremium);
-          const premium = filteredVenues.filter(v => v.isPremium);
-          const ordered = [...normal.slice(0, 6), ...premium, ...normal.slice(6)];
+          // New ordering:
+          // 1) All featured first
+          // 2) Then first two rows of normal (approx 6 cards for lg screens)
+          // 3) Then premium
+          // 4) Then remaining normal
+          const featured = filteredVenues.filter(v => v.isFeatured);
+          const premium = filteredVenues.filter(v => v.isPremium && !v.isFeatured);
+          const normal = filteredVenues.filter(v => !v.isPremium && !v.isFeatured);
+          const firstNormalChunk = normal.slice(0, 6);
+          const remainingNormal = normal.slice(6);
+          const ordered = [...featured, ...firstNormalChunk, ...premium, ...remainingNormal];
           return (
             <div className={`grid gap-6 ${viewMode === 'grid' 
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 

@@ -165,6 +165,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
   // Gallery State
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
+  // Timeline image load state to avoid rendering before data on small screens
+  const [timelineLoaded, setTimelineLoaded] = useState<Record<number, boolean>>({});
 
   // Fetch user and wedding event venue details
   useEffect(() => {
@@ -501,7 +503,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
         date: story.date || new Date().toLocaleDateString(),
         description:
           story.description || "A beautiful moment in our love story.",
-        image: getSafeImageUrl(story.image, "/api/placeholder/400/300"),
+        image: getSafeImageUrl(story.image, "/images/wedding/00.png"),
       }))
       : [];
 
@@ -549,7 +551,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
           landmark: "", // Regular venues don't have landmark info
           description:
             event.description || "Join us for this special celebration",
-          image: getSafeImageUrl(event.image, "/api/placeholder/600/400"),
+          image: getSafeImageUrl(event.image, "/images/wedding/00.png"),
           title: event.title || `Event ${idx + 1}`,
         };
       })
@@ -758,6 +760,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     src={safeAbout.groom.image}
                     alt={safeAbout.groom.name}
                     fill
+                    sizes="(max-width: 1024px) 50vw, 300px"
+                    unoptimized
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -833,13 +837,21 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 transition={{ duration: 0.8, delay: 0.5 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Image
-                  src={safeAbout.coupleImage}
-                  alt="Couple"
-                  fill
-                  className="object-cover transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                {safeAbout.coupleImage && !safeAbout.coupleImage.includes("/api/placeholder/") ? (
+                  <>
+                    <Image
+                      src={safeAbout.coupleImage}
+                      alt="Couple"
+                      fill
+                      sizes="(max-width: 1024px) 60vw, 350px"
+                      unoptimized
+                      className="object-cover transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                )}
               </motion.div>
             </div>
 
@@ -860,6 +872,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   src={safeAbout.bride.image}
                   alt={safeAbout.bride.name}
                   fill
+                  sizes="(max-width: 1024px) 50vw, 300px"
+                  unoptimized
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -980,12 +994,18 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 transition={{ duration: 0.8 }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Image
-                  src={safeAbout.coupleImage}
-                  alt="Couple"
-                  fill
-                  className="object-cover"
-                />
+                {safeAbout.coupleImage && !safeAbout.coupleImage.includes("/api/placeholder/") ? (
+                  <Image
+                    src={safeAbout.coupleImage}
+                    alt="Couple"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    unoptimized
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                )}
               </motion.div>
 
               {/* Bride */}
@@ -1000,6 +1020,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     src={safeAbout.bride.image}
                     alt={safeAbout.bride.name}
                     fill
+                    sizes="(max-width: 768px) 100vw, 280px"
+                    unoptimized
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
@@ -1062,27 +1084,28 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
           {/* Event Navigation */}
           {safeWeddingEvents.length > 1 && (
-            <div className="relative z-10 flex justify-center pt-8 gap-4">
-              {safeWeddingEvents.map((_, index) => (
-                <motion.button
-                  key={index}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedEventIndex === index
-                      ? "bg-white text-gray-800 shadow-lg"
-                      : "bg-white/20 text-white hover:bg-white/30"
-                    }`}
-                  onClick={() => setSelectedEventIndex(index)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Event {index + 1}
-                </motion.button>
-              ))}
+            <div className="relative z-10 pt-8 px-4">
+              <div className="flex gap-3 overflow-x-auto w-full whitespace-nowrap scrollbar-hide snap-x snap-mandatory justify-center items-center">
+                {safeWeddingEvents.map((_, index) => (
+                  <motion.button
+                    key={index}
+                    className={`inline-flex shrink-0 snap-start px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedEventIndex === index
+                        ? "bg-white text-gray-800 shadow-lg"
+                        : "bg-white/20 text-white hover:bg-white/30"
+                      }`}
+                    onClick={() => setSelectedEventIndex(index)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {safeWeddingEvents[index]?.title || `Event ${index + 1}`}
+                  </motion.button>
+                ))}
+              </div>
             </div>
           )}
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedEventIndex}
+          {/* Simplified animation to avoid mobile rendering issues */}
+          <motion.div
               className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20"
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1148,6 +1171,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                         src={safeWeddingEvents[selectedEventIndex].image!}
                         alt={safeWeddingEvents[selectedEventIndex].title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        unoptimized
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1301,19 +1326,21 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
                 {safeWeddingEvents[selectedEventIndex].image && (
                   <div className="px-4">
-                    <div className="relative h-64 rounded-lg overflow-hidden shadow-xl">
+                    <div className="relative h-64 w-full rounded-lg overflow-hidden shadow-xl">
                       <Image
                         src={safeWeddingEvents[selectedEventIndex].image!}
                         alt={safeWeddingEvents[selectedEventIndex].title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        unoptimized
                         className="object-cover"
+                        priority={false}
                       />
                     </div>
                   </div>
                 )}
               </div>
             </motion.div>
-          </AnimatePresence>
         </section>
       )}
 
@@ -1333,9 +1360,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="text-center mb-16">
+            <div className="text-center mb-16 px-2">
               <motion.h3
-                className="font-cormorant font-medium text-2xl sm:text-3xl lg:text-4xl mb-4"
+                className="font-cormorant font-medium text-2xl sm:text-3xl lg:text-4xl mb-4 leading-snug break-words"
                 style={{ color: safeTheme.titleColor }}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1344,7 +1371,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 The Story of Us
               </motion.h3>
               <motion.h2
-                className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl"
+                className="font-cormorant font-bold text-4xl sm:text-5xl lg:text-6xl leading-snug break-words"
                 style={{ color: safeTheme.nameColor }}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -1352,12 +1379,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
               >
                 The Beginning of Our Journey Together
               </motion.h2>
-              <motion.div
-                className="w-24 h-1 mx-auto mt-6 rounded-full"
+              <div
+                className="mx-auto mt-6 rounded-full h-[2px] w-16 sm:w-24 md:w-32"
                 style={{ backgroundColor: safeTheme.primaryColor }}
-                initial={{ width: 0 }}
-                whileInView={{ width: 96 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
               />
             </div>
 
@@ -1419,14 +1443,24 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-2xl">
-                        <Image
-                          src={milestone.image}
-                          alt={milestone.title}
-                          fill
-                          className="object-cover transition-transform duration-500 hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                      <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-2xl z-10">
+                        {!timelineLoaded[milestone.id] && (
+                          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                        )}
+                        {milestone.image && !milestone.image.includes("/images/wedding/00.png") && (
+                          <img
+                            src={milestone.image}
+                            alt={milestone.title}
+                            className="object-cover w-full h-full"
+                            style={{ opacity: timelineLoaded[milestone.id] ? 1 : 0 }}
+                            loading="lazy"
+                            onLoad={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
+                            onError={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
+                          />
+                        )}
+                        {timelineLoaded[milestone.id] && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                        )}
                       </div>
                     </motion.div>
                   </motion.div>
@@ -1462,6 +1496,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                         src={story.image}
                         alt={story.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        unoptimized
                         className="object-cover"
                       />
                       <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition-colors duration-200"></div>
@@ -1473,7 +1509,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
 
                   {/* Wedding Event Images */}
                   {safeWeddingEvents.map((event, index) => {
-                    if (event.image && event.image !== "/api/placeholder/600/400") {
+                    if (event.image && event.image !== "/images/wedding/00.png") {
                       return (
                         <motion.div
                           key={`event-${index}`}
@@ -1486,6 +1522,8 @@ const InvitePage = ({ params }: InvitePageProps) => {
                             src={event.image}
                             alt={event.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, 25vw"
+                            unoptimized
                             className="object-cover"
                           />
                           <div className="absolute inset-0 bg-black/20 hover:bg-black/10 transition-colors duration-200"></div>
@@ -1502,39 +1540,35 @@ const InvitePage = ({ params }: InvitePageProps) => {
             )}
           </div>
 
-          {/* Image Modal */}
-          <AnimatePresence>
-            {safeSelectedGalleryImage && (
+          {/* Image Modal - simple motion only */}
+          {safeSelectedGalleryImage && (
+            <motion.div
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              onClick={() => setSelectedGalleryImage(null)}
+            >
               <motion.div
-                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setSelectedGalleryImage(null)}
+                className="relative max-w-4xl max-h-[90vh] w-full h-full"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <motion.div
-                  className="relative max-w-4xl max-h-[90vh] w-full h-full"
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0.8 }}
-                  onClick={(e) => e.stopPropagation()}
+                <Image
+                  src={safeSelectedGalleryImage}
+                  alt="Gallery image"
+                  fill
+                  className="object-contain"
+                />
+                <button
+                  className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
+                  onClick={() => setSelectedGalleryImage(null)}
                 >
-                  <Image
-                    src={safeSelectedGalleryImage}
-                    alt="Gallery image"
-                    fill
-                    className="object-contain"
-                  />
-                  <button
-                    className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 transition-colors"
-                    onClick={() => setSelectedGalleryImage(null)}
-                  >
-                    ✕
-                  </button>
-                </motion.div>
+                  ✕
+                </button>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </motion.div>
+          )}
         </section>
       )}
 
