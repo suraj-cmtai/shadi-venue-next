@@ -1386,85 +1386,85 @@ const InvitePage = ({ params }: InvitePageProps) => {
             </div>
 
             {/* Timeline Layout for Love Story */}
-            <div className="relative">
+            <div className="relative max-w-5xl mx-auto">
               {/* Timeline line */}
               <div
                 className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full rounded-full hidden lg:block"
                 style={{ backgroundColor: safeTheme.secondaryColor }}
               ></div>
 
-              <div className="space-y-16">
-                {safeLoveStory.map((milestone, index) => (
-                  <motion.div
-                    key={milestone.id}
-                    className={`relative flex items-center ${index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
-                      } flex-col lg:gap-16 gap-8`}
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                  >
-                    {/* Timeline dot */}
-                    <div
-                      className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full border-4 border-white shadow-lg z-10 hidden lg:block"
-                      style={{ backgroundColor: safeTheme.primaryColor }}
-                    ></div>
-
-                    {/* Content */}
-                    <div
-                      className={`flex-1 ${index % 2 === 0
-                          ? "lg:text-right lg:pr-8"
-                          : "lg:text-left lg:pl-8"
-                        } text-center lg:text-left`}
-                    >
-                      <motion.div
-                        className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
-                        style={{
-                          backgroundColor: safeTheme.secondaryColor + "20",
-                          color: safeTheme.primaryColor,
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        {milestone.date}
-                      </motion.div>
-                      <h3
-                        className="text-3xl font-bold mb-4"
-                        style={{ color: safeTheme.titleColor }}
-                      >
-                        {milestone.title}
-                      </h3>
-                      <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                        {milestone.description}
-                      </p>
-                    </div>
-
-                    {/* Image */}
+              <div className="space-y-24">
+                {safeLoveStory.map((milestone, index) => {
+                  // Zig-zag: even index -> text left, image right; odd index -> image left, text right
+                  const isEven = index % 2 === 0;
+                  return (
                     <motion.div
-                      className="flex-1 max-w-md"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
+                      key={milestone.id}
+                      className={`relative flex flex-col lg:flex-row items-stretch ${!isEven ? "lg:flex-row-reverse" : ""} lg:gap-0 gap-8`}
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, delay: index * 0.1 }}
                     >
-                      <div className="relative h-80 w-full rounded-2xl overflow-hidden shadow-2xl z-10">
-                        {!timelineLoaded[milestone.id] && (
-                          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                        )}
-                        {milestone.image && !milestone.image.includes("/images/wedding/00.png") && (
-                          <img
-                            src={milestone.image}
-                            alt={milestone.title}
-                            className="object-cover w-full h-full"
-                            style={{ opacity: timelineLoaded[milestone.id] ? 1 : 0 }}
-                            loading="lazy"
-                            onLoad={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
-                            onError={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
-                          />
-                        )}
-                        {timelineLoaded[milestone.id] && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                        )}
+                      {/* Timeline dot */}
+                      <div
+                        className="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full border-4 border-white shadow-lg z-10 hidden lg:block"
+                        style={{ backgroundColor: safeTheme.primaryColor }}
+                      ></div>
+
+                      {/* Content (Text) */}
+                      <div className={`flex-1 flex flex-col ${isEven ? "lg:items-end" : "lg:items-start"} items-center justify-center`}>
+                        <div className={`w-full px-6 max-w-md ${isEven ? "lg:text-right" : "lg:text-left"} text-center`}>
+                          <motion.div
+                            className="inline-block px-6 py-3 rounded-full text-xs font-medium mb-2"
+                            style={{
+                              backgroundColor: safeTheme.secondaryColor + "20",
+                              color: safeTheme.primaryColor,
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                          >
+                            {milestone.date}
+                          </motion.div>
+                          <h3
+                            className="text-2xl sm:text-3xl font-bold mb-1"
+                            style={{ color: safeTheme.titleColor }}
+                          >
+                            {milestone.title}
+                          </h3>
+                          <p className="text-lg text-gray-600 leading-relaxed mb-0">
+                            {milestone.description}
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Image */}
+                      <motion.div
+                        className="flex-1 flex items-center justify-center"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="relative h-56 w-80 max-w-full rounded-2xl overflow-hidden shadow-2xl z-10">
+                          {!timelineLoaded[milestone.id] && (
+                            <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                          )}
+                          {milestone.image && !milestone.image.includes("/images/wedding/00.png") && (
+                            <img
+                              src={milestone.image}
+                              alt={milestone.title}
+                              className="object-cover w-full h-full"
+                              style={{ opacity: timelineLoaded[milestone.id] ? 1 : 0 }}
+                              loading="lazy"
+                              onLoad={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
+                              onError={() => setTimelineLoaded((prev) => ({ ...prev, [milestone.id]: true }))}
+                            />
+                          )}
+                          {timelineLoaded[milestone.id] && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                          )}
+                        </div>
+                      </motion.div>
                     </motion.div>
-                  </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
