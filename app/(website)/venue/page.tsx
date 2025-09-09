@@ -61,6 +61,7 @@ const DynamicVenuePage: React.FC = () => {
   const [localSearch, setLocalSearch] = useState<string>('');
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const resultsRef = useRef<HTMLElement | null>(null);
 
   // On mount, fetch hotels and reset filters
   useEffect(() => {
@@ -85,6 +86,29 @@ const DynamicVenuePage: React.FC = () => {
   // Avoid syncing redux search back into input to prevent focus jumps
 
   // Dynamic filter options derived from active hotels only
+  // If the page was opened with ?search= param, nudge-scroll to cards early and after paint
+  useEffect(() => {
+    const qp = searchParams.get('search')?.trim();
+    if (!qp) return;
+
+    const tryScroll = () => {
+      if (resultsRef.current) {
+        const top = resultsRef.current.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    };
+
+    // attempt immediately after mount, then after a couple of frames/timeouts to cover refreshes
+    requestAnimationFrame(() => tryScroll());
+    const t1 = setTimeout(tryScroll, 150);
+    const t2 = setTimeout(tryScroll, 500);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const filterOptions = useMemo(() => {
     const categories = Array.from(
       new Set(activeHotels.map(hotel => hotel.category).filter(cat => cat && cat.trim() !== ''))
@@ -135,6 +159,23 @@ const DynamicVenuePage: React.FC = () => {
       midPrice
     };
   }, [activeHotels]);
+
+  // Auto-scroll to results when filters/search are active and data is ready
+  useEffect(() => {
+    const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
+    const anyFilterActive = Boolean(
+      (filters.category && filters.category.trim() !== '') ||
+      (filters.city && String(filters.city).trim() !== '') ||
+      (filters.rating && filters.rating > 0) ||
+      !isDefaultPriceRange ||
+      (searchQuery && searchQuery.trim() !== '')
+    );
+
+    if (!loading && hasFetched && anyFilterActive && resultsRef.current) {
+      const top = resultsRef.current.getBoundingClientRect().top + window.scrollY - 80; // offset for sticky UI
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, [loading, hasFetched, filters, searchQuery]);
 
   // Filter active hotels based on current filters and search
   const filteredVenues = useMemo(() => {
@@ -680,7 +721,7 @@ const DynamicVenuePage: React.FC = () => {
       <VenueSearch />
 
       {/* Results Section */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main ref={resultsRef} className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-2">Wedding Venues</h2>
           {!loading && !error && (
