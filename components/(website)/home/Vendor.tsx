@@ -72,7 +72,7 @@ export default function FeaturedVendors() {
         </motion.h2>
 
         {/* Grid of featured vendors (max 8 items) */}
-        <div className="w-full mb-10 md:mb-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+        <div className="w-full mb-10 md:mb-16 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {isLoading && (
             <div className="col-span-full w-full flex justify-center items-center min-h-32">
               <span className="text-neutral-500 font-cormorant text-lg">Loading vendors...</span>
@@ -107,10 +107,10 @@ export default function FeaturedVendors() {
                 aria-label={vendor.name}
               >
                 <div className="absolute inset-0 bg-black/20" />
-                <div className="absolute inset-x-0 bottom-6 flex justify-center px-4">
-                  <div className="bg-[#212d47] rounded-lg px-4 py-3 shadow-lg max-w-full">
-                    <p className="font-cormorant font-bold text-white text-base md:text-lg uppercase truncate text-center max-w-full">
-                      <Link href={`/vendors/${vendor.id}`} passHref className="block truncate">
+                <div className="absolute inset-x-0 bottom-2 md:bottom-6 flex justify-center px-2 md:px-4">
+                  <div className="bg-[#212d47] rounded-lg px-2 md:px-4 py-2 md:py-3 shadow-lg max-w-[calc(100%-16px)] md:max-w-full">
+                    <p className="font-cormorant font-bold text-white text-sm md:text-base lg:text-lg uppercase text-center leading-tight">
+                      <Link href={`/vendors/${vendor.id}`} passHref className="block">
                         {vendor.name || "Vendor Name"}
                       </Link>
                     </p>

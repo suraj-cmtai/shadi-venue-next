@@ -32,11 +32,34 @@ export default function Hero() {
   const [direction, setDirection] = useState<1 | -1>(-1);
   // Keep fallback visible until first real slide has fully loaded
   const [showFallbackBg, setShowFallbackBg] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const fallbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const imageLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch active hero slides on mount
   useEffect(() => {
     dispatch(fetchActiveHeroSlides());
   }, [dispatch]);
+
+  // Set up fallback timing logic
+  useEffect(() => {
+    if (heroSlides.length > 0 && !imagesLoaded) {
+      // Set a 3-second timeout to check if images have loaded
+      imageLoadTimeoutRef.current = setTimeout(() => {
+        if (!imagesLoaded) {
+          // If images haven't loaded in 3 seconds, show fallback for full 5 seconds
+          fallbackTimeoutRef.current = setTimeout(() => {
+            setShowFallbackBg(false);
+          }, 2000); // Additional 2 seconds to make total 5 seconds
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (imageLoadTimeoutRef.current) clearTimeout(imageLoadTimeoutRef.current);
+      if (fallbackTimeoutRef.current) clearTimeout(fallbackTimeoutRef.current);
+    };
+  }, [heroSlides, imagesLoaded]);
 
   // Reset index if slides change
   useEffect(() => {
@@ -92,7 +115,7 @@ export default function Hero() {
           />
         </div>
         {/* Overlay */}
-        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        <div className="absolute inset-0" aria-hidden="true" />
         {/* Fallback Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 text-center text-white flex flex-col items-center justify-center w-full">
           <h1 className="font-dancing-script font-bold text-4xl md:text-6xl mb-6 md:mb-8 leading-tight">
@@ -126,7 +149,7 @@ export default function Hero() {
             priority
             unoptimized
           />
-          <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+          <div className="absolute inset-0 " aria-hidden="true" />
         </div>
       )}
       {/* Background Image with smooth crossfade (no black gap) */}
@@ -146,14 +169,21 @@ export default function Hero() {
             className="object-cover"
             priority
             unoptimized
-            onLoadingComplete={() => setShowFallbackBg(false)}
+            onLoadingComplete={() => {
+              setImagesLoaded(true);
+              // Clear any pending timeouts
+              if (imageLoadTimeoutRef.current) clearTimeout(imageLoadTimeoutRef.current);
+              if (fallbackTimeoutRef.current) clearTimeout(fallbackTimeoutRef.current);
+              // Show real image after a short delay for smooth transition
+              setTimeout(() => setShowFallbackBg(false), 500);
+            }}
           />
         </motion.div>
       </AnimatePresence>
 
       {/* Overlay for better text readability over real slide */}
       {!showFallbackBg && (
-        <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+        <div className="absolute inset-0" aria-hidden="true" />
       )}
 
       {/* Content */}

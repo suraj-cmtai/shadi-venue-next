@@ -57,7 +57,7 @@ export default function Award() {
               </span>
               <img src={VECTOR2_IMG} alt="" className="h-3 w-auto " />
             </div>
-            <h2 className="font-dancing-script font-normal text-[28px] xl:text-[36px] 2xl:text-[40px] text-[#212d47] text-center mb-8 leading-tight px-2">
+            <h2 className="font-dancing-script font-normal text-[36px] xl:text-[36px] 2xl:text-[40px] text-[#212d47] text-center mb-8 leading-tight px-2">
               Ranked Among the Top Ten Wedding Venues in India
             </h2>
           </div>
@@ -123,7 +123,7 @@ export default function Award() {
               </span>
               <img src={VECTOR2_IMG} alt="" className="h-2 w-auto " />
             </div>
-            <h2 className="font-dancing-script font-normal text-[16px] xs:text-[18px] sm:text-[20px] text-[#212d47] text-center mb-4 leading-tight px-1">
+            <h2 className="font-dancing-script font-normal text-3xl md:text-4xl lg:text-5xl text-[#212d47] text-center mb-12 leading-tight px-1">
               Among The Top Ten Wedding Venues In The All Countries
             </h2>
             {/* Counters */}

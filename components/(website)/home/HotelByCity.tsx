@@ -155,7 +155,7 @@ export default function Hotels() {
           {isClient && !isLoading && !error && rows.map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className="w-full grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row gap-3 md:gap-6 md:overflow-x-auto py-2"
+              className="w-full grid grid-cols-2 sm:grid-cols-2 md:flex md:flex-row gap-3 md:gap-6 md:overflow-x-auto py-2"
               style={{
                 WebkitOverflowScrolling: "touch",
                 scrollbarWidth: "none",
@@ -182,12 +182,12 @@ export default function Hotels() {
                     >
                       <div className="absolute inset-0 transition-opacity group-hover:bg-black/40" />
                       {/* Floating label */}
-                      <div className="absolute left-1/2 bottom-6 -translate-x-1/2">
-                        <div className="bg-[#212d47] rounded-lg px-4 py-3 flex items-center gap-3 shadow-lg">
-                          <p className="font-cormorant font-bold text-white text-base md:text-lg uppercase whitespace-nowrap">
+                      <div className="absolute left-1/2 bottom-2 md:bottom-6 -translate-x-1/2">
+                        <div className="bg-[#212d47] rounded-lg px-2 md:px-4 py-2 md:py-3 flex items-center gap-2 md:gap-3 shadow-lg max-w-[calc(100%-16px)] md:max-w-full">
+                          <p className="font-cormorant font-bold text-white text-sm md:text-base lg:text-lg uppercase text-center leading-tight">
                             {tile.city}
                           </p>
-                          <span className="text-white/90 text-sm font-medium">
+                          <span className="text-white/90 text-xs md:text-sm font-medium">
                             {tile.count}
                           </span>
                         </div>
