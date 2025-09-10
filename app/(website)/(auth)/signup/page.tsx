@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
@@ -16,6 +15,7 @@ const ROLES = [
   { value: "user", label: "User" },
   { value: "hotel", label: "Hotel" },
   { value: "vendor", label: "Vendor" },
+  { value: "banquet", label: "Banquet" },
   // Add more roles here as needed
 ];
 
@@ -37,11 +37,12 @@ const SignupPage = () => {
         return "Join as a Hotel Partner and showcase your venue to thousands of couples!";
       case "vendor":
         return "Start your journey as a Wedding Service Provider!";
+      case "banquet":
+        return "Start your journey as a Banquet Manager!";
       default:
         return "Sign up to get started";
     }
   };
-  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
 
   const handleSubmit = async (e: React.FormEvent) => {

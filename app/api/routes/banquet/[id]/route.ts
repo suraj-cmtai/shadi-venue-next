@@ -214,19 +214,36 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const isPremium = formData.get("isPremium")?.toString();
         const isFeatured = formData.get("isFeatured")?.toString();
 
-        // Extract file uploads
-        const imageFiles = formData.getAll("images");
-        const resortPhotoFiles = formData.getAll("uploadResortPhotos");
-        const marriagePhotoFiles = formData.getAll("uploadMarriagePhotos");
-        const weddingBrochureFiles = formData.getAll("uploadWeddingBrochure");
-        const cancelledChequeFiles = formData.getAll("uploadCancelledCheque");
+        // Helper function to collect URLs from mixed field (files and URLs)
+        const collectUrlsFromMixedField = async (formData: FormData, baseKey: string, width = 1200, height = 800): Promise<string[]> => {
+            const urls: string[] = [];
+            const files: FormDataEntryValue[] = [];
+            
+            // @ts-ignore - FormData entries() exists in the runtime
+            for (const [k, v] of (formData as any).entries()) {
+                if (k === baseKey || k.startsWith(`${baseKey}[`)) {
+                    if (v instanceof File) {
+                        files.push(v);
+                    } else {
+                        const s = (v ?? '').toString();
+                        if (s) urls.push(s);
+                    }
+                }
+            }
+            
+            if (files.length) {
+                const uploaded = await uploadFiles(files, width, height);
+                urls.push(...uploaded);
+            }
+            return urls;
+        };
 
-        // Upload all image types
-        const imageUrls = await uploadFiles(imageFiles, 1200, 800);
-        const resortPhotoUrls = await uploadFiles(resortPhotoFiles, 1200, 800);
-        const marriagePhotoUrls = await uploadFiles(marriagePhotoFiles, 1200, 800);
-        const weddingBrochureUrls = await uploadFiles(weddingBrochureFiles, 1200, 1600);
-        const cancelledChequeUrls = await uploadFiles(cancelledChequeFiles, 1200, 800);
+        // Extract and process all image types (both files and URLs)
+        const imageUrls = await collectUrlsFromMixedField(formData, "images", 1200, 800);
+        const resortPhotoUrls = await collectUrlsFromMixedField(formData, "uploadResortPhotos", 1200, 800);
+        const marriagePhotoUrls = await collectUrlsFromMixedField(formData, "uploadMarriagePhotos", 1200, 800);
+        const weddingBrochureUrls = await collectUrlsFromMixedField(formData, "uploadWeddingBrochure", 1200, 1600);
+        const cancelledChequeUrls = await collectUrlsFromMixedField(formData, "uploadCancelledCheque", 1200, 800);
 
         // Create update data object
         const updateData: any = {};
@@ -314,7 +331,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (referralSource !== undefined) updateData.referralSource = referralSource;
         if (partnershipInterest !== undefined) updateData.partnershipInterest = partnershipInterest;
 
-        // File uploads
+        // File uploads - always update if any URLs are provided (including existing ones)
+        if (imageUrls.length > 0) updateData.images = imageUrls;
         if (resortPhotoUrls.length > 0) updateData.uploadResortPhotos = resortPhotoUrls;
         if (marriagePhotoUrls.length > 0) updateData.uploadMarriagePhotos = marriagePhotoUrls;
         if (weddingBrochureUrls.length > 0) updateData.uploadWeddingBrochure = weddingBrochureUrls;

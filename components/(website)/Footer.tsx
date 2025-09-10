@@ -88,6 +88,8 @@ export default function Footer() {
                 hotels.slice(0, 6).map((hotel, i) => (
                   <Link
                     href={`/venue/${hotel.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     key={hotel.id || i}
                     className="group"
                     aria-label={hotel.name || `Hotel ${i + 1}`}
