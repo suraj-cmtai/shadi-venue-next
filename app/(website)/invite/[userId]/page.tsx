@@ -21,7 +21,7 @@ import {
   Star,
 } from "lucide-react";
 import { FaInstagram, FaTwitter, FaFacebookF } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 // --- Hotel interface for venue details ---
 export interface Hotel {
@@ -1534,6 +1534,90 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       );
                     }
                     return null;
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* YouTube Videos Section */}
+            {user?.invite?.invitation?.youtubeLinks && user.invite.invitation.youtubeLinks.length > 0 && (
+              <motion.div
+                className="mt-20 text-center"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <h4
+                  className="text-2xl font-semibold mb-8"
+                  style={{ color: safeTheme.titleColor }}
+                >
+                  Some unforgettable moments
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                  {user.invite.invitation.youtubeLinks.map((link, index) => {
+                    // Extract video ID from YouTube URL
+                    const getYouTubeVideoId = (url: string) => {
+                      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                      const match = url.match(regExp);
+                      return (match && match[2].length === 11) ? match[2] : null;
+                    };
+
+                    const videoId = getYouTubeVideoId(link);
+                    if (!videoId) return null;
+
+                    return (
+                      <motion.div
+                        key={index}
+                        className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+                        whileHover={{ scale: 1.02, y: -5 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {/* Video Thumbnail */}
+                        <div className="relative w-full h-48 bg-gray-100">
+                          <img
+                            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                            alt={`Wedding Video ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to medium quality thumbnail if maxresdefault fails
+                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                            }}
+                          />
+                          {/* Play button overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors duration-300">
+                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg hover:bg-red-700 transition-colors duration-300">
+                              <svg className="w-6 h-6 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Video Info */}
+                        <div className="p-4">
+                          
+                          {/* Watch Button */}
+                          <motion.a
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                            style={{
+                              backgroundColor: safeTheme.buttonColor,
+                              backgroundImage: `linear-gradient(45deg, ${safeTheme.buttonColor}, ${safeTheme.buttonHoverColor})`,
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                            Watch
+                          </motion.a>
+                        </div>
+                      </motion.div>
+                    );
                   })}
                 </div>
               </motion.div>

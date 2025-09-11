@@ -149,6 +149,7 @@ interface InviteSectionForm {
   message: string;
   rsvpLink?: string;
   backgroundImage?: string | File;
+  youtubeLinks?: string[];
 }
 
 // Theme presets for quick selection
@@ -277,7 +278,8 @@ export default function UserDashboard() {
     subheading: '',
     message: '',
     rsvpLink: '',
-    backgroundImage: ''
+    backgroundImage: '',
+    youtubeLinks: []
   });
 
   // Edit modes per tab/section
@@ -385,7 +387,8 @@ export default function UserDashboard() {
         subheading: '',
         message: '',
         rsvpLink: '',
-        backgroundImage: ''
+        backgroundImage: '',
+        youtubeLinks: []
       });
     }
     if (user) {
@@ -678,7 +681,8 @@ export default function UserDashboard() {
       
       const serverData = {
         ...processedInvitation,
-        backgroundImage: processedInvitation.backgroundImage as string
+        backgroundImage: processedInvitation.backgroundImage as string,
+        youtubeLinks: processedInvitation.youtubeLinks || []
       };
       
       await dispatch(updateInvite({
@@ -864,6 +868,33 @@ export default function UserDashboard() {
 
   const removePlanningItem = (index: number) => {
     setPlanningForm(planningForm.filter((_, i) => i !== index));
+    setUnsavedChanges(true);
+  };
+
+  // YouTube links management
+  const addYouTubeLink = () => {
+    setInvitationForm({
+      ...invitationForm,
+      youtubeLinks: [...(invitationForm.youtubeLinks || []), '']
+    });
+    setUnsavedChanges(true);
+  };
+
+  const removeYouTubeLink = (index: number) => {
+    setInvitationForm({
+      ...invitationForm,
+      youtubeLinks: (invitationForm.youtubeLinks || []).filter((_, i) => i !== index)
+    });
+    setUnsavedChanges(true);
+  };
+
+  const updateYouTubeLink = (index: number, value: string) => {
+    const updatedLinks = [...(invitationForm.youtubeLinks || [])];
+    updatedLinks[index] = value;
+    setInvitationForm({
+      ...invitationForm,
+      youtubeLinks: updatedLinks
+    });
     setUnsavedChanges(true);
   };
 
@@ -2344,6 +2375,72 @@ export default function UserDashboard() {
                     description="Upload a background image for the invitation"
                     disabled={!invitationEditing}
                   />
+                </div>
+
+                <Separator />
+
+                {/* YouTube Links Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-medium">YouTube Links for Memories</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Add YouTube video links to share your special memories with guests
+                      </p>
+                    </div>
+                    {invitationEditing && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addYouTubeLink}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Link
+                      </Button>
+                    )}
+                  </div>
+
+                  {invitationForm.youtubeLinks && invitationForm.youtubeLinks.length > 0 ? (
+                    <div className="space-y-3">
+                      {invitationForm.youtubeLinks.map((link, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                          <div className="flex-1">
+                            <Input
+                              value={link}
+                              onChange={(e) => updateYouTubeLink(index, e.target.value)}
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              disabled={!invitationEditing}
+                              className="bg-background"
+                            />
+                          </div>
+                          {invitationEditing && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeYouTubeLink(index)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                      <div className="text-muted-foreground">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                          <span className="text-2xl">📺</span>
+                        </div>
+                        <p className="text-sm">No YouTube links added yet</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Add YouTube video links to share your memories
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

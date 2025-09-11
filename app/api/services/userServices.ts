@@ -70,6 +70,7 @@ export interface InviteSection {
   message: string;
   rsvpLink: string | null;
   backgroundImage: string | null;
+  youtubeLinks?: string[];
 }
 
 export interface Invite {

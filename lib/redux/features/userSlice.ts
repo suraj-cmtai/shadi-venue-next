@@ -71,6 +71,7 @@ interface InviteSection {
   message: string;
   rsvpLink?: string;
   backgroundImage?: string;
+  youtubeLinks?: string[];
 }
 
 interface Invite {

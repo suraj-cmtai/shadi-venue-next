@@ -540,49 +540,11 @@ export default function BanquetDetailsPage() {
                       <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
                         <span className="text-pink-600 font-bold text-sm">🏨</span>
                       </div>
-                      <span className="text-lg font-semibold text-[#212D47]">Total Rooms</span>
+                      <span className="text-lg font-semibold text-[#212D47]">Total Guest Capacity</span>
                     </div>
-                    <div className="text-3xl font-bold text-[#212D47] mb-1">{(banquet as any)?.totalRooms || 0}</div>
-                    <div className="text-gray-500 text-sm">Available for events</div>
+                    <div className="text-3xl font-bold text-[#212D47] mb-1">{(banquet as any)?.maxGuestCapacity || 0}</div>
                   </div>
 
-                  {/* Wedding Packages */}
-                  {Array.isArray((banquet as any)?.weddingPackages) && (banquet as any).weddingPackages.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="text-center mb-4">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                            <span className="text-pink-600 font-bold text-sm">💒</span>
-                          </div>
-                          <span className="text-lg font-semibold text-[#212D47]">Wedding Packages</span>
-                        </div>
-                      </div>
-                      
-                      {/* Package Cards */}
-                      <div className="space-y-3">
-                        {(banquet as any).weddingPackages.map((pkg: any, index: number) => (
-                          <div key={index} className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-lg border border-pink-200">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-semibold text-[#212D47]">{pkg.name || `Package ${index + 1}`}</span>
-                              <span className="px-3 py-1 rounded-md bg-[#e7c1c2] text-[#212d47] text-lg md:text-xl font-extrabold">
-                                ₹ {Number(pkg.price ?? pkg.startingPrice ?? 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div>• {pkg.rooms ?? pkg.totalRooms ?? 0} Rooms Included</div>
-                              <div>• Up to {pkg.totalGuests ?? pkg.maxGuestCapacity ?? 0} Guests</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="text-center pt-4 border-t border-gray-200">
-                        <div className="text-sm text-[#e7c1c2] mb-2">Starting from</div>
-                        <div className="text-3xl md:text-4xl font-extrabold text-[#212d47]">₹ {Number((banquet as any).weddingPackages?.[0]?.price ?? (banquet as any).weddingPackages?.[0]?.startingPrice ?? 0).toLocaleString()}</div>
-                        <div className="text-gray-500 text-sm">per package</div>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </motion.div>
