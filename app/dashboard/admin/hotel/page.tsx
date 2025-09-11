@@ -154,6 +154,18 @@ interface HotelFormState {
   uploadMarriagePhotos: File[];
   uploadWeddingBrochure: File[];
   uploadCancelledCheque: File[];
+  
+  // Existing URLs (for editing)
+  resortPhotos: string[];
+  marriagePhotos: string[];
+  weddingBrochure: string[];
+  cancelledCheque: string[];
+  
+  // Preview URLs (for newly selected files)
+  resortPhotosPreview: string[];
+  marriagePhotosPreview: string[];
+  weddingBrochurePreview: string[];
+  cancelledChequePreview: string[];
 
   // Terms
   agreeToTerms: boolean;
@@ -224,6 +236,18 @@ const initialFormState: HotelFormState = {
   uploadMarriagePhotos: [],
   uploadWeddingBrochure: [],
   uploadCancelledCheque: [],
+  
+  // Existing URLs
+  resortPhotos: [],
+  marriagePhotos: [],
+  weddingBrochure: [],
+  cancelledCheque: [],
+  
+  // Preview URLs
+  resortPhotosPreview: [],
+  marriagePhotosPreview: [],
+  weddingBrochurePreview: [],
+  cancelledChequePreview: [],
 
   // Terms
   agreeToTerms: false,
@@ -376,11 +400,11 @@ const createRequestData = async (form: HotelFormState) => {
   try {
     // Upload all files first
     const [
-      imageUrls,
-      resortPhotoUrls,
-      marriagePhotoUrls,
-      weddingBrochureUrls,
-      cancelledChequeUrls
+      newImageUrls,
+      newResortPhotoUrls,
+      newMarriagePhotoUrls,
+      newWeddingBrochureUrls,
+      newCancelledChequeUrls
     ] = await Promise.all([
       uploadFiles(form.imageFiles),
       uploadFiles(form.uploadResortPhotos),
@@ -388,6 +412,13 @@ const createRequestData = async (form: HotelFormState) => {
       uploadFiles(form.uploadWeddingBrochure),
       uploadFiles(form.uploadCancelledCheque)
     ]);
+
+    // Combine existing URLs with new uploaded URLs
+    const imageUrls = [...(form.images || []), ...newImageUrls];
+    const resortPhotoUrls = [...(form.resortPhotos || []), ...newResortPhotoUrls];
+    const marriagePhotoUrls = [...(form.marriagePhotos || []), ...newMarriagePhotoUrls];
+    const weddingBrochureUrls = [...(form.weddingBrochure || []), ...newWeddingBrochureUrls];
+    const cancelledChequeUrls = [...(form.cancelledCheque || []), ...newCancelledChequeUrls];
 
     // Create FormData object
     const formData = new FormData();
@@ -735,6 +766,69 @@ const createRequestData = async (form: HotelFormState) => {
     }));
   };
 
+  // Helper function to handle gallery image changes
+  const handleGalleryImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    galleryType: 'resortPhotos' | 'marriagePhotos' | 'weddingBrochure' | 'cancelledCheque',
+    formState: HotelFormState,
+    setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length > 0) {
+      // No limit on number of files
+      
+      const invalidFiles = files.filter((file) => {
+        if (galleryType === 'weddingBrochure' || galleryType === 'cancelledCheque') {
+          return !file.type.startsWith("image/") && file.type !== 'application/pdf';
+        }
+        return !file.type.startsWith("image/");
+      });
+      
+      if (invalidFiles.length > 0) {
+        toast.error("Only image files and PDFs are allowed");
+        return;
+      }
+      
+      const oversizedFiles = files.filter((file) => file.size > 5 * 1024 * 1024);
+      if (oversizedFiles.length > 0) {
+        toast.error("Files must be under 5MB each");
+        return;
+      }
+      
+      // Create preview URLs for the selected files
+      const previewUrls = files.map((file) => URL.createObjectURL(file));
+      
+      setFormState((prev: HotelFormState) => ({
+        ...prev,
+        [`upload${galleryType.charAt(0).toUpperCase() + galleryType.slice(1)}`]: [
+          ...(prev[`upload${galleryType.charAt(0).toUpperCase() + galleryType.slice(1)}` as keyof HotelFormState] as File[] || []),
+          ...files
+        ],
+        [`${galleryType}Preview`]: [
+          ...(prev[`${galleryType}Preview` as keyof HotelFormState] as string[] || []),
+          ...previewUrls
+        ],
+      }));
+      
+      // Clear the input so the same file can be selected again if needed
+      e.target.value = '';
+    }
+  };
+
+  // Helper function to remove gallery images
+  const removeGalleryImage = (
+    index: number,
+    galleryType: 'resortPhotos' | 'marriagePhotos' | 'weddingBrochure' | 'cancelledCheque',
+    formState: HotelFormState,
+    setFormState: React.Dispatch<React.SetStateAction<HotelFormState>>
+  ) => {
+    setFormState((prev: HotelFormState) => ({
+      ...prev,
+      [galleryType]: (prev[galleryType] || []).filter((_, i) => i !== index),
+    }));
+  };
+
   // Render all form fields
   const renderFormFields = (
     form: HotelFormState,
@@ -1077,55 +1171,305 @@ const createRequestData = async (form: HotelFormState) => {
         {/* Additional File Uploads */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Additional Documents</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Resort Photos</Label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  setForm((prev) => ({ ...prev, uploadResortPhotos: files }));
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Marriage Photos</Label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  setForm((prev) => ({ ...prev, uploadMarriagePhotos: files }));
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Wedding Brochure</Label>
-              <Input
-                type="file"
-                multiple
-                accept="application/pdf,image/*"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  setForm((prev) => ({ ...prev, uploadWeddingBrochure: files }));
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Cancelled Cheque</Label>
-              <Input
-                type="file"
-                multiple
-                accept="image/*,application/pdf"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  setForm((prev) => ({ ...prev, uploadCancelledCheque: files }));
-                }}
-              />
-            </div>
+          
+          {/* Resort Photos Field */}
+          <div className="space-y-2">
+            <Label>Resort Photos</Label>
+            <Input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => handleGalleryImageChange(e, 'resortPhotos', form, setForm)}
+            />
+            {/* Resort Photos Preview - Right below field */}
+            {((form.resortPhotos && form.resortPhotos.length > 0) || (form.resortPhotosPreview && form.resortPhotosPreview.length > 0)) && (
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {/* Existing Resort Photos */}
+                {form.resortPhotos && form.resortPhotos.map((url, index) => (
+                  <div key={`existing-${index}`} className="relative group w-16 h-16">
+                    <Image
+                      src={url}
+                      alt={`Resort Photo ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => removeGalleryImage(index, 'resortPhotos', form, setForm)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                {/* New Resort Photos Preview */}
+                {form.resortPhotosPreview && form.resortPhotosPreview.map((url, index) => (
+                  <div key={`new-${index}`} className="relative group w-16 h-16">
+                    <Image
+                      src={url}
+                      alt={`New Resort Photo ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => {
+                        // Remove from preview and file arrays
+                        const newPreviewUrls = form.resortPhotosPreview.filter((_, i) => i !== index);
+                        const newFiles = form.uploadResortPhotos.filter((_, i) => i !== index);
+                        setForm((prev) => ({
+                          ...prev,
+                          resortPhotosPreview: newPreviewUrls,
+                          uploadResortPhotos: newFiles,
+                        }));
+                        // Revoke the blob URL
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Marriage Photos Field */}
+          <div className="space-y-2">
+            <Label>Marriage Photos</Label>
+            <Input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => handleGalleryImageChange(e, 'marriagePhotos', form, setForm)}
+            />
+            {/* Marriage Photos Preview - Right below field */}
+            {((form.marriagePhotos && form.marriagePhotos.length > 0) || (form.marriagePhotosPreview && form.marriagePhotosPreview.length > 0)) && (
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {/* Existing Marriage Photos */}
+                {form.marriagePhotos && form.marriagePhotos.map((url, index) => (
+                  <div key={`existing-${index}`} className="relative group w-16 h-16">
+                    <Image
+                      src={url}
+                      alt={`Marriage Photo ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => removeGalleryImage(index, 'marriagePhotos', form, setForm)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                {/* New Marriage Photos Preview */}
+                {form.marriagePhotosPreview && form.marriagePhotosPreview.map((url, index) => (
+                  <div key={`new-${index}`} className="relative group w-16 h-16">
+                    <Image
+                      src={url}
+                      alt={`New Marriage Photo ${index + 1}`}
+                      width={64}
+                      height={64}
+                      className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => {
+                        // Remove from preview and file arrays
+                        const newPreviewUrls = form.marriagePhotosPreview.filter((_, i) => i !== index);
+                        const newFiles = form.uploadMarriagePhotos.filter((_, i) => i !== index);
+                        setForm((prev) => ({
+                          ...prev,
+                          marriagePhotosPreview: newPreviewUrls,
+                          uploadMarriagePhotos: newFiles,
+                        }));
+                        // Revoke the blob URL
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Wedding Brochure Field */}
+          <div className="space-y-2">
+            <Label>Wedding Brochure</Label>
+            <Input
+              type="file"
+              multiple
+              accept="application/pdf,image/*"
+              onChange={(e) => handleGalleryImageChange(e, 'weddingBrochure', form, setForm)}
+            />
+            {/* Wedding Brochure Preview - Right below field */}
+            {((form.weddingBrochure && form.weddingBrochure.length > 0) || (form.weddingBrochurePreview && form.weddingBrochurePreview.length > 0)) && (
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {/* Existing Wedding Brochures */}
+                {form.weddingBrochure && form.weddingBrochure.map((url, index) => (
+                  <div key={`existing-${index}`} className="relative group w-16 h-16">
+                    {url.includes('.pdf') ? (
+                      <div className="w-16 h-16 border border-gray-200 rounded-md flex items-center justify-center bg-red-50">
+                        <span className="text-xs text-red-600 font-medium">PDF</span>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={`Wedding Brochure ${index + 1}`}
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => removeGalleryImage(index, 'weddingBrochure', form, setForm)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                {/* New Wedding Brochure Preview */}
+                {form.weddingBrochurePreview && form.weddingBrochurePreview.map((url, index) => (
+                  <div key={`new-${index}`} className="relative group w-16 h-16">
+                    {form.uploadWeddingBrochure[index]?.type === 'application/pdf' ? (
+                      <div className="w-16 h-16 border border-gray-200 rounded-md flex items-center justify-center bg-red-50">
+                        <span className="text-xs text-red-600 font-medium">PDF</span>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={`New Wedding Brochure ${index + 1}`}
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => {
+                        // Remove from preview and file arrays
+                        const newPreviewUrls = form.weddingBrochurePreview.filter((_, i) => i !== index);
+                        const newFiles = form.uploadWeddingBrochure.filter((_, i) => i !== index);
+                        setForm((prev) => ({
+                          ...prev,
+                          weddingBrochurePreview: newPreviewUrls,
+                          uploadWeddingBrochure: newFiles,
+                        }));
+                        // Revoke the blob URL
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Cancelled Cheque Field */}
+          <div className="space-y-2">
+            <Label>Cancelled Cheque</Label>
+            <Input
+              type="file"
+              multiple
+              accept="image/*,application/pdf"
+              onChange={(e) => handleGalleryImageChange(e, 'cancelledCheque', form, setForm)}
+            />
+            {/* Cancelled Cheque Preview - Right below field */}
+            {((form.cancelledCheque && form.cancelledCheque.length > 0) || (form.cancelledChequePreview && form.cancelledChequePreview.length > 0)) && (
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {/* Existing Cancelled Cheques */}
+                {form.cancelledCheque && form.cancelledCheque.map((url, index) => (
+                  <div key={`existing-${index}`} className="relative group w-16 h-16">
+                    {url.includes('.pdf') ? (
+                      <div className="w-16 h-16 border border-gray-200 rounded-md flex items-center justify-center bg-red-50">
+                        <span className="text-xs text-red-600 font-medium">PDF</span>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={`Cancelled Cheque ${index + 1}`}
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => removeGalleryImage(index, 'cancelledCheque', form, setForm)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                {/* New Cancelled Cheque Preview */}
+                {form.cancelledChequePreview && form.cancelledChequePreview.map((url, index) => (
+                  <div key={`new-${index}`} className="relative group w-16 h-16">
+                    {form.uploadCancelledCheque[index]?.type === 'application/pdf' ? (
+                      <div className="w-16 h-16 border border-gray-200 rounded-md flex items-center justify-center bg-red-50">
+                        <span className="text-xs text-red-600 font-medium">PDF</span>
+                      </div>
+                    ) : (
+                      <Image
+                        src={url}
+                        alt={`New Cancelled Cheque ${index + 1}`}
+                        width={64}
+                        height={64}
+                        className="rounded-md object-cover w-16 h-16 border border-gray-200"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 h-5 w-5 rounded-full text-xs"
+                      onClick={() => {
+                        // Remove from preview and file arrays
+                        const newPreviewUrls = form.cancelledChequePreview.filter((_, i) => i !== index);
+                        const newFiles = form.uploadCancelledCheque.filter((_, i) => i !== index);
+                        setForm((prev) => ({
+                          ...prev,
+                          cancelledChequePreview: newPreviewUrls,
+                          uploadCancelledCheque: newFiles,
+                        }));
+                        // Revoke the blob URL
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1641,6 +1985,14 @@ const createRequestData = async (form: HotelFormState) => {
                                 uploadMarriagePhotos: [],
                                 uploadWeddingBrochure: [],
                                 uploadCancelledCheque: [],
+                                resortPhotos: (hotel as any).uploadResortPhotos || [],
+                                marriagePhotos: (hotel as any).uploadMarriagePhotos || [],
+                                weddingBrochure: (hotel as any).uploadWeddingBrochure || [],
+                                cancelledCheque: (hotel as any).uploadCancelledCheque || [],
+                                resortPhotosPreview: [],
+                                marriagePhotosPreview: [],
+                                weddingBrochurePreview: [],
+                                cancelledChequePreview: [],
                                 agreeToTerms: hotel.agreeToTerms || false,
                                 agreeToPrivacy: hotel.agreeToPrivacy || false,
                                 signature: hotel.signature || "",
