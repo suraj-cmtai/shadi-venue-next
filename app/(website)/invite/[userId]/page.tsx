@@ -1567,9 +1567,12 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     if (!videoId) return null;
 
                     return (
-                      <motion.div
+                      <motion.a
                         key={index}
-                        className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
                         whileHover={{ scale: 1.02, y: -5 }}
                         transition={{ duration: 0.3 }}
                       >
@@ -1584,39 +1587,18 @@ const InvitePage = ({ params }: InvitePageProps) => {
                               (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
                             }}
                           />
-                          {/* Play button overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors duration-300">
-                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg hover:bg-red-700 transition-colors duration-300">
-                              <svg className="w-6 h-6 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            </div>
-                          </div>
                         </div>
                         
                         {/* Video Info */}
                         <div className="p-4">
-                          
-                          {/* Watch Button */}
-                          <motion.a
-                            href={link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
-                            style={{
-                              backgroundColor: safeTheme.buttonColor,
-                              backgroundImage: `linear-gradient(45deg, ${safeTheme.buttonColor}, ${safeTheme.buttonHoverColor})`,
-                            }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
+                          <div className="flex items-center justify-center gap-2 text-gray-600">
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                             </svg>
-                            Watch
-                          </motion.a>
+                            <span className="text-sm font-medium">Click to watch on YouTube</span>
+                          </div>
                         </div>
-                      </motion.div>
+                      </motion.a>
                     );
                   })}
                 </div>

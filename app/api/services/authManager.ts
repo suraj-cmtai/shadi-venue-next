@@ -1,5 +1,6 @@
 import { db } from "../config/firebase";
 import consoleManager from "../utils/consoleManager";
+import bcrypt from "bcryptjs";
 
 export interface Auth {
     id: string;
@@ -101,7 +102,7 @@ export default class AuthService {
     /**
      * Update auth entry details
      */
-    static async updateAuth(id: string, updates: { name: string; email: string; role: string }): Promise<Auth> {
+    static async updateAuth(id: string, updates: { name: string; email: string; role: string; password?: string }): Promise<Auth> {
         try {
             const authDoc = await db.collection(this.collection).doc(id).get();
             if (!authDoc.exists) {
@@ -112,13 +113,22 @@ export default class AuthService {
             const oldRole = authData.role;
             const newRole = updates.role as Auth["role"];
 
-            // Update auth document
-            await db.collection(this.collection).doc(id).update({
+            // Prepare update data
+            const updateData: any = {
                 name: updates.name,
                 email: updates.email,
                 role: newRole,
                 updatedOn: new Date().toISOString()
-            });
+            };
+
+            // Hash password if provided
+            if (updates.password && updates.password.trim() !== "") {
+                const hashedPassword = await bcrypt.hash(updates.password, 10);
+                updateData.password = hashedPassword;
+            }
+
+            // Update auth document
+            await db.collection(this.collection).doc(id).update(updateData);
 
             // If role changed, update the corresponding role documents
             if (oldRole !== newRole) {

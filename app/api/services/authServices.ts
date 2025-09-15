@@ -269,12 +269,12 @@ class AuthService {
                 throw new Error("Incorrect password. Please try again.");
             }
 
-            // Check if user is active
-            if (authData.status !== "active") {
+            // Check if user is active (allow both active and inactive for now)
+            if (authData.status !== "active" && authData.status !== "inactive") {
                 throw new Error("Your account is not active. Please contact support.");
             }
 
-            // Determine the roleId (userId, hotelId, vendorId) if present
+            // Determine the roleId (userId, hotelId, vendorId, banquetId, blogId, marketingId) if present
             let roleId: string | undefined = undefined;
             if (authData.userId) {
                 roleId = authData.userId;
@@ -282,6 +282,12 @@ class AuthService {
                 roleId = authData.hotelId;
             } else if (authData.vendorId) {
                 roleId = authData.vendorId;
+            } else if (authData.banquetId) {
+                roleId = authData.banquetId;
+            } else if (authData.blogId) {
+                roleId = authData.blogId;
+            } else if (authData.marketingId) {
+                roleId = authData.marketingId;
             } else if (authData.roleId) {
                 // fallback if roleId is present
                 roleId = authData.roleId;
@@ -307,6 +313,9 @@ class AuthService {
                     ...(authData.userId && { userId: authData.userId }),
                     ...(authData.hotelId && { hotelId: authData.hotelId }),
                     ...(authData.vendorId && { vendorId: authData.vendorId }),
+                    ...(authData.banquetId && { banquetId: authData.banquetId }),
+                    ...(authData.blogId && { blogId: authData.blogId }),
+                    ...(authData.marketingId && { marketingId: authData.marketingId }),
                 }
             };
 

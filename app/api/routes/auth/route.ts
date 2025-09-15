@@ -65,17 +65,15 @@ export async function POST(req: Request) {
         // Set secure cookies
         const cookieOptions = `Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`; // 7 days
 
-        // Only send authToken if login (not on signup)
-        if (action !== "signup") {
-            response.headers.append(
-                "Set-Cookie",
-                `authToken=${result.token}; ${cookieOptions}`
-            );
-            response.headers.append(
-                "Set-Cookie",
-                `auth=${encodeURIComponent(JSON.stringify(result.user))}; ${cookieOptions}`
-            );
-        }
+        // Set cookies for both signup and login
+        response.headers.append(
+            "Set-Cookie",
+            `authToken=${result.token}; ${cookieOptions}`
+        );
+        response.headers.append(
+            "Set-Cookie",
+            `auth=${encodeURIComponent(JSON.stringify(result.user))}; ${cookieOptions}`
+        );
 
 
         return response;

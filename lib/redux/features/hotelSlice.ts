@@ -95,6 +95,8 @@ interface HotelState {
     city: string;
     priceRange: [number, number];
     rating: number;
+    minRooms?: number;
+    maxRooms?: number;
     isPremium?: boolean;
     isFeatured?: boolean;
     status?: string;

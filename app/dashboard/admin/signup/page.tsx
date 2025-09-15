@@ -87,6 +87,8 @@ const AdminSignupPage = () => {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -157,6 +159,7 @@ const AdminSignupPage = () => {
     setEditName(auth.name);
     setEditEmail(auth.email);
     setEditRole(auth.role);
+    setEditPassword(""); // Clear password field for security
     setIsEditDialogOpen(true);
   };
 
@@ -165,18 +168,26 @@ const AdminSignupPage = () => {
     
     setEditLoading(true);
     try {
-      await dispatch(updateAuth({
+      const updateData: any = {
         id: selectedAuthId,
         name: editName,
         email: editEmail,
         role: editRole
-      }));
+      };
+      
+      // Only include password if it's provided
+      if (editPassword.trim() !== "") {
+        updateData.password = editPassword;
+      }
+      
+      await dispatch(updateAuth(updateData));
       toast.success("Auth entry updated successfully");
       setIsEditDialogOpen(false);
       setSelectedAuthId(null);
       setEditName("");
       setEditEmail("");
       setEditRole("");
+      setEditPassword("");
     } catch (error: any) {
       toast.error(error.message || "Update failed");
     } finally {
@@ -384,6 +395,7 @@ const AdminSignupPage = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Password</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
@@ -393,13 +405,13 @@ const AdminSignupPage = () => {
             <TableBody>
               {listLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={7} className="text-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
               ) : filteredAuthList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     No auth entries found
                   </TableCell>
                 </TableRow>
@@ -408,6 +420,11 @@ const AdminSignupPage = () => {
                   <TableRow key={auth.id}>
                     <TableCell>{auth.name}</TableCell>
                     <TableCell>{auth.email}</TableCell>
+                    <TableCell>
+                      <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+                        {auth.password ? "••••••••" : "••••••••"}
+                      </code>
+                    </TableCell>
                     <TableCell className="capitalize">{auth.role}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusStyles(auth.status)}`}>
@@ -555,6 +572,28 @@ const AdminSignupPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-navy">New Password (Optional)</label>
+              <div className="relative">
+                <Input
+                  type={showEditPassword ? "text" : "password"}
+                  value={editPassword}
+                  onChange={e => setEditPassword(e.target.value)}
+                  placeholder="Leave empty to keep current password"
+                  className="pl-10 pr-10 border-gray-300"
+                />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={() => setShowEditPassword(v => !v)}
+                >
+                  {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
             </div>
           </div>
 

@@ -49,9 +49,10 @@ export async function PUT(
         const name = formData.get("name")?.toString();
         const email = formData.get("email")?.toString();
         const role = formData.get("role")?.toString();
+        const password = formData.get("password")?.toString();
 
         // If only status is provided, update status only
-        if (status && !name && !email && !role) {
+        if (status && !name && !email && !role && !password) {
             const updatedAuth = await AuthService.updateAuthStatus(id, status as "active" | "inactive");
             return NextResponse.json({
                 statusCode: 200,
@@ -71,7 +72,12 @@ export async function PUT(
             }, { status: 400 });
         }
 
-        const updatedAuth = await AuthService.updateAuth(id, { name, email, role });
+        const updateData: any = { name, email, role };
+        if (password && password.trim() !== "") {
+            updateData.password = password;
+        }
+
+        const updatedAuth = await AuthService.updateAuth(id, updateData);
 
         return NextResponse.json({
             statusCode: 200,

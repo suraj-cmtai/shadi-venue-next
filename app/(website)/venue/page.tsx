@@ -147,6 +147,26 @@ const DynamicVenuePage: React.FC = () => {
       new Set(activeHotels.map(hotel => hotel.rating).filter(rating => rating > 0))
     ).sort((a, b) => b - a);
 
+    // Dynamic room count ranges based on actual hotel room counts
+    const roomCounts = activeHotels
+      .map(hotel => hotel.totalRooms)
+      .filter(rooms => rooms !== undefined && rooms !== null && rooms > 0)
+      .sort((a, b) => a - b);
+    
+    const minRooms = roomCounts.length > 0 ? Math.min(...roomCounts) : 0;
+    const maxRooms = roomCounts.length > 0 ? Math.max(...roomCounts) : 100;
+    
+    // Create room count ranges
+    const roomCountRanges = roomCounts.length > 0 ? [
+      { label: 'Up to 10 rooms', min: 0, max: 10 },
+      { label: '11 - 25 rooms', min: 11, max: 25 },
+      { label: '26 - 50 rooms', min: 26, max: 50 },
+      { label: '51 - 100 rooms', min: 51, max: 100 },
+      { label: '100+ rooms', min: 101, max: Infinity }
+    ].filter(range => 
+      roomCounts.some(rooms => rooms >= range.min && rooms <= range.max)
+    ) : [];
+
     return {
       categories,
       cities,
@@ -154,9 +174,12 @@ const DynamicVenuePage: React.FC = () => {
       states,
       priceRanges,
       ratings: ['All Ratings', ...ratings.map(rating => `${rating}+`)],
+      roomCountRanges,
       minPrice,
       maxPrice,
-      midPrice
+      midPrice,
+      minRooms,
+      maxRooms
     };
   }, [activeHotels]);
 
@@ -168,6 +191,7 @@ const DynamicVenuePage: React.FC = () => {
       (filters.city && String(filters.city).trim() !== '') ||
       (filters.rating && filters.rating > 0) ||
       !isDefaultPriceRange ||
+      (typeof filters.minRooms === 'number' || typeof filters.maxRooms === 'number') ||
       (searchQuery && searchQuery.trim() !== '')
     );
 
@@ -215,7 +239,12 @@ const DynamicVenuePage: React.FC = () => {
         hotel.rating === 0 || 
         hotel.rating >= filters.rating;
 
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating;
+      // Room count filter
+      const matchesRoomCount = 
+        (typeof filters.minRooms === 'number' ? (hotel.totalRooms || 0) >= filters.minRooms : true) &&
+        (typeof filters.maxRooms === 'number' ? (hotel.totalRooms || 0) <= filters.maxRooms : true);
+
+      return matchesSearch && matchesCategory && matchesCity && matchesPrice && matchesRating && matchesRoomCount;
     });
   }, [activeHotels, searchQuery, filters]);
 
@@ -238,6 +267,9 @@ const DynamicVenuePage: React.FC = () => {
         resetFilter[category] = [0, 10000] as [number, number];
       } else if (category === 'rating') {
         resetFilter[category] = 0;
+      } else if (category === 'roomCount') {
+        resetFilter.minRooms = 0;
+        resetFilter.maxRooms = Infinity;
       } else {
         resetFilter[category] = '';
       }
@@ -260,6 +292,13 @@ const DynamicVenuePage: React.FC = () => {
         updatedFilter[category] = 0;
       } else {
         updatedFilter[category] = parseFloat(value.replace('+', '')) || 0;
+      }
+    } else if (category === 'roomCount') {
+      // Find the room count range that matches the selected label
+      const selectedRange = filterOptions.roomCountRanges.find(range => range.label === value);
+      if (selectedRange) {
+        updatedFilter.minRooms = selectedRange.min;
+        updatedFilter.maxRooms = selectedRange.max;
       }
     } else {
       updatedFilter[category] = value;
@@ -294,6 +333,7 @@ const DynamicVenuePage: React.FC = () => {
     if (filters.city) count++;
     if (filters.rating > 0) count++;
     if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 10000) count++;
+    if (typeof filters.minRooms === 'number' || typeof filters.maxRooms === 'number') count++;
     return count;
   }, [filters]);
 
@@ -394,7 +434,8 @@ const DynamicVenuePage: React.FC = () => {
       category: { title: 'Category', options: filterOptions.categories },
       city: { title: 'City', options: filterOptions.cities },
       priceRange: { title: 'Price Range', options: filterOptions.priceRanges },
-      rating: { title: 'Rating', options: filterOptions.ratings }
+      rating: { title: 'Rating', options: filterOptions.ratings },
+      roomCount: { title: 'Room Count', options: filterOptions.roomCountRanges.map(range => range.label) }
     };
 
     return (
@@ -419,30 +460,40 @@ const DynamicVenuePage: React.FC = () => {
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-2">
-                  {category.options.map((option: string) => (
-                    <div key={option} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${key}-${option}`}
-                        checked={
-                          key === 'rating'
-                            ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
-                            : key === 'priceRange'
-                              ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
-                                 filters.priceRange[0] === filterOptions.minPrice && 
-                                 filters.priceRange[1] === filterOptions.midPrice) ||
-                                (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
-                                 filters.priceRange[0] === filterOptions.midPrice + 1 && 
-                                 filters.priceRange[1] === filterOptions.maxPrice) ||
-                                (option.startsWith('>') && filters.priceRange[0] > filterOptions.maxPrice)
-                              : (filters as any)[key] === option
-                        }
-                        onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
-                      />
-                      <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
+                  {category.options.map((option: string) => {
+                    // For room count, check if the current filter range matches this option
+                    const isChecked = key === 'roomCount' 
+                      ? (() => {
+                          const selectedRange = filterOptions.roomCountRanges.find(range => range.label === option);
+                          return selectedRange && 
+                            filters.minRooms === selectedRange.min && 
+                            filters.maxRooms === selectedRange.max;
+                        })()
+                      : key === 'rating'
+                        ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
+                        : key === 'priceRange'
+                          ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
+                             filters.priceRange[0] === filterOptions.minPrice && 
+                             filters.priceRange[1] === filterOptions.midPrice) ||
+                            (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
+                             filters.priceRange[0] === filterOptions.midPrice + 1 && 
+                             filters.priceRange[1] === filterOptions.maxPrice) ||
+                            (option.startsWith('>') && filters.priceRange[0] > filterOptions.maxPrice)
+                          : (filters as any)[key] === option;
+                    
+                    return (
+                      <div key={option} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${key}-${option}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
+                        />
+                        <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </CollapsibleContent>
               </Collapsible>
             )

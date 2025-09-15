@@ -121,6 +121,27 @@ const DynamicVenuePage: React.FC = () => {
       `> ₹ ${maxPrice}`
     ] : [];
 
+    // Dynamic guest capacity ranges based on actual venue capacities
+    const capacities = activeBanquets
+      .map(b => (b as any).maxGuestCapacity || b.capacity)
+      .filter(capacity => capacity !== undefined && capacity !== null && capacity > 0)
+      .sort((a, b) => a - b);
+    
+    const minCapacity = capacities.length > 0 ? Math.min(...capacities) : 0;
+    const maxCapacity = capacities.length > 0 ? Math.max(...capacities) : 1000;
+    
+    // Create guest capacity ranges
+    const guestCapacityRanges = capacities.length > 0 ? [
+      { label: 'Up to 50 guests', min: 0, max: 50 },
+      { label: '51 - 100 guests', min: 51, max: 100 },
+      { label: '101 - 200 guests', min: 101, max: 200 },
+      { label: '201 - 300 guests', min: 201, max: 300 },
+      { label: '301 - 500 guests', min: 301, max: 500 },
+      { label: '500+ guests', min: 501, max: Infinity }
+    ].filter(range => 
+      capacities.some(cap => cap >= range.min && cap <= range.max)
+    ) : [];
+
     // Dynamic ratings based on actual venue ratings (not used in filters now)
     const ratings: number[] = [];
 
@@ -132,9 +153,12 @@ const DynamicVenuePage: React.FC = () => {
       priceRanges,
       ratings: ['All Ratings', ...ratings.map(rating => `${rating}+`)],
       venueTypes,
+      guestCapacityRanges,
       minPrice,
       maxPrice,
-      midPrice
+      midPrice,
+      minCapacity,
+      maxCapacity
     };
   }, [activeBanquets]);
 
@@ -161,9 +185,10 @@ const DynamicVenuePage: React.FC = () => {
       const matchesVenueType = !filters.venueType || (banquet.venueType && banquet.venueType === filters.venueType);
 
       // Capacity filter
+      const venueCapacity = (banquet as any).maxGuestCapacity || banquet.capacity;
       const matchesCapacity =
-        (typeof filters.minCapacity === 'number' ? banquet.capacity >= filters.minCapacity : true) &&
-        (typeof filters.maxCapacity === 'number' ? banquet.capacity <= filters.maxCapacity : true);
+        (typeof filters.minCapacity === 'number' ? venueCapacity >= filters.minCapacity : true) &&
+        (typeof filters.maxCapacity === 'number' ? venueCapacity <= filters.maxCapacity : true);
 
       return matchesSearch && matchesCity && matchesVenueType && matchesCapacity;
     });
@@ -184,14 +209,23 @@ const DynamicVenuePage: React.FC = () => {
     if (!checked) {
       // Reset to default values that show all venues
       const resetFilter: any = {};
-      if (category === 'city' || category === 'venueType') resetFilter[category] = '';
+      if (category === 'city' || category === 'venueType' || category === 'guestCapacity') resetFilter[category] = '';
       dispatch(setFilters(resetFilter));
       return;
     }
 
     const updatedFilter: any = {};
 
-    if (category === 'city' || category === 'venueType') updatedFilter[category] = value;
+    if (category === 'city' || category === 'venueType') {
+      updatedFilter[category] = value;
+    } else if (category === 'guestCapacity') {
+      // Find the capacity range that matches the selected label
+      const selectedRange = filterOptions.guestCapacityRanges.find(range => range.label === value);
+      if (selectedRange) {
+        updatedFilter.minCapacity = selectedRange.min;
+        updatedFilter.maxCapacity = selectedRange.max;
+      }
+    }
 
     dispatch(setFilters(updatedFilter));
   };
@@ -220,6 +254,7 @@ const DynamicVenuePage: React.FC = () => {
     let count = 0;
     if (filters.city) count++;
     if (filters.venueType) count++;
+    if (typeof filters.minCapacity === 'number' || typeof filters.maxCapacity === 'number') count++;
     return count;
   }, [filters]);
 
@@ -319,6 +354,7 @@ const DynamicVenuePage: React.FC = () => {
     const filterCategories = {
       city: { title: 'City', options: filterOptions.cities },
       venueType: { title: 'Venue Type', options: filterOptions.venueTypes },
+      guestCapacity: { title: 'Guest Capacity', options: filterOptions.guestCapacityRanges.map(range => range.label) },
     };
 
     return (
@@ -343,18 +379,30 @@ const DynamicVenuePage: React.FC = () => {
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-2">
-                  {category.options.map((option: string) => (
-                    <div key={option} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${key}-${option}`}
-                        checked={(filters as any)[key] === option}
-                        onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
-                      />
-                      <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
+                  {category.options.map((option: string) => {
+                    // For guest capacity, check if the current filter range matches this option
+                    const isChecked = key === 'guestCapacity' 
+                      ? (() => {
+                          const selectedRange = filterOptions.guestCapacityRanges.find(range => range.label === option);
+                          return selectedRange && 
+                            filters.minCapacity === selectedRange.min && 
+                            filters.maxCapacity === selectedRange.max;
+                        })()
+                      : (filters as any)[key] === option;
+                    
+                    return (
+                      <div key={option} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${key}-${option}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
+                        />
+                        <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </CollapsibleContent>
               </Collapsible>
             )

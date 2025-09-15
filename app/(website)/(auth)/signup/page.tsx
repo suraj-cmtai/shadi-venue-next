@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/lib/redux/store";
 import { signup } from "@/lib/redux/features/authSlice";
@@ -27,6 +28,7 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   // Role-specific welcome messages
   const getRoleMessage = (role: string) => {
@@ -66,6 +68,23 @@ const SignupPage = () => {
       } catch (welcomeError) {
         // Optionally handle error, but don't block user
         // toast.error("Welcome API call failed.");
+      }
+
+      // Redirect based on role after successful signup
+      if (result.data.role === "admin") {
+        router.push("/dashboard/admin");
+      } else if (result.data.role === "hotel") {
+        router.push("/dashboard/hotel");
+      } else if (result.data.role === "vendor") {
+        router.push("/dashboard/vendor");
+      } else if (result.data.role === "banquet") {
+        router.push("/dashboard/banquet");
+      } else if (result.data.role === "blog") {
+        router.push("/dashboard/blog");
+      } else if (result.data.role === "marketing") {
+        router.push("/dashboard/marketing");
+      } else {
+        router.push("/dashboard/user");
       }
       
     } catch (error: unknown) {

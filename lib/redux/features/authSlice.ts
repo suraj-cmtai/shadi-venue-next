@@ -120,12 +120,15 @@ export const updateAuthStatus = createAsyncThunk(
 // Update auth entry
 export const updateAuth = createAsyncThunk(
   "auth/update",
-  async ({ id, name, email, role }: { id: string; name: string; email: string; role: string }, { rejectWithValue }) => {
+  async ({ id, name, email, role, password }: { id: string; name: string; email: string; role: string; password?: string }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("email", email);
       formData.append("role", role);
+      if (password && password.trim() !== "") {
+        formData.append("password", password);
+      }
       const response = await axios.put(`/api/routes/auth/${id}`, formData);
       return response.data.data;
     } catch (error: any) {
