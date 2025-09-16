@@ -523,9 +523,9 @@ export default function BanquetEnquiryPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm text-muted-foreground font-mono">
+                  <code className="bg-muted px-2 py-1 rounded text-xs">
                       {getBanquetName(enquiry.authId)}
-                    </div>
+                    </code>
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(enquiry.status)}>
