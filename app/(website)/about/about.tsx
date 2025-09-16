@@ -49,14 +49,6 @@ export default function WeddingSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
                 >
-                    <motion.h3
-                        className="font-cormorant text-xl text-[#666] mb-2"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                    >
-                        Milady Wedding
-                    </motion.h3>
                     <motion.h2
                         className="font-dancing-script text-4xl md:text-5xl text-[#212d47] mb-2"
                         initial={{ opacity: 0, y: 20 }}
@@ -92,7 +84,11 @@ export default function WeddingSection() {
                                 Creating Beautiful Memories Together Since 1998.
                             </h2>
                             <p className="font-cormorant text-lg text-[#666] leading-relaxed">
-                                Since 1998, we’ve been dedicated to creating beautiful memories together. Our commitment to excellence and personalized service ensures every detail of your special day is thoughtfully crafted, making each moment unforgettable and leaving a lasting impression on you and your loved ones.
+                                Shadi Venue is a premier venue booking platform and a trusted venture of MRAKL BASICS PVT LTD. We specialize in providing the best venues across India, with a particular focus on North India, including Rajasthan, Uttarakhand, and Himachal Pradesh. Our mission is to make your special occasions, such as weddings and events, unforgettable with the perfect venue selection.
+                                <br /><br />
+                                At Shadi Venue, we are dedicated to offering the most competitive rates in the market. Thanks to our strong relationships and better understanding with hotel and resort owners, we are able to negotiate the best deals for our clients. This ensures that you receive high-quality venues at affordable prices without compromising on excellence.
+                                <br /><br />
+                                We strive to provide a seamless and hassle-free booking experience, backed by local expertise and an extensive network of stunning locations. Whether you're planning an intimate gathering or a grand celebration, trust Shadi Venue to turn your dream event into reality with the perfect venue choice.
                             </p>
 
                             {/* Get in Touch Button */}
