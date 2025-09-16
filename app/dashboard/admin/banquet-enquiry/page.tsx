@@ -252,7 +252,7 @@ export default function BanquetEnquiryPage() {
             <Input
               id="add-authId"
               key="add-authid-input"
-              value={newEnquiry.authId}
+              value={getBanquetName(newEnquiry.authId)}
               onChange={(e) => {
                 setNewEnquiry(prev => ({ ...prev, authId: e.target.value }));
               }}
@@ -361,7 +361,7 @@ export default function BanquetEnquiryPage() {
               <Input
                 id="edit-authId"
                 key="edit-authid-input"
-                value={selectedEnquiry.authId}
+                value={getBanquetName(selectedEnquiry.authId)}
                 onChange={(e) => {
                   setSelectedEnquiry((prev: BanquetEnquiry | null) => 
                     prev ? { ...prev, authId: e.target.value } : null

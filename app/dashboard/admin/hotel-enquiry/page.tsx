@@ -436,7 +436,7 @@ export default function HotelEnquiryPage() {
                   </TableCell>
                   <TableCell>
                     <code className="bg-muted px-2 py-1 rounded text-xs">
-                      {enquiry.authId}
+                      {getHotelName(enquiry.authId)}
                     </code>
                   </TableCell>
                   <TableCell>
@@ -570,7 +570,7 @@ export default function HotelEnquiryPage() {
                 <p className="text-sm text-muted-foreground">{selectedEnquiry.email}</p>
                 <p className="text-sm text-muted-foreground">{selectedEnquiry.phoneNumber}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Auth ID: {selectedEnquiry.authId}
+                  Auth ID: {getHotelName(selectedEnquiry.authId)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Message: {selectedEnquiry.message}

@@ -252,7 +252,7 @@ export default function VendorEnquiryPage() {
             <Input
               id="add-authId"
               key="add-authid-input"
-              value={newEnquiry.authId}
+              value={getVendorName(newEnquiry.authId)}
               onChange={(e) => {
                 setNewEnquiry(prev => ({ ...prev, authId: e.target.value }));
               }}
@@ -361,7 +361,7 @@ export default function VendorEnquiryPage() {
               <Input
                 id="edit-authId"
                 key="edit-authid-input"
-                value={selectedEnquiry.authId}
+                value={getVendorName(selectedEnquiry.authId)}
                 onChange={(e) => {
                   setSelectedEnquiry(prev => 
                     prev ? { ...prev, authId: e.target.value } : null

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown, Award, Phone, Mail, Globe, Heart, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,9 +63,7 @@ const DynamicVendorPage: React.FC = () => {
 
   // On mount, fetch vendors and initialize filters from URL once
   useEffect(() => {
-    if (!hasFetched) {
       dispatch(fetchActiveVendors());
-    }
   
     const qp = searchParams.get('search');
     const cityParam = searchParams.get('city');
@@ -208,12 +207,14 @@ const DynamicVendorPage: React.FC = () => {
     <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#212D47] to-[#2A3759]">
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
           alt="Beautiful Wedding Vendors"
-          className="w-full h-full object-cover object-center"
+          fill
+          className="object-cover object-center"
           style={{ opacity: 0.35 }}
-          draggable={false}
+          priority
+          unoptimized
         />
         {/* Overlay for darkening */}
         <div className="absolute inset-0 bg-[#212D47] opacity-60" />
@@ -518,10 +519,13 @@ const DynamicVendorPage: React.FC = () => {
       onClick={() => onVendorClick(vendor.id)}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img
+        <Image
           src={vendor.coverImageUrl || vendor.logoUrl || '/api/placeholder/400/300'}
           alt={vendor.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          unoptimized
         />
         <div className="absolute top-3 right-3 flex items-center gap-2">
           <Badge variant="secondary" className="bg-black/70 text-white">

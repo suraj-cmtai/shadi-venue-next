@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import GradientButton from "@/components/GradientButton";
 import {
   // Imports from vendorSlice
@@ -40,11 +41,14 @@ export default function FeaturedVendors() {
     <section className="relative w-full bg-neutral-50 py-16 md:py-24 overflow-hidden">
       {/* Decorative Vector (right, desktop only) */}
       <div className="hidden lg:block absolute right-0 top-0 h-full z-0">
-        <img
+        <Image
           src={VECTOR02_IMG}
           alt="Decorative flower vector"
+          width={200}
+          height={400}
           className="h-full w-auto object-contain rotate-180 scale-y-[-1]"
           aria-hidden="true"
+          unoptimized
         />
       </div>
 
@@ -130,7 +134,7 @@ export default function FeaturedVendors() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           {/* Updated link to a general vendors page */}
-          <Link href="/vendors" passHref>
+          <Link href="/vendors">
             <GradientButton>EXPLORE MORE</GradientButton>
           </Link>
         </motion.div>
