@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { Search, List, Grid, MapPin, Star, Users, Camera, ChevronDown, Wifi, Car, Coffee, Dumbbell, Waves, Utensils, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -110,6 +111,7 @@ const DynamicVenuePage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const filterOptions = useMemo(() => {
+    // Get categories from actual hotel data
     const categories = Array.from(
       new Set(activeHotels.map(hotel => hotel.category).filter(cat => cat && cat.trim() !== ''))
     );
@@ -126,21 +128,37 @@ const DynamicVenuePage: React.FC = () => {
       new Set(activeHotels.map(hotel => hotel.location?.state).filter(state => state && state.trim() !== ''))
     );
 
-    // Dynamic price ranges based on actual venue prices (exclude 0 prices)
+    // Dynamic price ranges based on wedding package prices (exclude 0 prices)
     const prices = activeHotels
-      .map(hotel => hotel.priceRange?.startingPrice)
+      .flatMap(hotel => {
+        // Prioritize wedding package prices over regular price range
+        if (hotel.weddingPackages && hotel.weddingPackages.length > 0) {
+          return hotel.weddingPackages
+            .map(pkg => pkg.price)
+            .filter(price => price !== undefined && price !== null && price > 0);
+        }
+        // Fallback to regular price range if no wedding packages
+        return hotel.priceRange?.startingPrice ? [hotel.priceRange.startingPrice] : [];
+      })
       .filter(price => price !== undefined && price !== null && price > 0)
       .sort((a, b) => a - b);
     
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 10000;
-    const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 5000;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 500000;
+    const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 250000;
     
+    // Wedding package price ranges
     const priceRanges = prices.length > 0 ? [
-      `₹ ${minPrice} - ₹ ${midPrice}`,
-      `₹ ${midPrice + 1} - ₹ ${maxPrice}`,
-      `> ₹ ${maxPrice}`
-    ] : [];
+      `₹ ${minPrice.toLocaleString()} - ₹ ${midPrice.toLocaleString()}`,
+      `₹ ${(midPrice + 1).toLocaleString()} - ₹ ${maxPrice.toLocaleString()}`,
+      `Above ₹ ${maxPrice.toLocaleString()}`
+    ] : [
+      'Under ₹ 50,000',
+      '₹ 50,000 - ₹ 1,00,000', 
+      '₹ 1,00,000 - ₹ 2,50,000',
+      '₹ 2,50,000 - ₹ 5,00,000',
+      'Above ₹ 5,00,000'
+    ];
 
     // Dynamic ratings based on actual venue ratings
     const ratings = Array.from(
@@ -185,7 +203,7 @@ const DynamicVenuePage: React.FC = () => {
 
   // Auto-scroll to results when filters/search are active and data is ready
   useEffect(() => {
-    const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
+    const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 9999999;
     const anyFilterActive = Boolean(
       (filters.category && filters.category.trim() !== '') ||
       (filters.city && String(filters.city).trim() !== '') ||
@@ -226,13 +244,23 @@ const DynamicVenuePage: React.FC = () => {
         hotel.location.city.trim().toLowerCase() === String(filters.city).trim().toLowerCase()
       );
 
-      // Price range filter - show all venues if default range (0, 10000) or venue has no price data
-      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 10000;
-      const matchesPrice = isDefaultPriceRange || 
-        !hotel.priceRange?.startingPrice || 
-        hotel.priceRange.startingPrice === 0 ||
-        (hotel.priceRange.startingPrice >= filters.priceRange[0] &&
-         hotel.priceRange.startingPrice <= filters.priceRange[1]);
+      // Price range filter - prioritize wedding package prices over regular price range
+      const isDefaultPriceRange = filters.priceRange[0] === 0 && filters.priceRange[1] === 9999999;
+      const matchesPrice = isDefaultPriceRange || (() => {
+        // Check wedding package prices first
+        if (hotel.weddingPackages && hotel.weddingPackages.length > 0) {
+          return hotel.weddingPackages.some(pkg => 
+            pkg.price && pkg.price > 0 &&
+            pkg.price >= filters.priceRange[0] &&
+            pkg.price <= filters.priceRange[1]
+          );
+        }
+        // Fallback to regular price range
+        return !hotel.priceRange?.startingPrice || 
+          hotel.priceRange.startingPrice === 0 ||
+          (hotel.priceRange.startingPrice >= filters.priceRange[0] &&
+           hotel.priceRange.startingPrice <= filters.priceRange[1]);
+      })();
 
       // Rating filter - show all venues if no rating filter is applied
       const matchesRating = !filters.rating || filters.rating === 0 || 
@@ -264,7 +292,7 @@ const DynamicVenuePage: React.FC = () => {
       // Reset to default values that show all venues
       const resetFilter: any = {};
       if (category === 'priceRange') {
-        resetFilter[category] = [0, 10000] as [number, number];
+        resetFilter[category] = [0, 9999999] as [number, number];
       } else if (category === 'rating') {
         resetFilter[category] = 0;
       } else if (category === 'roomCount') {
@@ -280,12 +308,23 @@ const DynamicVenuePage: React.FC = () => {
     const updatedFilter: any = {};
 
     if (category === 'priceRange') {
-      if (value.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`)) {
+      // Handle wedding package price ranges
+      if (value.includes('Under ₹ 50,000')) {
+        updatedFilter[category] = [0, 50000] as [number, number];
+      } else if (value.includes('₹ 50,000 - ₹ 1,00,000')) {
+        updatedFilter[category] = [50000, 100000] as [number, number];
+      } else if (value.includes('₹ 1,00,000 - ₹ 2,50,000')) {
+        updatedFilter[category] = [100000, 250000] as [number, number];
+      } else if (value.includes('₹ 2,50,000 - ₹ 5,00,000')) {
+        updatedFilter[category] = [250000, 500000] as [number, number];
+      } else if (value.includes('Above ₹ 5,00,000')) {
+        updatedFilter[category] = [500000, 9999999] as [number, number];
+      } else if (value.includes(`${filterOptions.minPrice.toLocaleString()} - ₹ ${filterOptions.midPrice.toLocaleString()}`)) {
         updatedFilter[category] = [filterOptions.minPrice, filterOptions.midPrice] as [number, number];
-      } else if (value.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`)) {
+      } else if (value.includes(`${(filterOptions.midPrice + 1).toLocaleString()} - ₹ ${filterOptions.maxPrice.toLocaleString()}`)) {
         updatedFilter[category] = [filterOptions.midPrice + 1, filterOptions.maxPrice] as [number, number];
-      } else {
-        updatedFilter[category] = [filterOptions.maxPrice + 1, 999999] as [number, number];
+      } else if (value.includes(`Above ₹ ${filterOptions.maxPrice.toLocaleString()}`)) {
+        updatedFilter[category] = [filterOptions.maxPrice + 1, 9999999] as [number, number];
       }
     } else if (category === 'rating') {
       if (value === 'All Ratings') {
@@ -332,7 +371,7 @@ const DynamicVenuePage: React.FC = () => {
     if (filters.category) count++;
     if (filters.city) count++;
     if (filters.rating > 0) count++;
-    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 10000) count++;
+    if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 9999999) count++;
     if (typeof filters.minRooms === 'number' || typeof filters.maxRooms === 'number') count++;
     return count;
   }, [filters]);
@@ -342,12 +381,14 @@ const DynamicVenuePage: React.FC = () => {
     <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#212D47] to-[#2A3759]">
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
           alt="Beautiful Wedding Mandap"
-          className="w-full h-full object-cover object-center"
+          fill
+          className="object-cover object-center"
           style={{ opacity: 0.35 }}
-          draggable={false}
+          priority
+          unoptimized
         />
         {/* Overlay for darkening */}
         <div className="absolute inset-0 bg-[#212D47] opacity-60" />
@@ -388,6 +429,7 @@ const DynamicVenuePage: React.FC = () => {
       </div>
     </section>
   );
+
 
   // Dynamic City Selector Component
   const CitySelector: React.FC = () => (
@@ -472,13 +514,18 @@ const DynamicVenuePage: React.FC = () => {
                       : key === 'rating'
                         ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
                         : key === 'priceRange'
-                          ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
+                          ? (option.includes('Under ₹ 50,000') && filters.priceRange[0] === 0 && filters.priceRange[1] === 50000) ||
+                            (option.includes('₹ 50,000 - ₹ 1,00,000') && filters.priceRange[0] === 50000 && filters.priceRange[1] === 100000) ||
+                            (option.includes('₹ 1,00,000 - ₹ 2,50,000') && filters.priceRange[0] === 100000 && filters.priceRange[1] === 250000) ||
+                            (option.includes('₹ 2,50,000 - ₹ 5,00,000') && filters.priceRange[0] === 250000 && filters.priceRange[1] === 500000) ||
+                            (option.includes('Above ₹ 5,00,000') && filters.priceRange[0] === 500000 && filters.priceRange[1] === 9999999) ||
+                            (option.includes(`${filterOptions.minPrice.toLocaleString()} - ₹ ${filterOptions.midPrice.toLocaleString()}`) && 
                              filters.priceRange[0] === filterOptions.minPrice && 
                              filters.priceRange[1] === filterOptions.midPrice) ||
-                            (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
+                            (option.includes(`${(filterOptions.midPrice + 1).toLocaleString()} - ₹ ${filterOptions.maxPrice.toLocaleString()}`) && 
                              filters.priceRange[0] === filterOptions.midPrice + 1 && 
                              filters.priceRange[1] === filterOptions.maxPrice) ||
-                            (option.startsWith('>') && filters.priceRange[0] > filterOptions.maxPrice)
+                            (option.includes(`Above ₹ ${filterOptions.maxPrice.toLocaleString()}`) && filters.priceRange[0] > filterOptions.maxPrice)
                           : (filters as any)[key] === option;
                     
                     return (
@@ -489,7 +536,7 @@ const DynamicVenuePage: React.FC = () => {
                           onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
                         />
                         <Label htmlFor={`${key}-${option}`} className="text-xs text-gray-600 cursor-pointer">
-                          {option}
+                          {key === 'category' ? option.replace(/\([^)]*\)/g, '').trim() : option}
                         </Label>
                       </div>
                     );
@@ -592,10 +639,13 @@ const DynamicVenuePage: React.FC = () => {
       onClick={() => onVenueClick(venue.id)}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
-        <img
+        <Image
           src={venue.images?.[0] || '/api/placeholder/400/300'}
           alt={venue.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          unoptimized
         />
         <div className="absolute top-3 right-3 flex items-center gap-2">
           <Badge variant="secondary" className="bg-black/70 text-white">
@@ -681,22 +731,82 @@ const DynamicVenuePage: React.FC = () => {
             <div className="flex items-center text-sm text-gray-600">
               <Users className="w-4 h-4 mr-1" />
               <span>
-                {venue.totalRooms && venue.totalRooms !== 0 
-                  ? `${venue.totalRooms} rooms` 
-                  : venue.weddingPackages && venue.weddingPackages.length > 0 
-                    ? `${venue.weddingPackages.length} packages`
-                    : 'Rooms: N/A'
+                {venue.weddingPackages && venue.weddingPackages.length > 0 
+                  ? `${venue.weddingPackages.length} wedding packages`
+                  : venue.totalRooms && venue.totalRooms !== 0 
+                    ? `${venue.totalRooms} rooms` 
+                    : 'Packages: N/A'
                 }
               </span>
             </div>
-            {venue.priceRange && venue.priceRange.startingPrice > 0 && (
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Starting from</div>
-                <div className="font-semibold text-[#212D47]">
-                  ₹{venue.priceRange.startingPrice.toLocaleString()}
-                </div>
-              </div>
-            )}
+            {(() => {
+              // Check if venue has wedding packages with prices
+              const hasPackagePrices = venue.weddingPackages && venue.weddingPackages.length > 0 && 
+                venue.weddingPackages.some(pkg => pkg.price && pkg.price > 0);
+              
+              if (hasPackagePrices) {
+                const category = venue.category?.toLowerCase() || '';
+                const packagePrices = venue.weddingPackages
+                  .map(pkg => pkg.price)
+                  .filter(price => price && price > 0)
+                  .sort((a, b) => a - b);
+                
+                if (category.includes('budget')) {
+                  // Show minimum price for budget venues
+                  const minPrice = Math.min(...packagePrices);
+                  return (
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Budget Package</div>
+                      <div className="font-semibold text-[#212D47]">
+                        ₹{minPrice.toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                } else if (category.includes('luxury')) {
+                  // Show maximum price for luxury venues
+                  const maxPrice = Math.max(...packagePrices);
+                  return (
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Luxury Package</div>
+                      <div className="font-semibold text-[#212D47]">
+                        ₹{maxPrice.toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Show package count for other categories
+                  return (
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600">Wedding Packages</div>
+                      <div className="font-semibold text-[#212D47]">
+                        {venue.weddingPackages.length} Available
+                      </div>
+                    </div>
+                  );
+                }
+              } else if (venue.priceRange && venue.priceRange.startingPrice > 0) {
+                // Fallback to regular price range
+                return (
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600">Starting from</div>
+                    <div className="font-semibold text-[#212D47]">
+                      ₹{venue.priceRange.startingPrice.toLocaleString()}
+                    </div>
+                  </div>
+                );
+              } else if (venue.weddingPackages && venue.weddingPackages.length > 0) {
+                // Show package count if no prices available
+                return (
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600">Wedding Packages</div>
+                    <div className="font-semibold text-[#212D47]">
+                      {venue.weddingPackages.length} Available
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       </CardContent>
@@ -755,6 +865,7 @@ const DynamicVenuePage: React.FC = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <Hero />
+
 
       {/* City Selector - Only show if there are cities */}
       {filterOptions.cities.length > 0 && <CitySelector />}

@@ -59,6 +59,7 @@ export default function GalleryPage() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [currentHeroImage, setCurrentHeroImage] = useState(0);
 
   // Redux
   const dispatch = useDispatch();
@@ -90,6 +91,16 @@ export default function GalleryPage() {
     }
   }, [gallery]);
 
+  // Hero image carousel effect
+  useEffect(() => {
+    if (galleryImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentHeroImage((prev) => (prev + 1) % galleryImages.length);
+      }, 4000); // Change image every 4 seconds
+      return () => clearInterval(interval);
+    }
+  }, [galleryImages]);
+
   const openGalleryAt = (index: number) => {
     if (index >= 0 && index < galleryImages.length) {
       setGalleryIndex(index);
@@ -116,11 +127,27 @@ export default function GalleryPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="w-full relative flex items-center justify-center overflow-hidden min-h-[40vh] sm:min-h-[50vh] bg-[#595959]">
-        {/* Overlay */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
-        </div>
+      <section className="w-full relative flex items-center justify-center overflow-hidden min-h-[40vh] sm:min-h-[50vh] bg-black">
+        {/* Dynamic Background Images */}
+        {galleryImages.length > 0 && (
+          <div className="absolute inset-0 z-0">
+            {galleryImages.map((image, index) => (
+              <Image
+                key={image}
+                src={image}
+                alt="Gallery Background"
+                fill
+                className={`object-cover transition-opacity duration-1000 ${
+                  index === currentHeroImage ? 'opacity-50' : 'opacity-0'
+                }`}
+                priority={index === 0}
+                unoptimized
+              />
+            ))}
+            {/* 80% Black Background Overlay */}
+            <div className="absolute inset-0 bg-black opacity-80"></div>
+          </div>
+        )}
         {/* Content */}
         <div className="w-full max-w-7xl mx-auto px-4 relative z-10 text-center flex flex-col items-center justify-center py-16 sm:py-24">
           <motion.h1

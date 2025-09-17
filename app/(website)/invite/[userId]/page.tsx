@@ -167,6 +167,9 @@ const InvitePage = ({ params }: InvitePageProps) => {
   const [selectedGalleryImage, setSelectedGalleryImage] = useState<string | null>(null);
   // Timeline image load state to avoid rendering before data on small screens
   const [timelineLoaded, setTimelineLoaded] = useState<Record<number, boolean>>({});
+  
+  // Video playing state for YouTube videos
+  const [playingVideos, setPlayingVideos] = useState<Record<number, boolean>>({});
 
   // Fetch user and wedding event venue details
   useEffect(() => {
@@ -307,6 +310,14 @@ const InvitePage = ({ params }: InvitePageProps) => {
         : [...prev.selectedEvents, eventIndex];
       return { ...prev, selectedEvents: selected };
     });
+  };
+
+  // Handle video play state
+  const handleVideoPlay = (videoIndex: number) => {
+    setPlayingVideos((prev) => ({
+      ...prev,
+      [videoIndex]: true,
+    }));
   };
 
   const handleRSVPSubmit = async (e: React.FormEvent) => {
@@ -1566,39 +1577,66 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     const videoId = getYouTubeVideoId(link);
                     if (!videoId) return null;
 
+                    const isPlaying = playingVideos[index] || false;
+
                     return (
-                      <motion.a
+                      <motion.div
                         key={index}
-                        href={link}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
                         whileHover={{ scale: 1.02, y: -5 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {/* Video Thumbnail */}
-                        <div className="relative w-full h-48 bg-gray-100">
-                          <img
-                            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-                            alt={`Wedding Video ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback to medium quality thumbnail if maxresdefault fails
-                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                            }}
-                          />
+                        <div className="relative w-full h-48 bg-gray-100 flex items-center justify-center">
+                          {!isPlaying ? (
+                            <>
+                              <img
+                                src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                                alt={`Wedding Video ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to medium quality thumbnail if maxresdefault fails
+                                  (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                                }}
+                              />
+                              {/* Play Button Overlay */}
+                              <button
+                                className="absolute inset-0 flex items-center justify-center focus:outline-none"
+                                onClick={() => handleVideoPlay(index)}
+                                aria-label="Play video"
+                                type="button"
+                                style={{ background: "rgba(0,0,0,0.25)" }}
+                              >
+                                <span className="flex items-center justify-center w-16 h-16 bg-black/60 rounded-full hover:bg-black/80 transition">
+                                  <svg className="w-10 h-10 text-white" viewBox="0 0 64 64" fill="currentColor">
+                                    <circle cx="32" cy="32" r="32" fill="currentColor" opacity="0.2"/>
+                                    <polygon points="26,20 50,32 26,44" fill="white"/>
+                                  </svg>
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <iframe
+                              className="w-full h-48"
+                              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`}
+                              title={`Wedding Video ${index + 1}`}
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            ></iframe>
+                          )}
                         </div>
-                        
                         {/* Video Info */}
                         <div className="p-4">
                           <div className="flex items-center justify-center gap-2 text-gray-600">
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                             </svg>
-                            <span className="text-sm font-medium">Click to watch on YouTube</span>
+                            <span className="text-sm font-medium">
+                              {isPlaying ? "Now playing" : "Click play to watch"}
+                            </span>
                           </div>
                         </div>
-                      </motion.a>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -1839,7 +1877,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-email">
-                    Email Address <span className="text-red-500">*</span>
+                    Email Address
                   </label>
                   <motion.input
                     id="rsvp-email"
@@ -1849,7 +1887,6 @@ const InvitePage = ({ params }: InvitePageProps) => {
                     onChange={(e) =>
                       handleRSVPInputChange("email", e.target.value)
                     }
-                    required
                     className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
                     whileFocus={{ scale: 1.02 }}
                   />
@@ -1885,7 +1922,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-gray-700 font-medium mb-1" htmlFor="rsvp-phone">
-                      Phone Number (Optional)
+                      Phone Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="rsvp-phone"
@@ -1895,6 +1932,7 @@ const InvitePage = ({ params }: InvitePageProps) => {
                       onChange={(e) =>
                         handleRSVPInputChange("phone", e.target.value)
                       }
+                      required
                       className="w-full border-2 border-gray-200 rounded-xl bg-white py-3 px-4 text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 transition-colors"
                     />
                   </div>

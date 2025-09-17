@@ -5,17 +5,24 @@ import Image from "next/image";
 
 const TEAM_MEMBERS = [
     {
-        name: "Sarah Johnson",
-        position: "Wedding Coordinator",
+        name: "Ananya Joshi",
+        position: "Event Specialist",
         image: "/images/wedding/team1.png",
+        bio: "Ananya is a dedicated event specialist with a keen eye for detail. With years of experience in the wedding and event industry, she ensures that every client’s vision is beautifully brought to life, providing seamless and personalized venue solutions.",
     },
     {
-        name: "Michael Chen",
-        position: "Creative Director",
+        name: "Riya Mehta",
+        position: "Hotel & Resort Negotiation Expert",
         image: "/images/wedding/team2.png",
+        bio: "Riya is our expert in hotel and resort negotiations. Her strong relationships with property owners across North India help us secure the best rates for our clients. Riya’s knowledgeable approach guarantees affordability without compromising on quality.",
+    },
+    {
+        name: "Simran Kaur",
+        position: "Client Relations & Venue Advisor",
+        image: "/images/wedding/team3.png",
+        bio: "Simran is passionate about creating memorable event experiences. She handles client queries and assists in selecting the perfect venue, ensuring a smooth and stress-free booking process from start to finish.",
     },
 ];
-
 
 export default function TeamSection() {
     return (
@@ -97,10 +104,10 @@ export default function TeamSection() {
                             {/* White Label Overlay (40% inside, 60% outside) */}
                             <div
                                 className={`
-                    absolute bottom-0 z-20 w-[80%] max-w-[280px]
-                    px-6 py-4 shadow-md bg-white
-                    ${index % 2 === 0 ? "right-0 translate-x-[40%] mb-7" : "left-0 -translate-x-[40%] mb-7"}
-                `}
+                                    absolute bottom-0 z-20 w-[80%] max-w-[280px]
+                                    px-6 py-4 shadow-md bg-white
+                                    ${index % 2 === 0 ? "right-0 translate-x-[40%] mb-7" : "left-0 -translate-x-[40%] mb-7"}
+                                `}
                             >
                                 <h3 className="font-cinzel text-lg text-black font-semibold mb-1">
                                     {member.name}
@@ -108,13 +115,14 @@ export default function TeamSection() {
                                 <p className="font-cormorant text-sm text-gray-500">
                                     {member.position}
                                 </p>
+                                <p className="font-cormorant text-xs text-gray-400 mt-2">
+                                    {member.bio}
+                                </p>
                             </div>
                         </motion.div>
                     ))}
                 </div>
-
             </div>
-
         </section>
     );
 }
