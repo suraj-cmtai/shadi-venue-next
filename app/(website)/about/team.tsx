@@ -7,19 +7,19 @@ const TEAM_MEMBERS = [
     {
         name: "Ananya Joshi",
         position: "Event Specialist",
-        image: "/images/wedding/team1.png",
+        image: "/images/ananya-joshi.jpeg",
         bio: "Ananya is a dedicated event specialist with a keen eye for detail. With years of experience in the wedding and event industry, she ensures that every client’s vision is beautifully brought to life, providing seamless and personalized venue solutions.",
     },
     {
         name: "Riya Mehta",
         position: "Hotel & Resort Negotiation Expert",
-        image: "/images/wedding/team2.png",
+        image: "/images/riya-mehta.jpeg",
         bio: "Riya is our expert in hotel and resort negotiations. Her strong relationships with property owners across North India help us secure the best rates for our clients. Riya’s knowledgeable approach guarantees affordability without compromising on quality.",
     },
     {
         name: "Simran Kaur",
         position: "Client Relations & Venue Advisor",
-        image: "/images/wedding/team3.png",
+        image: "/images/simran-kaur.jpeg",
         bio: "Simran is passionate about creating memorable event experiences. She handles client queries and assists in selecting the perfect venue, ensuring a smooth and stress-free booking process from start to finish.",
     },
 ];
@@ -92,12 +92,12 @@ export default function TeamSection() {
                             transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
                         >
                             {/* Member Image */}
-                            <div className="relative w-full h-72 bg-gray-200 overflow-hidden">
+                            <div className="relative w-full h-96 md:h-[36rem] lg:h-[44rem] bg-gray-200 overflow-hidden">
                                 <Image
                                     src={member.image}
                                     alt={member.name}
                                     fill
-                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                    className="object-contain transition-transform duration-500 group-hover:scale-105"
                                 />
                             </div>
 
