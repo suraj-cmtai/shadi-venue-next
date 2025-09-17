@@ -50,9 +50,9 @@ export default function Hero() {
           // If images haven't loaded in 3 seconds, show fallback for full 5 seconds
           fallbackTimeoutRef.current = setTimeout(() => {
             setShowFallbackBg(false);
-          }, 2000); // Additional 2 seconds to make total 5 seconds
+          }, 6000); // Additional 2 seconds to make total 5 seconds
         }
-      }, 3000);
+      }, 6000);
     }
 
     return () => {
