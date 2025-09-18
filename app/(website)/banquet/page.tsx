@@ -264,14 +264,18 @@ const DynamicVenuePage: React.FC = () => {
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+          src="/images/banquet-hero.jpeg"
           alt="Beautiful Wedding Mandap"
           className="w-full h-full object-cover object-center"
           style={{ opacity: 0.35 }}
           draggable={false}
         />
         {/* Overlay for darkening */}
-        <div className="absolute inset-0 bg-[#212D47] opacity-60" />
+        {/* Background Overlays */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
+          <div className="absolute inset-0 opacity-80"></div>
+        </div>
       </div>
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center justify-center px-4 py-16 md:py-24 text-center">

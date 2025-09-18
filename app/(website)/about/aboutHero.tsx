@@ -14,7 +14,7 @@ export default function AboutHero() {
             {/* Hero Background Image */}
             <div className="absolute inset-0">
                 <Image
-                    src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+                    src="/images/about-hero.jpeg"
                     alt="Beautiful Wedding Mandap"
                     fill
                     className="object-cover"

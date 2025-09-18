@@ -115,15 +115,15 @@ const DynamicVenuePage: React.FC = () => {
     const categories = Array.from(
       new Set(activeHotels.map(hotel => hotel.category).filter(cat => cat && cat.trim() !== ''))
     );
-    
+
     const cities = Array.from(
       new Set(activeHotels.map(hotel => hotel.location?.city).filter(city => city && city.trim() !== ''))
     );
-    
+
     const countries = Array.from(
       new Set(activeHotels.map(hotel => hotel.location?.country).filter(country => country && country.trim() !== ''))
     );
-    
+
     const states = Array.from(
       new Set(activeHotels.map(hotel => hotel.location?.state).filter(state => state && state.trim() !== ''))
     );
@@ -142,11 +142,11 @@ const DynamicVenuePage: React.FC = () => {
       })
       .filter(price => price !== undefined && price !== null && price > 0)
       .sort((a, b) => a - b);
-    
+
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 500000;
     const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 250000;
-    
+
     // Wedding package price ranges
     const priceRanges = prices.length > 0 ? [
       `₹ ${minPrice.toLocaleString()} - ₹ ${midPrice.toLocaleString()}`,
@@ -154,7 +154,7 @@ const DynamicVenuePage: React.FC = () => {
       `Above ₹ ${maxPrice.toLocaleString()}`
     ] : [
       'Under ₹ 50,000',
-      '₹ 50,000 - ₹ 1,00,000', 
+      '₹ 50,000 - ₹ 1,00,000',
       '₹ 1,00,000 - ₹ 2,50,000',
       '₹ 2,50,000 - ₹ 5,00,000',
       'Above ₹ 5,00,000'
@@ -170,10 +170,10 @@ const DynamicVenuePage: React.FC = () => {
       .map(hotel => hotel.totalRooms)
       .filter(rooms => rooms !== undefined && rooms !== null && rooms > 0)
       .sort((a, b) => a - b);
-    
+
     const minRooms = roomCounts.length > 0 ? Math.min(...roomCounts) : 0;
     const maxRooms = roomCounts.length > 0 ? Math.max(...roomCounts) : 100;
-    
+
     // Create room count ranges
     const roomCountRanges = roomCounts.length > 0 ? [
       { label: 'Up to 10 rooms', min: 0, max: 10 },
@@ -181,7 +181,7 @@ const DynamicVenuePage: React.FC = () => {
       { label: '26 - 50 rooms', min: 26, max: 50 },
       { label: '51 - 100 rooms', min: 51, max: 100 },
       { label: '100+ rooms', min: 101, max: Infinity }
-    ].filter(range => 
+    ].filter(range =>
       roomCounts.some(rooms => rooms >= range.min && rooms <= range.max)
     ) : [];
 
@@ -230,12 +230,12 @@ const DynamicVenuePage: React.FC = () => {
         hotel.location?.state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hotel.location?.country?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         hotel.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        hotel.amenities?.some(amenity => 
+        hotel.amenities?.some(amenity =>
           amenity.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
       // Category filter - show all venues if no filter is applied
-      const matchesCategory = !filters.category || 
+      const matchesCategory = !filters.category ||
         (hotel.category && hotel.category.trim() !== '' && hotel.category === filters.category);
 
       // City filter - normalize whitespace and case to avoid mismatches
@@ -249,26 +249,26 @@ const DynamicVenuePage: React.FC = () => {
       const matchesPrice = isDefaultPriceRange || (() => {
         // Check wedding package prices first
         if (hotel.weddingPackages && hotel.weddingPackages.length > 0) {
-          return hotel.weddingPackages.some(pkg => 
+          return hotel.weddingPackages.some(pkg =>
             pkg.price && pkg.price > 0 &&
             pkg.price >= filters.priceRange[0] &&
             pkg.price <= filters.priceRange[1]
           );
         }
         // Fallback to regular price range
-        return !hotel.priceRange?.startingPrice || 
+        return !hotel.priceRange?.startingPrice ||
           hotel.priceRange.startingPrice === 0 ||
           (hotel.priceRange.startingPrice >= filters.priceRange[0] &&
-           hotel.priceRange.startingPrice <= filters.priceRange[1]);
+            hotel.priceRange.startingPrice <= filters.priceRange[1]);
       })();
 
       // Rating filter - show all venues if no rating filter is applied
-      const matchesRating = !filters.rating || filters.rating === 0 || 
-        hotel.rating === 0 || 
+      const matchesRating = !filters.rating || filters.rating === 0 ||
+        hotel.rating === 0 ||
         hotel.rating >= filters.rating;
 
       // Room count filter
-      const matchesRoomCount = 
+      const matchesRoomCount =
         (typeof filters.minRooms === 'number' ? (hotel.totalRooms || 0) >= filters.minRooms : true) &&
         (typeof filters.maxRooms === 'number' ? (hotel.totalRooms || 0) <= filters.maxRooms : true);
 
@@ -382,7 +382,7 @@ const DynamicVenuePage: React.FC = () => {
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+          src="/images/venue-hero.jpeg"
           alt="Beautiful Wedding Mandap"
           fill
           className="object-cover object-center"
@@ -391,7 +391,11 @@ const DynamicVenuePage: React.FC = () => {
           unoptimized
         />
         {/* Overlay for darkening */}
-        <div className="absolute inset-0 bg-[#212D47] opacity-60" />
+        {/* Background Overlays */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
+          <div className="absolute inset-0 opacity-80"></div>
+        </div>
       </div>
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center justify-center px-4 py-16 md:py-24 text-center">
@@ -418,7 +422,7 @@ const DynamicVenuePage: React.FC = () => {
         </nav>
         {/* Heading */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-wide uppercase mb-3">
-        Uncover Stunning Venues for Your Big Day
+          Uncover Stunning Venues for Your Big Day
         </h1>
         {/* Decorative Black Line */}
         <div className="mx-auto w-10 h-1 bg-black/80 rounded mb-4" />
@@ -441,26 +445,22 @@ const DynamicVenuePage: React.FC = () => {
             <button
               key={city}
               onClick={() => dispatch(setFilters({ city }))}
-              className={`group relative flex flex-col items-center transition-all duration-300 ${
-                filters.city === city ? 'scale-110' : 'hover:scale-105'
-              }`}
+              className={`group relative flex flex-col items-center transition-all duration-300 ${filters.city === city ? 'scale-110' : 'hover:scale-105'
+                }`}
             >
               <div
-                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 flex items-center justify-center ${
-                  filters.city === city 
-                    ? 'shadow-lg border-[#212D47] bg-[#212D47]' 
+                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 flex items-center justify-center ${filters.city === city
+                    ? 'shadow-lg border-[#212D47] bg-[#212D47]'
                     : 'border-gray-300 hover:border-[#212D47]/50 bg-gray-100'
-                }`}
+                  }`}
               >
-                <MapPin className={`w-8 h-8 ${
-                  filters.city === city ? 'text-white' : 'text-gray-600'
-                }`} />
+                <MapPin className={`w-8 h-8 ${filters.city === city ? 'text-white' : 'text-gray-600'
+                  }`} />
               </div>
-              <span className={`mt-2 text-sm font-medium transition-colors text-center ${
-                filters.city === city 
-                  ? 'text-[#212D47]' 
+              <span className={`mt-2 text-sm font-medium transition-colors text-center ${filters.city === city
+                  ? 'text-[#212D47]'
                   : 'text-gray-600 group-hover:text-gray-900'
-              }`}>
+                }`}>
                 {city}
               </span>
             </button>
@@ -496,38 +496,37 @@ const DynamicVenuePage: React.FC = () => {
                 >
                   <span className="font-medium text-sm text-[#212D47]">{category.title}</span>
                   <ChevronDown
-                    className={`h-4 w-4 text-[#212D47] transition-transform ${
-                      openSections.includes(key) ? 'rotate-180' : ''
-                    }`}
+                    className={`h-4 w-4 text-[#212D47] transition-transform ${openSections.includes(key) ? 'rotate-180' : ''
+                      }`}
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-2">
                   {category.options.map((option: string) => {
                     // For room count, check if the current filter range matches this option
-                    const isChecked = key === 'roomCount' 
+                    const isChecked = key === 'roomCount'
                       ? (() => {
-                          const selectedRange = filterOptions.roomCountRanges.find(range => range.label === option);
-                          return selectedRange && 
-                            filters.minRooms === selectedRange.min && 
-                            filters.maxRooms === selectedRange.max;
-                        })()
+                        const selectedRange = filterOptions.roomCountRanges.find(range => range.label === option);
+                        return selectedRange &&
+                          filters.minRooms === selectedRange.min &&
+                          filters.maxRooms === selectedRange.max;
+                      })()
                       : key === 'rating'
                         ? filters.rating === parseFloat(option.replace('+', '')) || (option === 'All Ratings' && filters.rating === 0)
                         : key === 'priceRange'
                           ? (option.includes('Under ₹ 50,000') && filters.priceRange[0] === 0 && filters.priceRange[1] === 50000) ||
-                            (option.includes('₹ 50,000 - ₹ 1,00,000') && filters.priceRange[0] === 50000 && filters.priceRange[1] === 100000) ||
-                            (option.includes('₹ 1,00,000 - ₹ 2,50,000') && filters.priceRange[0] === 100000 && filters.priceRange[1] === 250000) ||
-                            (option.includes('₹ 2,50,000 - ₹ 5,00,000') && filters.priceRange[0] === 250000 && filters.priceRange[1] === 500000) ||
-                            (option.includes('Above ₹ 5,00,000') && filters.priceRange[0] === 500000 && filters.priceRange[1] === 9999999) ||
-                            (option.includes(`${filterOptions.minPrice.toLocaleString()} - ₹ ${filterOptions.midPrice.toLocaleString()}`) && 
-                             filters.priceRange[0] === filterOptions.minPrice && 
-                             filters.priceRange[1] === filterOptions.midPrice) ||
-                            (option.includes(`${(filterOptions.midPrice + 1).toLocaleString()} - ₹ ${filterOptions.maxPrice.toLocaleString()}`) && 
-                             filters.priceRange[0] === filterOptions.midPrice + 1 && 
-                             filters.priceRange[1] === filterOptions.maxPrice) ||
-                            (option.includes(`Above ₹ ${filterOptions.maxPrice.toLocaleString()}`) && filters.priceRange[0] > filterOptions.maxPrice)
+                          (option.includes('₹ 50,000 - ₹ 1,00,000') && filters.priceRange[0] === 50000 && filters.priceRange[1] === 100000) ||
+                          (option.includes('₹ 1,00,000 - ₹ 2,50,000') && filters.priceRange[0] === 100000 && filters.priceRange[1] === 250000) ||
+                          (option.includes('₹ 2,50,000 - ₹ 5,00,000') && filters.priceRange[0] === 250000 && filters.priceRange[1] === 500000) ||
+                          (option.includes('Above ₹ 5,00,000') && filters.priceRange[0] === 500000 && filters.priceRange[1] === 9999999) ||
+                          (option.includes(`${filterOptions.minPrice.toLocaleString()} - ₹ ${filterOptions.midPrice.toLocaleString()}`) &&
+                            filters.priceRange[0] === filterOptions.minPrice &&
+                            filters.priceRange[1] === filterOptions.midPrice) ||
+                          (option.includes(`${(filterOptions.midPrice + 1).toLocaleString()} - ₹ ${filterOptions.maxPrice.toLocaleString()}`) &&
+                            filters.priceRange[0] === filterOptions.midPrice + 1 &&
+                            filters.priceRange[1] === filterOptions.maxPrice) ||
+                          (option.includes(`Above ₹ ${filterOptions.maxPrice.toLocaleString()}`) && filters.priceRange[0] > filterOptions.maxPrice)
                           : (filters as any)[key] === option;
-                    
+
                     return (
                       <div key={option} className="flex items-center space-x-2">
                         <Checkbox
@@ -731,26 +730,26 @@ const DynamicVenuePage: React.FC = () => {
             <div className="flex items-center text-sm text-gray-600">
               <Users className="w-4 h-4 mr-1" />
               <span>
-                {venue.weddingPackages && venue.weddingPackages.length > 0 
+                {venue.weddingPackages && venue.weddingPackages.length > 0
                   ? `${venue.weddingPackages.length} wedding packages`
-                  : venue.totalRooms && venue.totalRooms !== 0 
-                    ? `${venue.totalRooms} rooms` 
+                  : venue.totalRooms && venue.totalRooms !== 0
+                    ? `${venue.totalRooms} rooms`
                     : 'Packages: N/A'
                 }
               </span>
             </div>
             {(() => {
               // Check if venue has wedding packages with prices
-              const hasPackagePrices = venue.weddingPackages && venue.weddingPackages.length > 0 && 
+              const hasPackagePrices = venue.weddingPackages && venue.weddingPackages.length > 0 &&
                 venue.weddingPackages.some(pkg => pkg.price && pkg.price > 0);
-              
+
               if (hasPackagePrices) {
                 const category = venue.category?.toLowerCase() || '';
                 const packagePrices = venue.weddingPackages
                   .map(pkg => pkg.price)
                   .filter(price => price && price > 0)
                   .sort((a, b) => a - b);
-                
+
                 if (category.includes('budget')) {
                   // Show minimum price for budget venues
                   const minPrice = Math.min(...packagePrices);
@@ -815,10 +814,10 @@ const DynamicVenuePage: React.FC = () => {
 
   // Loading Skeleton
   const LoadingSkeleton: React.FC = () => (
-    <div className={`grid gap-6 ${viewMode === 'grid' 
-      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+    <div className={`grid gap-6 ${viewMode === 'grid'
+      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
       : 'grid-cols-1'
-    }`}>
+      }`}>
       {[...Array(6)].map((_, index) => (
         <div key={index} className="space-y-3">
           <Skeleton className="h-48 w-full rounded-lg" />
@@ -917,10 +916,10 @@ const DynamicVenuePage: React.FC = () => {
           const remainingNormal = normal.slice(6);
           const ordered = [...featured, ...firstNormalChunk, ...premium, ...remainingNormal];
           return (
-            <div className={`grid gap-6 ${viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+            <div className={`grid gap-6 ${viewMode === 'grid'
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
               : 'grid-cols-1'
-            }`}>
+              }`}>
               {ordered.map((venue) => (
                 <div key={venue.id} className="relative">
                   {venue.isPremium && (

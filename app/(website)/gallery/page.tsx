@@ -29,9 +29,8 @@ function GalleryCard({
   // Responsive card: span 2 columns on md+ if spanTwo, else 1
   return (
     <motion.div
-      className={`relative overflow-hidden shadow hover:shadow-lg transition-all duration-300 w-full cursor-pointer ${
-        spanTwo ? "col-span-1 md:col-span-2" : "col-span-1"
-      } h-48 xs:h-56 sm:h-64 md:h-72 lg:h-80`}
+      className={`relative overflow-hidden shadow hover:shadow-lg transition-all duration-300 w-full cursor-pointer ${spanTwo ? "col-span-1 md:col-span-2" : "col-span-1"
+        } h-48 xs:h-56 sm:h-64 md:h-72 lg:h-80`}
       whileHover={{ scale: 1.03 }}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -96,7 +95,7 @@ export default function GalleryPage() {
     if (galleryImages.length > 1) {
       const interval = setInterval(() => {
         setCurrentHeroImage((prev) => (prev + 1) % galleryImages.length);
-      }, 4000); // Change image every 4 seconds
+      }, 8000); // Change image every 8 seconds
       return () => clearInterval(interval);
     }
   }, [galleryImages]);
@@ -137,15 +136,18 @@ export default function GalleryPage() {
                 src={image}
                 alt="Gallery Background"
                 fill
-                className={`object-cover transition-opacity duration-1000 ${
-                  index === currentHeroImage ? 'opacity-50' : 'opacity-0'
-                }`}
+                className={`object-cover transition-opacity duration-1000 ${index === currentHeroImage ? 'opacity-50' : 'opacity-0'
+                  }`}
                 priority={index === 0}
                 unoptimized
               />
             ))}
             {/* 80% Black Background Overlay */}
-            <div className="absolute inset-0 bg-black opacity-80"></div>
+            {/* Background Overlays */}
+            <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
+              <div className="absolute inset-0 opacity-80"></div>
+            </div>
           </div>
         )}
         {/* Content */}
@@ -252,42 +254,42 @@ export default function GalleryPage() {
           </div>
         </div>
       </section>
-              {/* Image Gallery Modal */}
-              <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-          <DialogContent className="w-auto max-w-none p-0 overflow-hidden">
-            <div className="relative bg-black">
-              {galleryImages.length > 0 && (
-                <img
-                  src={galleryImages[galleryIndex]}
-                  alt={`Gallery Image ${galleryIndex + 1}`}
-                  className="w-full h-[70vh] object-contain bg-black"
-                />
-              )}
-              {/* Controls */}
-              {galleryImages.length > 1 && (
-                <>
-                  <button
-                    aria-label="Previous image"
-                    onClick={handlePrevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    aria-label="Next image"
-                    onClick={handleNextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/80 text-sm px-2 py-1 rounded bg-black/40">
-                    {galleryIndex + 1} / {galleryImages.length}
-                  </div>
-                </>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+      {/* Image Gallery Modal */}
+      <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+        <DialogContent className="w-auto max-w-none p-0 overflow-hidden">
+          <div className="relative bg-black">
+            {galleryImages.length > 0 && (
+              <img
+                src={galleryImages[galleryIndex]}
+                alt={`Gallery Image ${galleryIndex + 1}`}
+                className="w-full h-[70vh] object-contain bg-black"
+              />
+            )}
+            {/* Controls */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  aria-label="Previous image"
+                  onClick={handlePrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  aria-label="Next image"
+                  onClick={handleNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#212d47] rounded-full p-2 shadow"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white/80 text-sm px-2 py-1 rounded bg-black/40">
+                  {galleryIndex + 1} / {galleryImages.length}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

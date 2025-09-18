@@ -1,4 +1,3 @@
-import { Fullscreen } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -14,7 +13,7 @@ export default function AboutHero() {
             {/* Hero Background Image */}
             <div className="absolute inset-0">
                 <Image
-                    src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+                    src="/images/venue-hero.jpeg"
                     alt="Beautiful Wedding Mandap"
                     fill
                     className="object-cover"

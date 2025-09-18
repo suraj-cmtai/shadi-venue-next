@@ -63,11 +63,11 @@ const DynamicVendorPage: React.FC = () => {
 
   // On mount, fetch vendors and initialize filters from URL once
   useEffect(() => {
-      dispatch(fetchActiveVendors());
-  
+    dispatch(fetchActiveVendors());
+
     const qp = searchParams.get('search');
     const cityParam = searchParams.get('city');
-  
+
     if (qp && qp.trim() !== '') {
       dispatch(setFilters({ city: qp, search: qp }));
       setLocalSearch(qp);
@@ -80,7 +80,7 @@ const DynamicVendorPage: React.FC = () => {
     }
     // Run only on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  
+  }, []);
 
   // Avoid syncing redux search back into input on every change to prevent focus jumps
 
@@ -89,15 +89,15 @@ const DynamicVendorPage: React.FC = () => {
   // Dynamic filter options derived from active vendors only
   const filterOptions = useMemo(() => {
     console.log('Active vendors:', activeVendors.length, activeVendors);
-    
+
     const categories = Array.from(
       new Set(activeVendors.map(vendor => vendor.category).filter(cat => cat && cat.trim() !== ''))
     );
-    
+
     const cities = Array.from(
       new Set(activeVendors.map(vendor => vendor.city).filter(city => city && city.trim() !== ''))
     );
-    
+
     const serviceAreas = Array.from(
       new Set(activeVendors.flatMap(vendor => vendor.serviceAreas || []).filter(area => area && area.trim() !== ''))
     );
@@ -107,11 +107,11 @@ const DynamicVendorPage: React.FC = () => {
       .map(vendor => vendor.startingPrice)
       .filter(price => price !== undefined && price !== null && price > 0)
       .sort((a, b) => a - b);
-    
+
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 100000;
     const midPrice = prices.length > 0 ? Math.floor((minPrice + maxPrice) / 2) : 50000;
-    
+
     const priceRanges = prices.length > 0 ? [
       `₹ ${minPrice} - ₹ ${midPrice}`,
       `₹ ${midPrice + 1} - ₹ ${maxPrice}`,
@@ -188,7 +188,7 @@ const DynamicVendorPage: React.FC = () => {
 
   // Handle vendor click
   const handleVendorClick = (vendorId: string) => {
-            router.push(`/vendors/${vendorId}`);
+    router.push(`/vendors/${vendorId}`);
   };
 
   // Count active filters
@@ -208,7 +208,7 @@ const DynamicVendorPage: React.FC = () => {
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/about-new/A gorgeous mandap decor and a beautiful….jpg"
+          src="/images/vendor-hero.jpeg"
           alt="Beautiful Wedding Vendors"
           fill
           className="object-cover object-center"
@@ -217,7 +217,11 @@ const DynamicVendorPage: React.FC = () => {
           unoptimized
         />
         {/* Overlay for darkening */}
-        <div className="absolute inset-0 bg-[#212D47] opacity-60" />
+        {/* Background Overlays */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-[#595959] opacity-60"></div>
+          <div className="absolute inset-0 opacity-80"></div>
+        </div>
       </div>
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center justify-center px-4 py-16 md:py-24 text-center">
@@ -276,26 +280,22 @@ const DynamicVendorPage: React.FC = () => {
                 }
                 router.push(`/vendors?${params.toString()}`, { scroll: false });
               }}
-              className={`group relative flex flex-col items-center transition-all duration-300 ${
-                filters.city === city ? 'scale-110' : 'hover:scale-105'
-              }`}
+              className={`group relative flex flex-col items-center transition-all duration-300 ${filters.city === city ? 'scale-110' : 'hover:scale-105'
+                }`}
             >
               <div
-                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 flex items-center justify-center ${
-                  filters.city === city 
-                    ? 'shadow-lg border-[#212D47] bg-[#212D47]' 
+                className={`w-16 h-16 rounded-full overflow-hidden border-4 transition-all duration-300 flex items-center justify-center ${filters.city === city
+                    ? 'shadow-lg border-[#212D47] bg-[#212D47]'
                     : 'border-gray-300 hover:border-[#212D47]/50 bg-gray-100'
-                }`}
+                  }`}
               >
-                <MapPin className={`w-8 h-8 ${
-                  filters.city === city ? 'text-white' : 'text-gray-600'
-                }`} />
+                <MapPin className={`w-8 h-8 ${filters.city === city ? 'text-white' : 'text-gray-600'
+                  }`} />
               </div>
-              <span className={`mt-2 text-sm font-medium transition-colors text-center ${
-                filters.city === city 
-                  ? 'text-[#212D47]' 
+              <span className={`mt-2 text-sm font-medium transition-colors text-center ${filters.city === city
+                  ? 'text-[#212D47]'
                   : 'text-gray-600 group-hover:text-gray-900'
-              }`}>
+                }`}>
                 {city}
               </span>
             </button>
@@ -323,7 +323,7 @@ const DynamicVendorPage: React.FC = () => {
               'Others': Users
             };
             const Icon = categoryIcons[category] || Users;
-            
+
             return (
               <button
                 key={category}
@@ -338,26 +338,22 @@ const DynamicVendorPage: React.FC = () => {
                   }
                   router.push(`/vendors?${params.toString()}`, { scroll: false });
                 }}
-                className={`group relative flex flex-col items-center p-4 rounded-lg transition-all duration-300 ${
-                  filters.category === category 
-                    ? 'bg-[#212D47] text-white shadow-lg scale-105' 
+                className={`group relative flex flex-col items-center p-4 rounded-lg transition-all duration-300 ${filters.category === category
+                    ? 'bg-[#212D47] text-white shadow-lg scale-105'
                     : 'bg-gray-50 hover:bg-gray-100 hover:scale-105'
-                }`}
+                  }`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-300 ${
-                  filters.category === category 
-                    ? 'bg-white/20' 
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-300 ${filters.category === category
+                    ? 'bg-white/20'
                     : 'bg-white group-hover:bg-[#212D47]/10'
-                }`}>
-                  <Icon className={`w-6 h-6 ${
-                    filters.category === category ? 'text-white' : 'text-[#212D47]'
-                  }`} />
+                  }`}>
+                  <Icon className={`w-6 h-6 ${filters.category === category ? 'text-white' : 'text-[#212D47]'
+                    }`} />
                 </div>
-                <span className={`text-sm font-medium text-center ${
-                  filters.category === category 
-                    ? 'text-white' 
+                <span className={`text-sm font-medium text-center ${filters.category === category
+                    ? 'text-white'
                     : 'text-gray-700 group-hover:text-gray-900'
-                }`}>
+                  }`}>
                   {category}
                 </span>
               </button>
@@ -393,9 +389,8 @@ const DynamicVendorPage: React.FC = () => {
                 >
                   <span className="font-medium text-sm text-[#212D47]">{category.title}</span>
                   <ChevronDown
-                    className={`h-4 w-4 text-[#212D47] transition-transform ${
-                      openSections.includes(key) ? 'rotate-180' : ''
-                    }`}
+                    className={`h-4 w-4 text-[#212D47] transition-transform ${openSections.includes(key) ? 'rotate-180' : ''
+                      }`}
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-2">
@@ -405,13 +400,13 @@ const DynamicVendorPage: React.FC = () => {
                         id={`${key}-${option}`}
                         checked={
                           key === 'priceRange'
-                            ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) && 
-                               filters.minPrice === filterOptions.minPrice && 
-                               filters.maxPrice === filterOptions.midPrice) ||
-                              (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) && 
-                               filters.minPrice === filterOptions.midPrice + 1 && 
-                               filters.maxPrice === filterOptions.maxPrice) ||
-                              (option.startsWith('>') && filters.minPrice > filterOptions.maxPrice)
+                            ? (option.includes(`${filterOptions.minPrice} - ₹ ${filterOptions.midPrice}`) &&
+                              filters.minPrice === filterOptions.minPrice &&
+                              filters.maxPrice === filterOptions.midPrice) ||
+                            (option.includes(`${filterOptions.midPrice + 1} - ₹ ${filterOptions.maxPrice}`) &&
+                              filters.minPrice === filterOptions.midPrice + 1 &&
+                              filters.maxPrice === filterOptions.maxPrice) ||
+                            (option.startsWith('>') && filters.minPrice > filterOptions.maxPrice)
                             : (filters as any)[key] === option
                         }
                         onCheckedChange={(checked) => handleFilterChange(key, option, checked as boolean)}
@@ -651,10 +646,10 @@ const DynamicVendorPage: React.FC = () => {
 
   // Loading Skeleton
   const LoadingSkeleton: React.FC = () => (
-    <div className={`grid gap-6 ${viewMode === 'grid' 
-      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+    <div className={`grid gap-6 ${viewMode === 'grid'
+      ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
       : 'grid-cols-1'
-    }`}>
+      }`}>
       {[...Array(6)].map((_, index) => (
         <div key={index} className="space-y-3">
           <Skeleton className="h-48 w-full rounded-lg" />
@@ -720,18 +715,18 @@ const DynamicVendorPage: React.FC = () => {
       {/* Search and Controls */}
       <VendorSearch />
 
-              {/* Results Section */}
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Wedding Vendors</h2>
-            {!loading && !error && (
-              <p className="text-gray-600">
-                Showing {filteredVendors.length} results
-                {(filters.search || activeFilterCount > 0) && ' matching your criteria'}
-              </p>
-            )}
-            {/* Debug info removed to minimize unnecessary re-renders while typing */}
-          </div>
+      {/* Results Section */}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Wedding Vendors</h2>
+          {!loading && !error && (
+            <p className="text-gray-600">
+              Showing {filteredVendors.length} results
+              {(filters.search || activeFilterCount > 0) && ' matching your criteria'}
+            </p>
+          )}
+          {/* Debug info removed to minimize unnecessary re-renders while typing */}
+        </div>
 
         {/* Loading State */}
         {loading && <LoadingSkeleton />}
@@ -756,10 +751,10 @@ const DynamicVendorPage: React.FC = () => {
           const remainingNormal = normal.slice(6);
           const ordered = [...featured, ...firstNormalChunk, ...premium, ...remainingNormal];
           return (
-            <div className={`grid gap-6 ${viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+            <div className={`grid gap-6 ${viewMode === 'grid'
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
               : 'grid-cols-1'
-            }`}>
+              }`}>
               {ordered.map((vendor) => (
                 <div key={vendor.id} className="relative">
                   {vendor.isPremium && (
