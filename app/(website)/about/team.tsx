@@ -79,7 +79,7 @@ export default function TeamSection() {
                 </motion.div>
 
                 {/* Small Screen Grid Layout */}
-                <div className="grid grid-cols-2 gap-4 md:hidden">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
                     {TEAM_MEMBERS.map((member, index) => (
                         <motion.div
                             key={`md-${index}`}

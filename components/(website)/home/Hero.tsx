@@ -50,9 +50,9 @@ export default function Hero() {
           // If images haven't loaded in 3 seconds, show fallback for full 5 seconds
           fallbackTimeoutRef.current = setTimeout(() => {
             setShowFallbackBg(false);
-          }, 6000); // Additional 2 seconds to make total 5 seconds
+          }, 12000); // Additional 2 seconds to make total 5 seconds
         }
-      }, 6000);
+      }, 12000);
     }
 
     return () => {
@@ -76,7 +76,7 @@ export default function Hero() {
     intervalRef.current = setInterval(() => {
       setDirection(1);
       setCurrentIndex((prev) => (prev + 1) % heroSlides.length);
-    }, 7000);
+    }, 12000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
