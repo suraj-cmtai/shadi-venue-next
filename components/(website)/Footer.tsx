@@ -150,7 +150,7 @@ export default function Footer() {
             </div>
             {/* Social & Email */}
             <div className="flex-1 flex flex-col items-center gap-2 min-w-[120px] mt-4 sm:mt-0">
-              <span className="font-bold font-cormorant text-base md:text-lg">@shadi venue.com</span>
+              <span className="font-bold font-cormorant text-base md:text-lg">connect@shadivenue.com</span>
               <div className="h-px w-16 my-2 bg-white/40" aria-hidden="true" />
               {/* Social icons row */}
               <div className="flex flex-row items-center justify-center gap-3 mt-1">
